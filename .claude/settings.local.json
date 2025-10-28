@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(bc:*)",
+      "Bash(npm install:*)",
+      "Bash(createdb:*)",
+      "Bash(psql:*)",
+      "Bash(where:*)",
+      "Bash(python -m flask:*)",
+      "Bash(py:*)",
+      "Bash(npm run dev:*)",
+      "Bash(findstr:*)",
+      "Bash(curl:*)",
+      "Bash(dir:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
