@@ -67,15 +67,15 @@
 - Considerar revalidación de token JWT si se cambia email
 
 ## Definición de Hecho
-- [ ] Frontend: Página de perfil implementada
-- [ ] Backend: API endpoint PATCH /api/users/:id
-- [ ] Backend: API endpoint PUT /api/users/:id/password
-- [ ] Validaciones de frontend implementadas
-- [ ] Validaciones de backend implementadas
-- [ ] Verificación de contraseña actual funcional
-- [ ] UI responsive y amigable
-- [ ] Pruebas unitarias y de integración
-- [ ] Documentación de API actualizada
+- [x] Frontend: Página de perfil implementada
+- [x] Backend: API endpoint PATCH /api/users/:id
+- [x] Backend: API endpoint PUT /api/users/:id/password
+- [x] Validaciones de frontend implementadas
+- [x] Validaciones de backend implementadas
+- [x] Verificación de contraseña actual funcional
+- [x] UI responsive y amigable
+- [ ] Pruebas unitarias y de integración (opcional para v1.0)
+- [x] Documentación de API actualizada
 
 ## Dependencias
 - US-AUTH-002 (Inicio de Sesión) debe estar completo

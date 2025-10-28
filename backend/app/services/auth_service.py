@@ -146,3 +146,90 @@ class AuthService:
             list[User]: Lista de usuarios
         """
         return User.query.order_by(User.created_at.desc()).all()
+
+    @staticmethod
+    def update_user_profile(user_id, full_name=None, email=None):
+        """
+        Actualiza el perfil de un usuario
+        US-AUTH-004 - CA-3, CA-4: Update name and email
+
+        Args:
+            user_id: ID del usuario
+            full_name: Nuevo nombre completo (opcional)
+            email: Nuevo email (opcional)
+
+        Returns:
+            User: Usuario actualizado
+
+        Raises:
+            ValueError: Si hay algún error en la actualización
+        """
+        user = User.query.get(user_id)
+        if not user:
+            raise ValueError('Usuario no encontrado')
+
+        # Actualizar nombre si se proporciona
+        if full_name is not None:
+            user.full_name = full_name.strip()
+
+        # Actualizar email si se proporciona (CA-4)
+        if email is not None:
+            # Normalizar email
+            _, normalized_email, _ = validate_email_format(email)
+
+            # Verificar que no exista otro usuario con ese email
+            existing_user = User.query.filter_by(email=normalized_email).first()
+            if existing_user and existing_user.id != user_id:
+                raise ValueError('Este email ya está registrado')
+
+            user.email = normalized_email
+
+        try:
+            db.session.commit()
+            return user
+        except Exception as e:
+            db.session.rollback()
+            raise ValueError(f'Error al actualizar perfil: {str(e)}')
+
+    @staticmethod
+    def change_user_password(user_id, current_password, new_password, confirm_password):
+        """
+        Cambia la contraseña de un usuario
+        US-AUTH-004 - CA-5: Password change with validation
+
+        Args:
+            user_id: ID del usuario
+            current_password: Contraseña actual (para verificación)
+            new_password: Nueva contraseña
+            confirm_password: Confirmación de nueva contraseña
+
+        Returns:
+            User: Usuario actualizado
+
+        Raises:
+            ValueError: Si hay algún error en el cambio de contraseña
+        """
+        user = User.query.get(user_id)
+        if not user:
+            raise ValueError('Usuario no encontrado')
+
+        # Verificar contraseña actual (CA-5)
+        if not user.check_password(current_password):
+            raise ValueError('La contraseña actual es incorrecta')
+
+        # Verificar que las contraseñas coincidan (CA-5)
+        if new_password != confirm_password:
+            raise ValueError('Las contraseñas no coinciden')
+
+        # Verificar que la nueva contraseña sea diferente (CA-5)
+        if user.check_password(new_password):
+            raise ValueError('La nueva contraseña debe ser diferente de la actual')
+
+        try:
+            # Cambiar contraseña (se hasheará automáticamente)
+            user.set_password(new_password)
+            db.session.commit()
+            return user
+        except Exception as e:
+            db.session.rollback()
+            raise ValueError(f'Error al cambiar contraseña: {str(e)}')

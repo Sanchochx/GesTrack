@@ -12,11 +12,11 @@
 │  PROGRESO GLOBAL DEL PROYECTO                               │
 ├─────────────────────────────────────────────────────────────┤
 │  Total Historias de Usuario:     82                         │
-│  ✅ Completadas:                   3                         │
+│  ✅ Completadas:                   4                         │
 │  ⏳ En Progreso:                   0                         │
-│  ⏸️  Pendientes:                   79                        │
+│  ⏸️  Pendientes:                   78                        │
 │                                                             │
-│  Progreso: [█░░░░░░░░░░░░░░░░░░░] 3.7% (3/82)              │
+│  Progreso: [█░░░░░░░░░░░░░░░░░░░] 4.9% (4/82)              │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -26,7 +26,7 @@
 
 | Epic | Nombre | Total US | Completadas | En Progreso | Pendientes | Progreso |
 |------|--------|----------|-------------|-------------|------------|----------|
-| 01 | Foundation | 6 | 3 | 0 | 3 | [█████░░░░░] 50.0% |
+| 01 | Foundation | 6 | 4 | 0 | 2 | [██████░░░░] 66.7% |
 | 02 | Core Data | 10 | 0 | 0 | 10 | [░░░░░░░░░░] 0% |
 | 03 | Stock Management | 10 | 0 | 0 | 10 | [░░░░░░░░░░] 0% |
 | 04 | Sales | 26 | 0 | 0 | 26 | [░░░░░░░░░░] 0% |
@@ -51,7 +51,7 @@
 ## Epic 01: Foundation - Autenticación y Configuración Base
 
 **Prioridad:** ⭐⭐⭐ ALTA
-**Progreso:** [█████░░░░░] 50.0% (3/6)
+**Progreso:** [██████░░░░] 66.7% (4/6)
 **Carpeta:** `context/user_stories/epic_01_foundation/`
 
 ### ✅ Historias de Usuario
@@ -80,12 +80,13 @@
 - **Criterios de Aceptación:** 4 ✅ (1 opcional no implementado)
 - **Fecha de completación:** 2025-10-28
 
-#### [ ] US-AUTH-004: Gestión de Perfil de Usuario
+#### [x] US-AUTH-004: Gestión de Perfil de Usuario
 - **Archivo:** `context/user_stories/epic_01_foundation/US-AUTH-004_profile_management.md`
 - **Prioridad:** MEDIA
 - **Estimación:** 5 pts
-- **Estado:** ⏸️ Pendiente
-- **Criterios de Aceptación:** 6
+- **Estado:** ✅ Completada
+- **Criterios de Aceptación:** 7 ✅
+- **Fecha de completación:** 2025-10-28
 
 #### [ ] US-AUTH-005: Control de Acceso por Roles
 - **Archivo:** `context/user_stories/epic_01_foundation/US-AUTH-005_role_based_access.md`

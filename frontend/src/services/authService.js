@@ -99,6 +99,50 @@ const authService = {
       throw { success: false, error: { message: 'Error de conexión con el servidor' } };
     }
   },
+
+  /**
+   * Actualiza el perfil del usuario actual
+   * US-AUTH-004 - CA-3, CA-4: Profile update with validations
+   * @param {string} userId - ID del usuario
+   * @param {Object} profileData - Datos a actualizar (full_name, email)
+   * @returns {Promise} - Promesa con la respuesta del servidor
+   */
+  async updateProfile(userId, profileData) {
+    try {
+      const response = await api.patch(`/auth/users/${userId}`, profileData);
+
+      if (response.data.success && response.data.data.user) {
+        // Actualizar usuario en localStorage
+        localStorage.setItem('user', JSON.stringify(response.data.data.user));
+      }
+
+      return response.data;
+    } catch (error) {
+      if (error.response && error.response.data) {
+        throw error.response.data;
+      }
+      throw { success: false, error: { message: 'Error de conexión con el servidor' } };
+    }
+  },
+
+  /**
+   * Cambia la contraseña del usuario actual
+   * US-AUTH-004 - CA-5: Password change functionality
+   * @param {string} userId - ID del usuario
+   * @param {Object} passwordData - Datos de contraseñas (current_password, new_password, confirm_password)
+   * @returns {Promise} - Promesa con la respuesta del servidor
+   */
+  async changePassword(userId, passwordData) {
+    try {
+      const response = await api.put(`/auth/users/${userId}/password`, passwordData);
+      return response.data;
+    } catch (error) {
+      if (error.response && error.response.data) {
+        throw error.response.data;
+      }
+      throw { success: false, error: { message: 'Error de conexión con el servidor' } };
+    }
+  },
 };
 
 export default authService;

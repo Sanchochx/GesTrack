@@ -75,7 +75,54 @@ class UserSchema(Schema):
     updated_at = fields.DateTime(dump_only=True)
 
 
+class UserProfileUpdateSchema(Schema):
+    """
+    Schema de validación para actualización de perfil de usuario
+    US-AUTH-004 - CA-3, CA-4: Name and email editing with validation
+    """
+    full_name = fields.Str(required=False, allow_none=True)
+    email = fields.Email(required=False, allow_none=True, error_messages={
+        'invalid': 'El formato del email no es válido'
+    })
+
+    @validates('full_name')
+    def validate_full_name(self, value):
+        """Valida que el nombre completo tenga longitud válida (CA-3)"""
+        if value is not None:
+            if not value or value.strip() == '':
+                raise ValidationError('El nombre completo no puede estar vacío')
+            if len(value) < 3:
+                raise ValidationError('El nombre completo debe tener al menos 3 caracteres')
+            if len(value) > 100:
+                raise ValidationError('El nombre completo no puede exceder 100 caracteres')
+
+
+class UserPasswordChangeSchema(Schema):
+    """
+    Schema de validación para cambio de contraseña
+    US-AUTH-004 - CA-5: Password change with validations
+    """
+    current_password = fields.Str(required=True, load_only=True, error_messages={
+        'required': 'La contraseña actual es obligatoria'
+    })
+    new_password = fields.Str(required=True, load_only=True, error_messages={
+        'required': 'La nueva contraseña es obligatoria'
+    })
+    confirm_password = fields.Str(required=True, load_only=True, error_messages={
+        'required': 'La confirmación de contraseña es obligatoria'
+    })
+
+    @validates('new_password')
+    def validate_new_password(self, value):
+        """Valida la fortaleza de la nueva contraseña (CA-5)"""
+        is_valid, errors = validate_password_strength(value)
+        if not is_valid:
+            raise ValidationError(errors)
+
+
 # Instancias de schemas para uso en rutas
 user_registration_schema = UserRegistrationSchema()
 user_schema = UserSchema()
 users_schema = UserSchema(many=True)
+user_profile_update_schema = UserProfileUpdateSchema()
+user_password_change_schema = UserPasswordChangeSchema()
