@@ -143,6 +143,48 @@ const authService = {
       throw { success: false, error: { message: 'Error de conexión con el servidor' } };
     }
   },
+
+  /**
+   * Solicita el enlace de recuperación de contraseña
+   * US-AUTH-006 - CA-2, CA-3: Request password reset
+   * @param {string} email - Email del usuario
+   * @returns {Promise} - Promesa con la respuesta del servidor
+   */
+  async requestPasswordReset(email) {
+    try {
+      const response = await api.post('/auth/forgot-password', { email });
+      return response.data;
+    } catch (error) {
+      if (error.response && error.response.data) {
+        throw error.response.data;
+      }
+      throw { success: false, error: { message: 'Error de conexión con el servidor' } };
+    }
+  },
+
+  /**
+   * Resetea la contraseña usando el token
+   * US-AUTH-006 - CA-6, CA-7, CA-8: Reset password with token
+   * @param {string} token - Token de recuperación
+   * @param {string} newPassword - Nueva contraseña
+   * @param {string} confirmPassword - Confirmación de contraseña
+   * @returns {Promise} - Promesa con la respuesta del servidor
+   */
+  async resetPassword(token, newPassword, confirmPassword) {
+    try {
+      const response = await api.post('/auth/reset-password', {
+        token,
+        new_password: newPassword,
+        confirm_password: confirmPassword
+      });
+      return response.data;
+    } catch (error) {
+      if (error.response && error.response.data) {
+        throw error.response.data;
+      }
+      throw { success: false, error: { message: 'Error de conexión con el servidor' } };
+    }
+  },
 };
 
 export default authService;

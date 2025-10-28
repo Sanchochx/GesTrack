@@ -21,6 +21,8 @@ import PersonIcon from '@mui/icons-material/Person';
 import Login from './pages/Auth/Login';
 import Register from './pages/Auth/Register';
 import UserList from './pages/Auth/UserList';
+import ForgotPassword from './pages/Auth/ForgotPassword';
+import ResetPassword from './pages/Auth/ResetPassword';
 import Profile from './pages/Profile/Profile';
 import AdminDashboard from './pages/Dashboard/AdminDashboard';
 import WarehouseDashboard from './pages/Dashboard/WarehouseDashboard';
@@ -223,6 +225,10 @@ function App() {
               <Route path="/" element={<Navigate to="/login" replace />} />
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
+
+              {/* US-AUTH-006: Rutas de recuperación de contraseña */}
+              <Route path="/forgot-password" element={<ForgotPassword />} />
+              <Route path="/reset-password" element={<ResetPassword />} />
 
               {/* US-AUTH-005: CA-6 - Página de error 403 */}
               <Route path="/forbidden" element={<Forbidden />} />

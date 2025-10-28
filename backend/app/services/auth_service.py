@@ -1,7 +1,9 @@
 from app import db
 from app.models.user import User
 from app.models.login_attempt import LoginAttempt
+from app.models.password_reset_token import PasswordResetToken
 from app.utils.validators import validate_email_format
+from app.services.email_service import EmailService
 from flask_jwt_extended import create_access_token
 from datetime import timedelta
 
@@ -242,3 +244,125 @@ class AuthService:
         except Exception as e:
             db.session.rollback()
             raise ValueError(f'Error al cambiar contraseña: {str(e)}')
+
+    @staticmethod
+    def request_password_reset(email):
+        """
+        Solicita el reseteo de contraseña
+        US-AUTH-006 - CA-2, CA-3, CA-4, CA-5: Password recovery request
+
+        Args:
+            email: Email del usuario
+
+        Returns:
+            bool: True si el proceso fue exitoso (siempre retorna True por seguridad)
+
+        Raises:
+            Exception: Si hay un error al enviar el email
+        """
+        # Normalizar email
+        _, normalized_email, _ = validate_email_format(email)
+
+        # Buscar usuario (CA-3: No revelar si el email existe o no)
+        user = User.query.filter_by(email=normalized_email).first()
+
+        # Si el usuario existe, crear token y enviar email
+        if user:
+            try:
+                # Generar token seguro (CA-5)
+                token = PasswordResetToken.generate_token()
+                token_hash = PasswordResetToken.hash_token(token)
+
+                # Crear registro en BD
+                reset_token = PasswordResetToken(
+                    user_id=user.id,
+                    token_hash=token_hash
+                )
+                db.session.add(reset_token)
+                db.session.commit()
+
+                # Enviar email (CA-4)
+                EmailService.send_password_reset_email(
+                    user_email=user.email,
+                    user_name=user.full_name,
+                    reset_token=token  # Enviamos el token sin hashear
+                )
+
+            except Exception as e:
+                db.session.rollback()
+                # Log error pero no exponerlo al usuario
+                print(f"Error en password reset: {str(e)}")
+                raise Exception('Error al procesar la solicitud')
+
+        # Siempre retornar True por seguridad (CA-3: evitar enumeration attacks)
+        # Tanto si el email existe como si no
+        return True
+
+    @staticmethod
+    def reset_password_with_token(token, new_password, confirm_password):
+        """
+        Resetea la contraseña usando el token
+        US-AUTH-006 - CA-6, CA-7, CA-8, CA-9: Password reset with token
+
+        Args:
+            token: Token de recuperación
+            new_password: Nueva contraseña
+            confirm_password: Confirmación de nueva contraseña
+
+        Returns:
+            User: Usuario actualizado
+
+        Raises:
+            ValueError: Si el token es inválido, expirado o las contraseñas no coinciden
+        """
+        # Verificar que las contraseñas coincidan (CA-6)
+        if new_password != confirm_password:
+            raise ValueError('Las contraseñas no coinciden')
+
+        # Buscar token
+        reset_token = PasswordResetToken.find_by_token(token)
+
+        # Verificar que el token existe (CA-7)
+        if not reset_token:
+            raise ValueError('Enlace inválido o ya utilizado')
+
+        # Verificar que el token no ha expirado (CA-7)
+        if reset_token.is_expired():
+            raise ValueError('Este enlace ha expirado. Solicita uno nuevo')
+
+        # Verificar que el token no ha sido usado (CA-7)
+        if not reset_token.is_valid():
+            raise ValueError('Enlace inválido o ya utilizado')
+
+        # Obtener usuario
+        user = User.query.get(reset_token.user_id)
+        if not user:
+            raise ValueError('Usuario no encontrado')
+
+        try:
+            # Cambiar contraseña (CA-8)
+            user.set_password(new_password)
+
+            # Marcar token como usado (CA-8)
+            reset_token.mark_as_used()
+
+            # Invalidar otros tokens activos del usuario
+            PasswordResetToken.invalidate_user_tokens(user.id)
+
+            db.session.commit()
+
+            # Enviar email de notificación (CA-9)
+            try:
+                EmailService.send_password_changed_notification(
+                    user_email=user.email,
+                    user_name=user.full_name
+                )
+            except Exception as e:
+                # Log error pero no fallar el proceso
+                print(f"Error al enviar email de confirmación: {str(e)}")
+
+            return user
+
+        except Exception as e:
+            db.session.rollback()
+            raise ValueError(f'Error al resetear contraseña: {str(e)}')

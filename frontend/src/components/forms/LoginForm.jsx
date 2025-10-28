@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, Link as RouterLink } from 'react-router-dom';
 import {
   Box,
   TextField,
@@ -205,7 +205,8 @@ const LoginForm = () => {
         {/* Enlaces adicionales */}
         <Box sx={{ textAlign: 'center', mt: 2 }}>
           <Link
-            href="/forgot-password"
+            component={RouterLink}
+            to="/forgot-password"
             variant="body2"
             sx={{ display: 'block', mb: 1 }}
           >
@@ -213,7 +214,7 @@ const LoginForm = () => {
           </Link>
           <Typography variant="body2" color="text.secondary">
             ¿No tienes una cuenta?{' '}
-            <Link href="/register" variant="body2">
+            <Link component={RouterLink} to="/register" variant="body2">
               Regístrate aquí
             </Link>
           </Typography>

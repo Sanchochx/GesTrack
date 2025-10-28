@@ -384,3 +384,130 @@ def change_user_password(user_id):
                 'message': 'Error interno del servidor'
             }
         }), 500
+
+
+@auth_bp.route('/forgot-password', methods=['POST'])
+def forgot_password():
+    """
+    POST /api/auth/forgot-password
+    Solicita un enlace de recuperación de contraseña
+    US-AUTH-006: CA-2, CA-3, CA-4, CA-5
+
+    Request Body:
+        {
+            "email": "usuario@example.com"
+        }
+
+    Returns:
+        200: Mensaje de confirmación (siempre exitoso por seguridad)
+        400: Datos inválidos
+        500: Error del servidor
+    """
+    try:
+        data = request.get_json()
+
+        if not data or 'email' not in data:
+            return jsonify({
+                'success': False,
+                'error': {
+                    'code': 'INVALID_DATA',
+                    'message': 'El email es requerido'
+                }
+            }), 400
+
+        # Solicitar reset de contraseña
+        AuthService.request_password_reset(data['email'])
+
+        # Respuesta genérica por seguridad (CA-3)
+        return jsonify({
+            'success': True,
+            'message': 'Si el email está registrado, recibirás instrucciones para recuperar tu contraseña'
+        }), 200
+
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': {
+                'code': 'INTERNAL_ERROR',
+                'message': 'Error interno del servidor'
+            }
+        }), 500
+
+
+@auth_bp.route('/reset-password', methods=['POST'])
+def reset_password():
+    """
+    POST /api/auth/reset-password
+    Resetea la contraseña usando el token
+    US-AUTH-006: CA-6, CA-7, CA-8, CA-9
+
+    Request Body:
+        {
+            "token": "abc123...",
+            "new_password": "NewPassword123",
+            "confirm_password": "NewPassword123"
+        }
+
+    Returns:
+        200: Contraseña actualizada exitosamente
+        400: Token inválido/expirado o errores de validación
+        500: Error del servidor
+    """
+    try:
+        data = request.get_json()
+
+        if not data:
+            return jsonify({
+                'success': False,
+                'error': {
+                    'code': 'INVALID_DATA',
+                    'message': 'No se proporcionaron datos'
+                }
+            }), 400
+
+        # Validar campos requeridos
+        required_fields = ['token', 'new_password', 'confirm_password']
+        missing_fields = [field for field in required_fields if field not in data]
+
+        if missing_fields:
+            return jsonify({
+                'success': False,
+                'error': {
+                    'code': 'MISSING_FIELDS',
+                    'message': f'Campos requeridos faltantes: {", ".join(missing_fields)}'
+                }
+            }), 400
+
+        # Resetear contraseña
+        user = AuthService.reset_password_with_token(
+            token=data['token'],
+            new_password=data['new_password'],
+            confirm_password=data['confirm_password']
+        )
+
+        # Respuesta exitosa (CA-8)
+        return jsonify({
+            'success': True,
+            'message': 'Tu contraseña ha sido actualizada correctamente',
+            'data': {
+                'user': user_schema.dump(user)
+            }
+        }), 200
+
+    except ValueError as e:
+        return jsonify({
+            'success': False,
+            'error': {
+                'code': 'RESET_ERROR',
+                'message': str(e)
+            }
+        }), 400
+
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': {
+                'code': 'INTERNAL_ERROR',
+                'message': 'Error interno del servidor'
+            }
+        }), 500

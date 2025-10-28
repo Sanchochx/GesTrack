@@ -15,7 +15,9 @@
       "Bash(netstat:*)",
       "Bash(timeout:*)",
       "Bash(npm run lint)",
-      "Bash(taskkill:*)"
+      "Bash(taskkill:*)",
+      "Bash(flask db migrate:*)",
+      "Bash(flask db upgrade:*)"
     ],
     "deny": [],
     "ask": []
