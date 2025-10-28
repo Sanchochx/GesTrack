@@ -25,6 +25,7 @@ import Profile from './pages/Profile/Profile';
 import AdminDashboard from './pages/Dashboard/AdminDashboard';
 import WarehouseDashboard from './pages/Dashboard/WarehouseDashboard';
 import SalesDashboard from './pages/Dashboard/SalesDashboard';
+import Forbidden from './pages/Errors/Forbidden';
 import ProtectedRoute from './components/common/ProtectedRoute';
 import authService from './services/authService';
 
@@ -40,9 +41,34 @@ const theme = createTheme({
 });
 
 /**
+ * Componente para redirigir al dashboard correcto según el rol
+ * US-AUTH-005: CA-5 - Dashboard dinámico según rol
+ */
+function DashboardRedirect() {
+  const currentUser = authService.getCurrentUser();
+
+  if (!currentUser) {
+    return <Navigate to="/login" replace />;
+  }
+
+  // Redirigir según el rol del usuario (CA-5)
+  switch (currentUser.role) {
+    case 'Admin':
+      return <Navigate to="/dashboard/admin" replace />;
+    case 'Gerente de Almacén':
+      return <Navigate to="/dashboard/warehouse" replace />;
+    case 'Personal de Ventas':
+      return <Navigate to="/dashboard/sales" replace />;
+    default:
+      return <Navigate to="/login" replace />;
+  }
+}
+
+/**
  * Componente de Navegación
  * US-AUTH-003: CA-1 - Botón de Cierre de Sesión
  * US-AUTH-004: CA-1 - Dropdown menu con acceso al perfil
+ * US-AUTH-005: CA-5 - Menú dinámico según rol
  */
 function Navigation() {
   const navigate = useNavigate();
@@ -121,10 +147,14 @@ function Navigation() {
           </>
         ) : (
           // Mostrar navegación y menú de usuario cuando está autenticado
+          // US-AUTH-005: CA-5 - Menú dinámico según rol
           <>
-            <Button color="inherit" href="/users">
-              Usuarios
-            </Button>
+            {/* US-AUTH-005: CA-2, CA-5 - Ocultar opciones según rol */}
+            {currentUser?.role === 'Admin' && (
+              <Button color="inherit" href="/users">
+                Usuarios
+              </Button>
+            )}
 
             {/* US-AUTH-004: CA-1 - Menú de usuario con dropdown */}
             <IconButton
@@ -194,11 +224,15 @@ function App() {
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
 
+              {/* US-AUTH-005: CA-6 - Página de error 403 */}
+              <Route path="/forbidden" element={<Forbidden />} />
+
               {/* US-AUTH-003: CA-4 - Rutas Protegidas */}
+              {/* US-AUTH-005: CA-2 - Solo Admin puede ver lista de usuarios */}
               <Route
                 path="/users"
                 element={
-                  <ProtectedRoute>
+                  <ProtectedRoute allowedRoles={['Admin']}>
                     <UserList />
                   </ProtectedRoute>
                 }
@@ -214,6 +248,17 @@ function App() {
                 }
               />
 
+              {/* US-AUTH-005: CA-5 - Dashboard dinámico según rol */}
+              <Route
+                path="/dashboard"
+                element={
+                  <ProtectedRoute>
+                    <DashboardRedirect />
+                  </ProtectedRoute>
+                }
+              />
+
+              {/* US-AUTH-005: CA-2 - Dashboards protegidos por rol */}
               <Route
                 path="/dashboard/admin"
                 element={

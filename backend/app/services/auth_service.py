@@ -47,8 +47,12 @@ class AuthService:
             db.session.add(user)
             db.session.commit()
 
-            # Generar token JWT para el nuevo usuario
-            token = create_access_token(identity=user.id)
+            # Generar token JWT para el nuevo usuario (US-AUTH-005 CA-4)
+            # Incluir rol en el token para validaciones de autorización
+            token = create_access_token(
+                identity=user.id,
+                additional_claims={'role': user.role}
+            )
 
             return user, token
 
@@ -113,6 +117,7 @@ class AuthService:
         LoginAttempt.record_attempt(normalized_email, ip_address, success=True)
 
         # Generar token JWT con expiración según "Remember me" (CA-5)
+        # US-AUTH-005 CA-4: Incluir rol en el token para validaciones de autorización
         if remember_me:
             # Si "Recordarme" está activado: 30 días
             expires_delta = timedelta(days=30)
@@ -120,7 +125,11 @@ class AuthService:
             # Por defecto: 24 horas
             expires_delta = timedelta(hours=24)
 
-        token = create_access_token(identity=user.id, expires_delta=expires_delta)
+        token = create_access_token(
+            identity=user.id,
+            expires_delta=expires_delta,
+            additional_claims={'role': user.role}
+        )
 
         return user, token
 

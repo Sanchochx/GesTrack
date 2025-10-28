@@ -9,6 +9,7 @@ from app.schemas.user_schema import (
     user_password_change_schema
 )
 from app.services.auth_service import AuthService
+from app.utils.decorators import admin_required
 
 auth_bp = Blueprint('auth', __name__)
 
@@ -167,13 +168,17 @@ def login():
 
 
 @auth_bp.route('/users', methods=['GET'])
+@admin_required
 def get_users():
     """
     GET /api/auth/users
     Obtiene la lista de todos los usuarios
+    US-AUTH-005 CA-3: Solo Admin puede listar usuarios
 
     Returns:
         200: Lista de usuarios
+        401: No autenticado
+        403: Sin permisos (solo Admin)
         500: Error del servidor
     """
     try:

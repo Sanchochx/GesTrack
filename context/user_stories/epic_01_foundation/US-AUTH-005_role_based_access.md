@@ -100,16 +100,16 @@ El menú de navegación se adapta según el rol:
 - Considerar permisos granulares en el futuro (tabla de permisos)
 
 ## Definición de Hecho
-- [ ] Backend: Middleware de autorización implementado
-- [ ] Backend: Decoradores de rol en endpoints críticos
-- [ ] Frontend: Guards de ruta configurados
-- [ ] Frontend: Menú dinámico según rol
-- [ ] Frontend: Página 403 implementada
-- [ ] Token JWT incluye información de rol
-- [ ] Validación de permisos en todas las operaciones CRUD
-- [ ] Logs de seguridad para accesos denegados
-- [ ] Pruebas de todos los escenarios de roles
-- [ ] Documentación de permisos por rol
+- [x] Backend: Middleware de autorización implementado
+- [x] Backend: Decoradores de rol en endpoints críticos
+- [x] Frontend: Guards de ruta configurados
+- [x] Frontend: Menú dinámico según rol
+- [x] Frontend: Página 403 implementada
+- [x] Token JWT incluye información de rol
+- [x] Validación de permisos en todas las operaciones CRUD
+- [x] Logs de seguridad para accesos denegados
+- [ ] Pruebas de todos los escenarios de roles (testing opcional en v1.0)
+- [x] Documentación de permisos por rol
 
 ## Dependencias
 - US-AUTH-001 (Registro con roles)

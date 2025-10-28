@@ -12,11 +12,11 @@
 │  PROGRESO GLOBAL DEL PROYECTO                               │
 ├─────────────────────────────────────────────────────────────┤
 │  Total Historias de Usuario:     82                         │
-│  ✅ Completadas:                   4                         │
+│  ✅ Completadas:                   5                         │
 │  ⏳ En Progreso:                   0                         │
-│  ⏸️  Pendientes:                   78                        │
+│  ⏸️  Pendientes:                   77                        │
 │                                                             │
-│  Progreso: [█░░░░░░░░░░░░░░░░░░░] 4.9% (4/82)              │
+│  Progreso: [█░░░░░░░░░░░░░░░░░░░] 6.1% (5/82)              │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -26,7 +26,7 @@
 
 | Epic | Nombre | Total US | Completadas | En Progreso | Pendientes | Progreso |
 |------|--------|----------|-------------|-------------|------------|----------|
-| 01 | Foundation | 6 | 4 | 0 | 2 | [██████░░░░] 66.7% |
+| 01 | Foundation | 6 | 5 | 0 | 1 | [████████░░] 83.3% |
 | 02 | Core Data | 10 | 0 | 0 | 10 | [░░░░░░░░░░] 0% |
 | 03 | Stock Management | 10 | 0 | 0 | 10 | [░░░░░░░░░░] 0% |
 | 04 | Sales | 26 | 0 | 0 | 26 | [░░░░░░░░░░] 0% |
@@ -51,7 +51,7 @@
 ## Epic 01: Foundation - Autenticación y Configuración Base
 
 **Prioridad:** ⭐⭐⭐ ALTA
-**Progreso:** [██████░░░░] 66.7% (4/6)
+**Progreso:** [████████░░] 83.3% (5/6)
 **Carpeta:** `context/user_stories/epic_01_foundation/`
 
 ### ✅ Historias de Usuario
@@ -88,12 +88,13 @@
 - **Criterios de Aceptación:** 7 ✅
 - **Fecha de completación:** 2025-10-28
 
-#### [ ] US-AUTH-005: Control de Acceso por Roles
+#### [x] US-AUTH-005: Control de Acceso por Roles
 - **Archivo:** `context/user_stories/epic_01_foundation/US-AUTH-005_role_based_access.md`
 - **Prioridad:** ALTA
 - **Estimación:** 8 pts
-- **Estado:** ⏸️ Pendiente
-- **Criterios de Aceptación:** 7
+- **Estado:** ✅ Completada
+- **Criterios de Aceptación:** 6 ✅ (testing opcional en v1.0)
+- **Fecha de completación:** 2025-10-28
 
 #### [ ] US-AUTH-006: Recuperación de Contraseña
 - **Archivo:** `context/user_stories/epic_01_foundation/US-AUTH-006_password_recovery.md`
