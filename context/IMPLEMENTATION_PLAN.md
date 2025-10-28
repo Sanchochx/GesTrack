@@ -12,11 +12,11 @@
 │  PROGRESO GLOBAL DEL PROYECTO                               │
 ├─────────────────────────────────────────────────────────────┤
 │  Total Historias de Usuario:     82                         │
-│  ✅ Completadas:                   2                         │
+│  ✅ Completadas:                   3                         │
 │  ⏳ En Progreso:                   0                         │
-│  ⏸️  Pendientes:                   80                        │
+│  ⏸️  Pendientes:                   79                        │
 │                                                             │
-│  Progreso: [█░░░░░░░░░░░░░░░░░░░] 2.4% (2/82)              │
+│  Progreso: [█░░░░░░░░░░░░░░░░░░░] 3.7% (3/82)              │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -26,7 +26,7 @@
 
 | Epic | Nombre | Total US | Completadas | En Progreso | Pendientes | Progreso |
 |------|--------|----------|-------------|-------------|------------|----------|
-| 01 | Foundation | 6 | 2 | 0 | 4 | [███░░░░░░░] 33.3% |
+| 01 | Foundation | 6 | 3 | 0 | 3 | [█████░░░░░] 50.0% |
 | 02 | Core Data | 10 | 0 | 0 | 10 | [░░░░░░░░░░] 0% |
 | 03 | Stock Management | 10 | 0 | 0 | 10 | [░░░░░░░░░░] 0% |
 | 04 | Sales | 26 | 0 | 0 | 26 | [░░░░░░░░░░] 0% |
@@ -51,7 +51,7 @@
 ## Epic 01: Foundation - Autenticación y Configuración Base
 
 **Prioridad:** ⭐⭐⭐ ALTA
-**Progreso:** [███░░░░░░░] 33.3% (2/6)
+**Progreso:** [█████░░░░░] 50.0% (3/6)
 **Carpeta:** `context/user_stories/epic_01_foundation/`
 
 ### ✅ Historias de Usuario
@@ -72,12 +72,13 @@
 - **Criterios de Aceptación:** 6 ✅
 - **Fecha de completación:** 2025-10-28
 
-#### [ ] US-AUTH-003: Cierre de Sesión
+#### [x] US-AUTH-003: Cierre de Sesión
 - **Archivo:** `context/user_stories/epic_01_foundation/US-AUTH-003_user_logout.md`
 - **Prioridad:** ALTA
-- **Estimación:** 3 pts
-- **Estado:** ⏸️ Pendiente
-- **Criterios de Aceptación:** 4
+- **Estimación:** 2 pts
+- **Estado:** ✅ Completada
+- **Criterios de Aceptación:** 4 ✅ (1 opcional no implementado)
+- **Fecha de completación:** 2025-10-28
 
 #### [ ] US-AUTH-004: Gestión de Perfil de Usuario
 - **Archivo:** `context/user_stories/epic_01_foundation/US-AUTH-004_profile_management.md`

@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import {
   Box,
   TextField,
@@ -19,9 +19,11 @@ import authService from '../../services/authService';
 /**
  * Formulario de Inicio de Sesión
  * US-AUTH-002 - CA-1: Formulario de Login
+ * US-AUTH-003 - CA-3: Mensaje de logout
  */
 const LoginForm = () => {
   const navigate = useNavigate();
+  const location = useLocation();
 
   // Estado del formulario
   const [formData, setFormData] = useState({
@@ -33,7 +35,17 @@ const LoginForm = () => {
   // Estado de UI
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [successMessage, setSuccessMessage] = useState(null);
   const [showPassword, setShowPassword] = useState(false);
+
+  // US-AUTH-003: CA-3 - Mostrar mensaje de logout exitoso
+  useEffect(() => {
+    if (location.state?.message) {
+      setSuccessMessage(location.state.message);
+      // Limpiar el mensaje del state después de mostrarlo
+      window.history.replaceState({}, document.title);
+    }
+  }, [location]);
 
   // Manejador de cambios en inputs
   const handleChange = (e) => {
@@ -106,6 +118,13 @@ const LoginForm = () => {
           Ingresa tus credenciales para acceder al sistema
         </Typography>
       </Box>
+
+      {/* US-AUTH-003: CA-3 - Mensaje de logout exitoso */}
+      {successMessage && (
+        <Alert severity="success" sx={{ mb: 2 }}>
+          {successMessage}
+        </Alert>
+      )}
 
       {error && (
         <Alert severity="error" sx={{ mb: 2 }}>
