@@ -13,37 +13,37 @@
 
 ## Criterios de Aceptación
 
-### CA-1: Formulario de Login
-- El formulario incluye campos de email y contraseña
-- Existe un botón "Iniciar Sesión"
-- Existe enlace "¿Olvidaste tu contraseña?"
-- Diseño limpio y profesional
+### CA-1: Formulario de Login ✅
+- [x] El formulario incluye campos de email y contraseña
+- [x] Existe un botón "Iniciar Sesión"
+- [x] Existe enlace "¿Olvidaste tu contraseña?"
+- [x] Diseño limpio y profesional
 
-### CA-2: Validación de Credenciales
-- El sistema valida credenciales contra la base de datos
-- Se compara el hash de la contraseña ingresada con el almacenado
-- Si las credenciales son correctas, genera token JWT
+### CA-2: Validación de Credenciales ✅
+- [x] El sistema valida credenciales contra la base de datos
+- [x] Se compara el hash de la contraseña ingresada con el almacenado
+- [x] Si las credenciales son correctas, genera token JWT
 
-### CA-3: Login Exitoso
-- Si las credenciales son correctas, redirige al dashboard correspondiente según rol
-- Se almacena el token JWT en localStorage/sessionStorage
-- Se muestra mensaje de bienvenida con el nombre del usuario
+### CA-3: Login Exitoso ✅
+- [x] Si las credenciales son correctas, redirige al dashboard correspondiente según rol
+- [x] Se almacena el token JWT en localStorage/sessionStorage
+- [x] Se muestra mensaje de bienvenida con el nombre del usuario
 
-### CA-4: Login Fallido
-- Si las credenciales son incorrectas, muestra mensaje: "Email o contraseña incorrectos"
-- No especificar cuál campo es incorrecto (seguridad)
-- El usuario permanece en la página de login
-- Máximo 5 intentos fallidos antes de bloqueo temporal (15 minutos)
+### CA-4: Login Fallido ✅
+- [x] Si las credenciales son incorrectas, muestra mensaje: "Email o contraseña incorrectos"
+- [x] No especificar cuál campo es incorrecto (seguridad)
+- [x] El usuario permanece en la página de login
+- [x] Máximo 5 intentos fallidos antes de bloqueo temporal (15 minutos)
 
-### CA-5: Persistencia de Sesión
-- La sesión se mantiene activa hasta que el usuario cierre sesión
-- Si cierra el navegador, puede optar por mantener sesión (checkbox "Recordarme")
-- Token JWT válido por 24 horas
+### CA-5: Persistencia de Sesión ✅
+- [x] La sesión se mantiene activa hasta que el usuario cierre sesión
+- [x] Si cierra el navegador, puede optar por mantener sesión (checkbox "Recordarme")
+- [x] Token JWT válido por 24 horas (30 días con "Recordarme")
 
-### CA-6: Redirección por Rol
-- Admin → Dashboard completo
-- Gerente de Almacén → Dashboard de inventario
-- Personal de Ventas → Dashboard de ventas
+### CA-6: Redirección por Rol ✅
+- [x] Admin → Dashboard completo
+- [x] Gerente de Almacén → Dashboard de inventario
+- [x] Personal de Ventas → Dashboard de ventas
 
 ## Notas Técnicas
 - Token JWT con expiración de 24 horas
@@ -52,12 +52,12 @@
 - Rate limiting en endpoint de login (máx 10 intentos por minuto por IP)
 
 ## Definición de Hecho
-- [ ] Frontend: Página de login implementada
-- [ ] Backend: API endpoint POST /api/auth/login creado
-- [ ] Generación de JWT token implementada
-- [ ] Validación de credenciales funcional
-- [ ] Redirección por roles implementada
-- [ ] Sistema de bloqueo por intentos fallidos
+- [x] Frontend: Página de login implementada
+- [x] Backend: API endpoint POST /api/auth/login creado
+- [x] Generación de JWT token implementada
+- [x] Validación de credenciales funcional
+- [x] Redirección por roles implementada
+- [x] Sistema de bloqueo por intentos fallidos
 - [ ] Pruebas de seguridad realizadas
 - [ ] Documentación de API actualizada
 

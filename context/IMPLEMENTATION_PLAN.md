@@ -12,11 +12,11 @@
 │  PROGRESO GLOBAL DEL PROYECTO                               │
 ├─────────────────────────────────────────────────────────────┤
 │  Total Historias de Usuario:     82                         │
-│  ✅ Completadas:                   1                         │
+│  ✅ Completadas:                   2                         │
 │  ⏳ En Progreso:                   0                         │
-│  ⏸️  Pendientes:                   81                        │
+│  ⏸️  Pendientes:                   80                        │
 │                                                             │
-│  Progreso: [█░░░░░░░░░░░░░░░░░░░] 1.2% (1/82)              │
+│  Progreso: [█░░░░░░░░░░░░░░░░░░░] 2.4% (2/82)              │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -26,7 +26,7 @@
 
 | Epic | Nombre | Total US | Completadas | En Progreso | Pendientes | Progreso |
 |------|--------|----------|-------------|-------------|------------|----------|
-| 01 | Foundation | 6 | 1 | 0 | 5 | [██░░░░░░░░] 16.7% |
+| 01 | Foundation | 6 | 2 | 0 | 4 | [███░░░░░░░] 33.3% |
 | 02 | Core Data | 10 | 0 | 0 | 10 | [░░░░░░░░░░] 0% |
 | 03 | Stock Management | 10 | 0 | 0 | 10 | [░░░░░░░░░░] 0% |
 | 04 | Sales | 26 | 0 | 0 | 26 | [░░░░░░░░░░] 0% |
@@ -51,7 +51,7 @@
 ## Epic 01: Foundation - Autenticación y Configuración Base
 
 **Prioridad:** ⭐⭐⭐ ALTA
-**Progreso:** [██░░░░░░░░] 16.7% (1/6)
+**Progreso:** [███░░░░░░░] 33.3% (2/6)
 **Carpeta:** `context/user_stories/epic_01_foundation/`
 
 ### ✅ Historias de Usuario
@@ -64,12 +64,13 @@
 - **Criterios de Aceptación:** 6 ✅
 - **Fecha de completación:** 2025-10-28
 
-#### [ ] US-AUTH-002: Inicio de Sesión
+#### [x] US-AUTH-002: Inicio de Sesión
 - **Archivo:** `context/user_stories/epic_01_foundation/US-AUTH-002_user_login.md`
 - **Prioridad:** ALTA
-- **Estimación:** 5 pts
-- **Estado:** ⏸️ Pendiente
-- **Criterios de Aceptación:** 5
+- **Estimación:** 3 pts
+- **Estado:** ✅ Completada
+- **Criterios de Aceptación:** 6 ✅
+- **Fecha de completación:** 2025-10-28
 
 #### [ ] US-AUTH-003: Cierre de Sesión
 - **Archivo:** `context/user_stories/epic_01_foundation/US-AUTH-003_user_logout.md`

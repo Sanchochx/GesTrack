@@ -117,10 +117,18 @@ def login():
                 }
             }), 400
 
+        # Obtener IP del cliente para control de intentos (CA-4)
+        ip_address = request.remote_addr
+
+        # Obtener remember_me (CA-5)
+        remember_me = data.get('remember_me', False)
+
         # Autenticar usuario
         user, token = AuthService.login_user(
             email=data['email'],
-            password=data['password']
+            password=data['password'],
+            ip_address=ip_address,
+            remember_me=remember_me
         )
 
         return jsonify({

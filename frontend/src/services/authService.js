@@ -31,13 +31,19 @@ const authService = {
 
   /**
    * Inicia sesión de un usuario
+   * US-AUTH-002 - CA-5: Session persistence
    * @param {string} email - Email del usuario
    * @param {string} password - Contraseña
+   * @param {boolean} rememberMe - Si mantener sesión por 30 días (default: false = 24 horas)
    * @returns {Promise} - Promesa con la respuesta del servidor
    */
-  async login(email, password) {
+  async login(email, password, rememberMe = false) {
     try {
-      const response = await api.post('/auth/login', { email, password });
+      const response = await api.post('/auth/login', {
+        email,
+        password,
+        remember_me: rememberMe
+      });
 
       if (response.data.success && response.data.data.token) {
         localStorage.setItem('token', response.data.data.token);
