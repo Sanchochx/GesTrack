@@ -33,6 +33,10 @@ class Config:
     DEFAULT_PAGE_SIZE = 20
     MAX_PAGE_SIZE = 100
 
+    # File Upload (CA-5)
+    UPLOAD_FOLDER = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'uploads')
+    MAX_CONTENT_LENGTH = 5 * 1024 * 1024  # 5MB
+
 
 class DevelopmentConfig(Config):
     """Configuración para desarrollo"""

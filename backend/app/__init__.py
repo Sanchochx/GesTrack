@@ -37,9 +37,11 @@ def create_app(config_name=None):
     # Registrar blueprints
     from app.routes.auth import auth_bp
     from app.routes.categories import categories_bp
+    from app.routes.products import products_bp
 
     app.register_blueprint(auth_bp, url_prefix='/api/auth')
     app.register_blueprint(categories_bp)
+    app.register_blueprint(products_bp)
 
     # Manejador de errores global
     @app.errorhandler(404)
