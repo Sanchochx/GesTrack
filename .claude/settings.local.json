@@ -17,7 +17,12 @@
       "Bash(npm run lint)",
       "Bash(taskkill:*)",
       "Bash(flask db migrate:*)",
-      "Bash(flask db upgrade:*)"
+      "Bash(flask db upgrade:*)",
+      "Bash(python seed_categories.py:*)",
+      "Bash(git clean:*)",
+      "Bash(git checkout:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)"
     ],
     "deny": [],
     "ask": []
