@@ -75,16 +75,16 @@ El formulario incluye los siguientes campos:
 - Trigger automático para crear registro de movimiento de inventario
 
 ## Definición de Hecho
-- [ ] Frontend: Formulario de creación implementado
-- [ ] Frontend: Validaciones en tiempo real
-- [ ] Frontend: Preview de imagen funcional
-- [ ] Backend: API POST /api/products implementado
-- [ ] Backend: Validación de SKU único
-- [ ] Backend: Validación de todos los campos
-- [ ] Base de datos: Tabla products creada
-- [ ] Optimización y almacenamiento de imágenes
-- [ ] Registro automático en historial de inventario
-- [ ] Cálculo de margen de ganancia
+- [x] Frontend: Formulario de creación implementado
+- [x] Frontend: Validaciones en tiempo real
+- [x] Frontend: Preview de imagen funcional
+- [x] Backend: API POST /api/products implementado
+- [x] Backend: Validación de SKU único
+- [x] Backend: Validación de todos los campos
+- [x] Base de datos: Tabla products creada
+- [x] Optimización y almacenamiento de imágenes
+- [x] Registro automático en historial de inventario
+- [x] Cálculo de margen de ganancia
 - [ ] Pruebas unitarias y de integración
 - [ ] Documentación de API
 

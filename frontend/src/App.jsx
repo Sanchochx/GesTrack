@@ -28,6 +28,8 @@ import AdminDashboard from './pages/Dashboard/AdminDashboard';
 import WarehouseDashboard from './pages/Dashboard/WarehouseDashboard';
 import SalesDashboard from './pages/Dashboard/SalesDashboard';
 import Forbidden from './pages/Errors/Forbidden';
+import ProductList from './pages/Products/ProductList';
+import CreateProduct from './pages/Products/CreateProduct';
 import ProtectedRoute from './components/common/ProtectedRoute';
 import authService from './services/authService';
 
@@ -286,6 +288,24 @@ function App() {
                 element={
                   <ProtectedRoute allowedRoles={['Personal de Ventas']}>
                     <SalesDashboard />
+                  </ProtectedRoute>
+                }
+              />
+
+              {/* US-PROD-001: Product Management Routes */}
+              <Route
+                path="/products"
+                element={
+                  <ProtectedRoute allowedRoles={['Admin', 'Gerente de Almacén']}>
+                    <ProductList />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/products/new"
+                element={
+                  <ProtectedRoute allowedRoles={['Admin', 'Gerente de Almacén']}>
+                    <CreateProduct />
                   </ProtectedRoute>
                 }
               />
