@@ -242,24 +242,43 @@ def validate_sku(sku):
 def get_products():
     """
     GET /api/products
-    Listar todos los productos con filtros y búsqueda
+    US-PROD-002: Listar productos con paginación, ordenamiento y estadísticas
+
+    Criterios de Aceptación implementados:
+    - CA-1: Estructura de tabla con todas las columnas
+    - CA-2: Paginación del lado del servidor
+    - CA-3: Indicadores de stock bajo
+    - CA-4: Ordenamiento por múltiples columnas
+    - CA-6: Contador total y estadísticas
 
     Query params:
-        - search: Buscar por nombre o SKU
-        - category_id: Filtrar por categoría
-        - min_stock: Filtrar productos con stock bajo
-        - sort_by: Campo para ordenar (name, sku, created_at)
-        - order: Orden (asc, desc)
+        - page: Número de página (default: 1)
+        - limit: Productos por página (default: 20, opciones: 10, 20, 50, 100)
+        - sort: Campo para ordenar (name, sku, category, sale_price, stock_quantity)
+        - order: Orden (asc, desc) - default: asc
+        - search: Buscar por nombre o SKU (opcional)
+        - category_id: Filtrar por categoría (opcional)
+        - low_stock_only: Filtrar solo productos con stock bajo (opcional)
     """
     try:
-        # Parámetros de consulta
+        # CA-2: Parámetros de paginación
+        page = request.args.get('page', 1, type=int)
+        limit = request.args.get('limit', 20, type=int)
+
+        # Validar límite (solo permitir valores específicos)
+        if limit not in [10, 20, 50, 100]:
+            limit = 20
+
+        # CA-4: Parámetros de ordenamiento
+        sort_field = request.args.get('sort', 'name')  # Default: Nombre A-Z
+        order = request.args.get('order', 'asc')
+
+        # Filtros opcionales
         search = request.args.get('search', '').strip()
         category_id = request.args.get('category_id')
-        min_stock = request.args.get('min_stock', type=bool, default=False)
-        sort_by = request.args.get('sort_by', 'created_at')
-        order = request.args.get('order', 'desc')
+        low_stock_only = request.args.get('low_stock_only', 'false').lower() == 'true'
 
-        # Query base
+        # Query base - productos activos
         query = Product.query.filter(Product.is_active == True)
 
         # Aplicar búsqueda
@@ -275,26 +294,56 @@ def get_products():
         if category_id:
             query = query.filter(Product.category_id == category_id)
 
-        # Filtrar productos con stock bajo
-        if min_stock:
+        # CA-3: Filtrar productos con stock bajo
+        if low_stock_only:
             query = query.filter(Product.stock_quantity <= Product.min_stock_level)
 
-        # Ordenamiento
-        if sort_by == 'name':
+        # CA-6: Calcular estadísticas ANTES de aplicar paginación
+        total_products = query.count()
+
+        # Estadísticas de stock
+        all_products = query.all()
+        stats = {
+            'total': total_products,
+            'normal_stock': sum(1 for p in all_products if p.stock_quantity > p.min_stock_level),
+            'low_stock': sum(1 for p in all_products if 0 < p.stock_quantity <= p.min_stock_level),
+            'out_of_stock': sum(1 for p in all_products if p.stock_quantity == 0)
+        }
+
+        # CA-4: Aplicar ordenamiento
+        # Join con Category para poder ordenar por nombre de categoría
+        query = query.outerjoin(Category)
+
+        if sort_field == 'name':
             query = query.order_by(Product.name.desc() if order == 'desc' else Product.name.asc())
-        elif sort_by == 'sku':
+        elif sort_field == 'sku':
             query = query.order_by(Product.sku.desc() if order == 'desc' else Product.sku.asc())
-        else:  # created_at
-            query = query.order_by(Product.created_at.desc() if order == 'desc' else Product.created_at.asc())
+        elif sort_field == 'category':
+            query = query.order_by(Category.name.desc() if order == 'desc' else Category.name.asc())
+        elif sort_field == 'sale_price':
+            query = query.order_by(Product.sale_price.desc() if order == 'desc' else Product.sale_price.asc())
+        elif sort_field == 'stock_quantity':
+            query = query.order_by(Product.stock_quantity.desc() if order == 'desc' else Product.stock_quantity.asc())
+        else:
+            # Default: ordenar por nombre
+            query = query.order_by(Product.name.asc())
 
-        # Ejecutar query
-        products = query.all()
+        # CA-2: Aplicar paginación
+        pagination = query.paginate(
+            page=page,
+            per_page=limit,
+            error_out=False
+        )
 
-        # Convertir a diccionarios con información adicional
+        # CA-1 & CA-3: Convertir productos a diccionarios con info completa
         products_data = []
-        for product in products:
+        for product in pagination.items:
             product_dict = product.to_dict()
+
+            # CA-4: Margen de ganancia
             product_dict['profit_margin'] = product.calculate_profit_margin()
+
+            # CA-1: Información de categoría
             if product.category:
                 product_dict['category'] = {
                     'id': product.category.id,
@@ -302,12 +351,33 @@ def get_products():
                     'color': product.category.color,
                     'icon': product.category.icon
                 }
+            else:
+                product_dict['category'] = None
+
+            # CA-3: Indicadores de stock bajo
+            product_dict['stock_status'] = {
+                'is_low_stock': product.stock_quantity <= product.min_stock_level and product.stock_quantity > 0,
+                'is_out_of_stock': product.stock_quantity == 0,
+                'reorder_units': max(0, product.min_stock_level - product.stock_quantity) if product.stock_quantity <= product.min_stock_level else 0
+            }
+
             products_data.append(product_dict)
 
+        # CA-2 & CA-6: Respuesta con paginación y estadísticas
         return jsonify({
             'success': True,
             'data': products_data,
-            'total': len(products_data)
+            'pagination': {
+                'page': pagination.page,
+                'per_page': pagination.per_page,
+                'total': pagination.total,
+                'pages': pagination.pages,
+                'has_prev': pagination.has_prev,
+                'has_next': pagination.has_next,
+                'prev_page': pagination.prev_num if pagination.has_prev else None,
+                'next_page': pagination.next_num if pagination.has_next else None
+            },
+            'statistics': stats
         }), 200
 
     except Exception as e:

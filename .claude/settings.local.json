@@ -22,7 +22,9 @@
       "Bash(git clean:*)",
       "Bash(git checkout:*)",
       "Bash(git add:*)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Bash(ls:*)",
+      "Read(//c/Users/santi/OneDrive/Documents/devv/**)"
     ],
     "deny": [],
     "ask": []
