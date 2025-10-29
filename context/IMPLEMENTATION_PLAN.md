@@ -13,8 +13,8 @@
 ├─────────────────────────────────────────────────────────────┤
 │  Total Historias de Usuario:     82                         │
 │  ✅ Completadas:                   6                         │
-│  ⏳ En Progreso:                   0                         │
-│  ⏸️  Pendientes:                   76                        │
+│  ⏳ En Progreso:                   1                         │
+│  ⏸️  Pendientes:                   75                        │
 │                                                             │
 │  Progreso: [█░░░░░░░░░░░░░░░░░░░] 7.3% (6/82)              │
 └─────────────────────────────────────────────────────────────┘
@@ -27,7 +27,7 @@
 | Epic | Nombre | Total US | Completadas | En Progreso | Pendientes | Progreso |
 |------|--------|----------|-------------|-------------|------------|----------|
 | 01 | Foundation | 6 | 6 | 0 | 0 | [██████████] 100% |
-| 02 | Core Data | 10 | 0 | 0 | 10 | [░░░░░░░░░░] 0% |
+| 02 | Core Data | 10 | 0 | 1 | 9 | [█░░░░░░░░░] 10% |
 | 03 | Stock Management | 10 | 0 | 0 | 10 | [░░░░░░░░░░] 0% |
 | 04 | Sales | 26 | 0 | 0 | 26 | [░░░░░░░░░░] 0% |
 | 05 | Supply Chain | 15 | 0 | 0 | 15 | [░░░░░░░░░░] 0% |
@@ -44,7 +44,7 @@
 **Objetivo:** Establecer base funcional del sistema
 **Épicas:** 01 Foundation, 02 Core Data
 **Total US:** 16
-**Progreso:** [███░░░░░░░] 37.5% (6/16)
+**Progreso:** [███░░░░░░░] 37.5% (6/16 completadas + 1 en progreso)
 
 ---
 
@@ -111,17 +111,31 @@
 ## Epic 02: Core Data - Gestión de Productos y Categorías
 
 **Prioridad:** ⭐⭐⭐ ALTA
-**Progreso:** [░░░░░░░░░░] 0% (0/10)
+**Progreso:** [█░░░░░░░░░] 10% (0/10 completadas, 1 en progreso)
 **Carpeta:** `context/user_stories/epic_02_core_data/`
 
 ### ✅ Historias de Usuario
 
-#### [ ] US-PROD-001: Crear Producto
+#### [~] US-PROD-001: Crear Producto
 - **Archivo:** `context/user_stories/epic_02_core_data/US-PROD-001_create_product.md`
 - **Prioridad:** ALTA
-- **Estimación:** 5 pts
-- **Estado:** ⏸️ Pendiente
+- **Estimación:** 8 pts (actualizado de 5 pts por complejidad)
+- **Estado:** ⏳ EN PROGRESO
 - **Criterios de Aceptación:** 8
+- **Progreso Backend:** ✅ 100% - Todos los CA implementados
+  - CA-1: Schema con validaciones ✅
+  - CA-2: Validación SKU único ✅
+  - CA-3: Validación de precios ✅
+  - CA-4: Cálculo de margen ✅
+  - CA-5: Sistema de imágenes ✅
+  - CA-6: InventoryMovement model ✅
+  - CA-7 & CA-8: API endpoints + error handling ✅
+- **Progreso Frontend:** ⏳ 0% - Pendiente
+  - ProductForm component
+  - Validación en tiempo real
+  - Vista de detalles
+  - Navegación
+- **Última actualización:** 2025-10-29
 
 #### [ ] US-PROD-002: Listar Productos
 - **Archivo:** `context/user_stories/epic_02_core_data/US-PROD-002_listar_productos.md`
