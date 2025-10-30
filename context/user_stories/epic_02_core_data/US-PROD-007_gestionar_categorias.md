@@ -13,7 +13,7 @@
 
 ## Criterios de Aceptación
 
-### CA-1: Vista de Lista de Categorías
+### CA-1: Vista de Lista de Categorías ✅
 Página dedicada a gestión de categorías que muestra:
 - Tabla con columnas:
   - **Nombre**: Nombre de la categoría
@@ -24,7 +24,7 @@ Página dedicada a gestión de categorías que muestra:
 - Ordenamiento alfabético por nombre por defecto
 - Búsqueda simple por nombre de categoría
 
-### CA-2: Crear Nueva Categoría
+### CA-2: Crear Nueva Categoría ✅
 Modal o formulario para crear categoría:
 - Campos:
   - **Nombre**: Campo de texto (requerido, max 100 caracteres, único)
@@ -38,7 +38,7 @@ Modal o formulario para crear categoría:
   - "Crear" (primario)
   - "Cancelar" (secundario)
 
-### CA-3: Editar Categoría
+### CA-3: Editar Categoría ✅
 Modal o formulario precargado con datos actuales:
 - Permite modificar nombre, descripción, color e icono
 - Validación de nombre único (excepto el actual)
@@ -46,7 +46,7 @@ Modal o formulario precargado con datos actuales:
 - Confirmación antes de guardar si hay muchos productos asociados
 - Mensaje: "✓ Categoría actualizada correctamente"
 
-### CA-4: Validación para Eliminar Categoría
+### CA-4: Validación para Eliminar Categoría ✅
 Antes de eliminar una categoría:
 - Verificar si tiene productos asignados
 - Si tiene productos:
@@ -58,14 +58,14 @@ Antes de eliminar una categoría:
   - Solicitar confirmación: "¿Estás seguro de eliminar esta categoría?"
   - Permitir eliminación
 
-### CA-5: Categorías en Selectores
+### CA-5: Categorías en Selectores ✅
 Las categorías aparecen en selectores al crear/editar productos:
 - Ordenadas alfabéticamente
 - Muestra nombre y opcionalmente color/icono
 - Formato: "Categoría (X productos)"
 - Opción de "Crear nueva categoría" desde el selector (opcional)
 
-### CA-6: Contador de Productos por Categoría
+### CA-6: Contador de Productos por Categoría ✅
 En la lista de categorías:
 - Muestra cantidad de productos asignados
 - Formato: "15 productos" o "1 producto"
@@ -73,13 +73,13 @@ En la lista de categorías:
 - El número es clickeable y filtra productos de esa categoría
 - Se actualiza automáticamente al crear/eliminar productos
 
-### CA-7: Categoría por Defecto
+### CA-7: Categoría por Defecto ✅
 - Existe una categoría "Sin Categoría" o "General" por defecto
 - Esta categoría no se puede eliminar
 - Se asigna automáticamente si no se selecciona categoría al crear producto
 - Permite tener productos sin categorización específica
 
-### CA-8: Visualización con Color e Icono
+### CA-8: Visualización con Color e Icono ✅
 - Cada categoría puede tener color asociado:
   - Usado en badges, chips, cards
   - Mejora identificación visual
@@ -87,7 +87,7 @@ En la lista de categorías:
   - Biblioteca de iconos predefinidos
   - Se muestra junto al nombre en lista de productos
 
-### CA-9: Búsqueda y Filtrado de Categorías
+### CA-9: Búsqueda y Filtrado de Categorías ✅
 - Campo de búsqueda para filtrar categorías por nombre
 - Filtro por cantidad de productos:
   - Todas
@@ -120,21 +120,21 @@ Para categorías con productos:
 - Considerar jerarquía de categorías (subcategorías) en futuro
 
 ## Definición de Hecho
-- [ ] Frontend: Página de gestión de categorías
-- [ ] Frontend: Lista de categorías con búsqueda y ordenamiento
-- [ ] Frontend: Modal/formulario de crear categoría
-- [ ] Frontend: Modal/formulario de editar categoría
-- [ ] Frontend: Validación para eliminar con productos
-- [ ] Frontend: Contador de productos por categoría
-- [ ] Frontend: Selector de color e icono
-- [ ] Frontend: Categorías en selectores de productos
-- [ ] Backend: API completa de CRUD categorías
-- [ ] Backend: Validación de unicidad de nombre
-- [ ] Backend: Restricción de eliminación con productos
-- [ ] Backend: Contador de productos por categoría
-- [ ] Base de datos: Tabla categories creada
-- [ ] Base de datos: Categoría por defecto en seeds
-- [ ] Relación Foreign Key con productos
+- [x] Frontend: Página de gestión de categorías
+- [x] Frontend: Lista de categorías con búsqueda y ordenamiento
+- [x] Frontend: Modal/formulario de crear categoría
+- [x] Frontend: Modal/formulario de editar categoría
+- [x] Frontend: Validación para eliminar con productos
+- [x] Frontend: Contador de productos por categoría
+- [x] Frontend: Selector de color e icono
+- [x] Frontend: Categorías en selectores de productos
+- [x] Backend: API completa de CRUD categorías
+- [x] Backend: Validación de unicidad de nombre
+- [x] Backend: Restricción de eliminación con productos
+- [x] Backend: Contador de productos por categoría
+- [x] Base de datos: Tabla categories creada
+- [x] Base de datos: Categoría por defecto en seeds
+- [x] Relación Foreign Key con productos
 - [ ] Pruebas unitarias y de integración
 - [ ] Documentación de API
 

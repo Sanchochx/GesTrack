@@ -12,11 +12,11 @@
 │  PROGRESO GLOBAL DEL PROYECTO                               │
 ├─────────────────────────────────────────────────────────────┤
 │  Total Historias de Usuario:     82                         │
-│  ✅ Completadas:                   7                         │
+│  ✅ Completadas:                   8                         │
 │  ⏳ En Progreso:                   0                         │
-│  ⏸️  Pendientes:                   75                        │
+│  ⏸️  Pendientes:                   74                        │
 │                                                             │
-│  Progreso: [█░░░░░░░░░░░░░░░░░░░] 8.5% (7/82)              │
+│  Progreso: [█░░░░░░░░░░░░░░░░░░░] 9.8% (8/82)              │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -27,7 +27,7 @@
 | Epic | Nombre | Total US | Completadas | En Progreso | Pendientes | Progreso |
 |------|--------|----------|-------------|-------------|------------|----------|
 | 01 | Foundation | 6 | 6 | 0 | 0 | [██████████] 100% |
-| 02 | Core Data | 10 | 1 | 0 | 9 | [█░░░░░░░░░] 10% |
+| 02 | Core Data | 10 | 2 | 0 | 8 | [██░░░░░░░░] 20% |
 | 03 | Stock Management | 10 | 0 | 0 | 10 | [░░░░░░░░░░] 0% |
 | 04 | Sales | 26 | 0 | 0 | 26 | [░░░░░░░░░░] 0% |
 | 05 | Supply Chain | 15 | 0 | 0 | 15 | [░░░░░░░░░░] 0% |
@@ -44,7 +44,7 @@
 **Objetivo:** Establecer base funcional del sistema
 **Épicas:** 01 Foundation, 02 Core Data
 **Total US:** 16
-**Progreso:** [████░░░░░░] 43.75% (7/16 completadas)
+**Progreso:** [█████░░░░░] 50% (8/16 completadas)
 
 ---
 
@@ -111,7 +111,7 @@
 ## Epic 02: Core Data - Gestión de Productos y Categorías
 
 **Prioridad:** ⭐⭐⭐ ALTA
-**Progreso:** [█░░░░░░░░░] 10% (1/10 completadas)
+**Progreso:** [██░░░░░░░░] 20% (2/10 completadas)
 **Carpeta:** `context/user_stories/epic_02_core_data/`
 
 ### ✅ Historias de Usuario
@@ -175,12 +175,27 @@
 - **Estado:** ⏸️ Pendiente
 - **Criterios de Aceptación:** 5
 
-#### [ ] US-PROD-007: Gestionar Categorías de Productos
+#### [x] US-PROD-007: Gestionar Categorías de Productos
 - **Archivo:** `context/user_stories/epic_02_core_data/US-PROD-007_gestionar_categorias.md`
 - **Prioridad:** ALTA
 - **Estimación:** 5 pts
-- **Estado:** ⏸️ Pendiente
-- **Criterios de Aceptación:** 7
+- **Estado:** ✅ COMPLETADA
+- **Criterios de Aceptación:** 9 ✅ (CA-10 opcional no implementado)
+- **Progreso Backend:** ✅ 100% - API completa
+  - CA-1 a CA-9: Todos los endpoints implementados ✅
+  - Validación de unicidad de nombre ✅
+  - Restricción de eliminación con productos ✅
+  - Contador de productos por categoría ✅
+  - Categoría por defecto protegida ✅
+- **Progreso Frontend:** ✅ 100% - Completado
+  - categoryService.js con todos los métodos CRUD ✅
+  - Categories.jsx página principal con tabla y estadísticas ✅
+  - CategoryDialog.jsx para crear/editar con color e icono ✅
+  - DeleteCategoryDialog.jsx con validaciones ✅
+  - Búsqueda y filtrado de categorías ✅
+  - Ruta /categories protegida por rol ✅
+  - Navegación en AppBar ✅
+- **Fecha de completación:** 2025-10-29
 
 #### [ ] US-PROD-008: Alertas de Stock Bajo
 - **Archivo:** `context/user_stories/epic_02_core_data/US-PROD-008_alertas_stock_bajo.md`

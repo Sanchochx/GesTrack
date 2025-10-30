@@ -13,7 +13,7 @@
 
 ## Criterios de Aceptación
 
-### CA-1: Estructura de la Tabla
+### CA-1: Estructura de la Tabla ✅
 La tabla muestra las siguientes columnas:
 - **Imagen**: Thumbnail del producto (100x100px)
 - **Nombre**: Nombre completo del producto
@@ -23,14 +23,14 @@ La tabla muestra las siguientes columnas:
 - **Stock Actual**: Cantidad disponible con indicador visual
 - **Acciones**: Botones para ver, editar, eliminar
 
-### CA-2: Paginación
+### CA-2: Paginación ✅
 - La lista muestra 20 productos por página
 - Controles de navegación: Primera, Anterior, Siguiente, Última
 - Muestra información: "Mostrando X-Y de Z productos"
 - Se mantiene la página actual al realizar acciones
 - Selector para cambiar cantidad de items por página (10, 20, 50, 100)
 
-### CA-3: Indicador de Stock Bajo
+### CA-3: Indicador de Stock Bajo ✅
 - Productos con stock ≤ punto de reorden se marcan con:
   - Icono de alerta (⚠️) en color naranja/rojo
   - Clase CSS diferente para resaltar la fila
@@ -39,7 +39,7 @@ La tabla muestra las siguientes columnas:
   - Marcador "SIN STOCK" en rojo
   - Fila con fondo tenue rojo
 
-### CA-4: Ordenamiento
+### CA-4: Ordenamiento ✅
 Se puede ordenar la tabla por:
 - **Nombre**: Alfabético A-Z / Z-A
 - **SKU**: Alfabético A-Z / Z-A
@@ -49,13 +49,13 @@ Se puede ordenar la tabla por:
 - Indicador visual de columna ordenada (flecha ↑↓)
 - Orden por defecto: Nombre A-Z
 
-### CA-5: Botón de Nuevo Producto
+### CA-5: Botón de Nuevo Producto ✅
 - Botón visible en la parte superior derecha: "+ Nuevo Producto"
 - Color destacado (primario)
 - Redirige al formulario de creación de producto
 - Solo visible para usuarios con permisos de creación
 
-### CA-6: Contador Total
+### CA-6: Contador Total ✅
 - Se muestra el total de productos registrados: "Total: X productos"
 - Se actualiza según filtros aplicados: "X de Y productos"
 - Estadísticas adicionales:
@@ -63,15 +63,15 @@ Se puede ordenar la tabla por:
   - Productos con stock bajo
   - Productos sin stock
 
-### CA-7: Acciones Rápidas
+### CA-7: Acciones Rápidas ✅
 - **Ver**: Icono de ojo, abre vista de detalles
 - **Editar**: Icono de lápiz, abre formulario de edición
 - **Eliminar**: Icono de papelera, solicita confirmación
 - Tooltips en cada icono
 - Los iconos se deshabilitan según permisos del usuario
 
-### CA-8: Vista Responsive
-- En móviles, la tabla se adapta a cards
+### CA-8: Vista Responsive ⚠️
+- En móviles, la tabla se adapta a cards (Pendiente - básico implementado)
 - Cada card muestra: imagen, nombre, SKU, precio, stock
 - Acciones disponibles en menú desplegable (⋮)
 
@@ -84,17 +84,17 @@ Se puede ordenar la tabla por:
 - Optimización: No cargar imágenes en alta resolución, solo thumbnails
 
 ## Definición de Hecho
-- [ ] Frontend: Componente de tabla de productos implementado
-- [ ] Frontend: Paginación funcional
-- [ ] Frontend: Ordenamiento por columnas
-- [ ] Frontend: Indicadores visuales de stock bajo
-- [ ] Frontend: Botón de nuevo producto con permisos
-- [ ] Frontend: Acciones rápidas (ver, editar, eliminar)
-- [ ] Frontend: Vista responsive (cards en móvil)
-- [ ] Backend: API GET /api/products con paginación
-- [ ] Backend: Soporte para ordenamiento
-- [ ] Backend: Cálculo de contadores y estadísticas
-- [ ] Lazy loading de imágenes
+- [x] Frontend: Componente de tabla de productos implementado
+- [x] Frontend: Paginación funcional
+- [x] Frontend: Ordenamiento por columnas
+- [x] Frontend: Indicadores visuales de stock bajo
+- [x] Frontend: Botón de nuevo producto con permisos
+- [x] Frontend: Acciones rápidas (ver, editar, eliminar)
+- [ ] Frontend: Vista responsive (cards en móvil) - Básico implementado
+- [x] Backend: API GET /api/products con paginación
+- [x] Backend: Soporte para ordenamiento
+- [x] Backend: Cálculo de contadores y estadísticas
+- [ ] Lazy loading de imágenes - Básico implementado
 - [ ] Pruebas unitarias y de integración
 - [ ] Documentación de API
 

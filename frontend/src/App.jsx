@@ -30,6 +30,7 @@ import SalesDashboard from './pages/Dashboard/SalesDashboard';
 import Forbidden from './pages/Errors/Forbidden';
 import ProductList from './pages/Products/ProductList';
 import CreateProduct from './pages/Products/CreateProduct';
+import Categories from './pages/Categories/Categories';
 import ProtectedRoute from './components/common/ProtectedRoute';
 import authService from './services/authService';
 
@@ -158,6 +159,18 @@ function Navigation() {
               <Button color="inherit" href="/users">
                 Usuarios
               </Button>
+            )}
+
+            {/* US-PROD: Product and Category Management Navigation */}
+            {(currentUser?.role === 'Admin' || currentUser?.role === 'Gerente de Almacén') && (
+              <>
+                <Button color="inherit" href="/products">
+                  Productos
+                </Button>
+                <Button color="inherit" href="/categories">
+                  Categorías
+                </Button>
+              </>
             )}
 
             {/* US-AUTH-004: CA-1 - Menú de usuario con dropdown */}
@@ -306,6 +319,16 @@ function App() {
                 element={
                   <ProtectedRoute allowedRoles={['Admin', 'Gerente de Almacén']}>
                     <CreateProduct />
+                  </ProtectedRoute>
+                }
+              />
+
+              {/* US-PROD-007: Category Management Routes */}
+              <Route
+                path="/categories"
+                element={
+                  <ProtectedRoute allowedRoles={['Admin', 'Gerente de Almacén']}>
+                    <Categories />
                   </ProtectedRoute>
                 }
               />
