@@ -20,6 +20,8 @@ import {
   DialogActions,
   Button,
   DialogContentText,
+  useMediaQuery,
+  useTheme,
 } from '@mui/material';
 import {
   Visibility as VisibilityIcon,
@@ -29,6 +31,7 @@ import {
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import StockBadge from './StockBadge';
+import ProductCardView from './ProductCardView';
 import productService from '../../services/productService';
 
 /**
@@ -41,6 +44,7 @@ import productService from '../../services/productService';
  * - CA-3: Stock indicators
  * - CA-4: Column sorting
  * - CA-7: Quick actions (view, edit, delete)
+ * - CA-8: Responsive view (cards on mobile)
  */
 const ProductTable = ({
   products = [],
@@ -55,6 +59,9 @@ const ProductTable = ({
   onProductDeleted,
 }) => {
   const navigate = useNavigate();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md')); // < 960px
+
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [productToDelete, setProductToDelete] = useState(null);
   const [deleting, setDeleting] = useState(false);
@@ -177,45 +184,74 @@ const ProductTable = ({
 
   return (
     <>
-      <TableContainer component={Paper}>
-        <Table>
-          <TableHead>
-            <TableRow>
-              {columns.map((column) => (
-                <TableCell
-                  key={column.id}
-                  align={column.align || 'left'}
-                  style={{ width: column.width, fontWeight: 'bold' }}
-                >
-                  {column.sortable ? (
-                    <TableSortLabel
-                      active={sortField === column.id}
-                      direction={sortField === column.id ? sortOrder : 'asc'}
-                      onClick={() => handleSortClick(column.id)}
-                    >
-                      {column.label}
-                    </TableSortLabel>
-                  ) : (
-                    column.label
-                  )}
-                </TableCell>
-              ))}
-            </TableRow>
-          </TableHead>
-
-          <TableBody>
-            {products.length === 0 ? (
+      {/* CA-8: Responsive view - Show cards on mobile, table on desktop */}
+      {isMobile ? (
+        <Box>
+          <ProductCardView
+            products={products}
+            onView={handleView}
+            onEdit={handleEdit}
+            onDelete={handleDeleteRequest}
+          />
+          {/* Pagination for mobile */}
+          {products.length > 0 && (
+            <Box component={Paper} sx={{ mt: 2 }}>
+              <TablePagination
+                component="div"
+                count={totalProducts}
+                page={page - 1}
+                onPageChange={handleChangePage}
+                rowsPerPage={itemsPerPage}
+                onRowsPerPageChange={handleChangeRowsPerPage}
+                rowsPerPageOptions={[10, 20, 50, 100]}
+                labelRowsPerPage="Por página:"
+                labelDisplayedRows={({ from, to, count }) =>
+                  `${from}-${to} de ${count !== -1 ? count : `más de ${to}`}`
+                }
+              />
+            </Box>
+          )}
+        </Box>
+      ) : (
+        <TableContainer component={Paper}>
+          <Table>
+            <TableHead>
               <TableRow>
-                <TableCell colSpan={columns.length} align="center">
-                  <Box sx={{ py: 4 }}>
-                    <Typography variant="body1" color="text.secondary">
-                      No se encontraron productos
-                    </Typography>
-                  </Box>
-                </TableCell>
+                {columns.map((column) => (
+                  <TableCell
+                    key={column.id}
+                    align={column.align || 'left'}
+                    style={{ width: column.width, fontWeight: 'bold' }}
+                  >
+                    {column.sortable ? (
+                      <TableSortLabel
+                        active={sortField === column.id}
+                        direction={sortField === column.id ? sortOrder : 'asc'}
+                        onClick={() => handleSortClick(column.id)}
+                      >
+                        {column.label}
+                      </TableSortLabel>
+                    ) : (
+                      column.label
+                    )}
+                  </TableCell>
+                ))}
               </TableRow>
-            ) : (
-              products.map((product) => {
+            </TableHead>
+
+            <TableBody>
+              {products.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={columns.length} align="center">
+                    <Box sx={{ py: 4 }}>
+                      <Typography variant="body1" color="text.secondary">
+                        No se encontraron productos
+                      </Typography>
+                    </Box>
+                  </TableCell>
+                </TableRow>
+              ) : (
+                products.map((product) => {
                 const isLowStock = product.stock_quantity <= product.min_stock_level;
                 const isOutOfStock = product.stock_quantity === 0;
 
@@ -238,13 +274,14 @@ const ProductTable = ({
                       },
                     }}
                   >
-                    {/* Image */}
+                    {/* Image with lazy loading */}
                     <TableCell>
                       <Avatar
                         src={product.image_url}
                         alt={product.name}
                         variant="rounded"
                         sx={{ width: 80, height: 80 }}
+                        imgProps={{ loading: 'lazy' }}
                       >
                         {product.name.charAt(0)}
                       </Avatar>
@@ -333,28 +370,29 @@ const ProductTable = ({
                     </TableCell>
                   </TableRow>
                 );
-              })
-            )}
-          </TableBody>
-        </Table>
+                })
+              )}
+            </TableBody>
+          </Table>
 
-        {/* Pagination */}
-        {products.length > 0 && (
-          <TablePagination
-            component="div"
-            count={totalProducts}
-            page={page - 1} // MUI uses 0-based, convert from 1-based
-            onPageChange={handleChangePage}
-            rowsPerPage={itemsPerPage}
-            onRowsPerPageChange={handleChangeRowsPerPage}
-            rowsPerPageOptions={[10, 20, 50, 100]}
-            labelRowsPerPage="Productos por página:"
-            labelDisplayedRows={({ from, to, count }) =>
-              `${from}-${to} de ${count !== -1 ? count : `más de ${to}`}`
-            }
-          />
-        )}
-      </TableContainer>
+          {/* Pagination */}
+          {products.length > 0 && (
+            <TablePagination
+              component="div"
+              count={totalProducts}
+              page={page - 1} // MUI uses 0-based, convert from 1-based
+              onPageChange={handleChangePage}
+              rowsPerPage={itemsPerPage}
+              onRowsPerPageChange={handleChangeRowsPerPage}
+              rowsPerPageOptions={[10, 20, 50, 100]}
+              labelRowsPerPage="Productos por página:"
+              labelDisplayedRows={({ from, to, count }) =>
+                `${from}-${to} de ${count !== -1 ? count : `más de ${to}`}`
+              }
+            />
+          )}
+        </TableContainer>
+      )}
 
       {/* Delete Confirmation Dialog */}
       <Dialog

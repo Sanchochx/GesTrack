@@ -12,11 +12,11 @@
 │  PROGRESO GLOBAL DEL PROYECTO                               │
 ├─────────────────────────────────────────────────────────────┤
 │  Total Historias de Usuario:     82                         │
-│  ✅ Completadas:                   8                         │
+│  ✅ Completadas:                   9                         │
 │  ⏳ En Progreso:                   0                         │
-│  ⏸️  Pendientes:                   74                        │
+│  ⏸️  Pendientes:                   73                        │
 │                                                             │
-│  Progreso: [█░░░░░░░░░░░░░░░░░░░] 9.8% (8/82)              │
+│  Progreso: [██░░░░░░░░░░░░░░░░░░] 11.0% (9/82)             │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -27,7 +27,7 @@
 | Epic | Nombre | Total US | Completadas | En Progreso | Pendientes | Progreso |
 |------|--------|----------|-------------|-------------|------------|----------|
 | 01 | Foundation | 6 | 6 | 0 | 0 | [██████████] 100% |
-| 02 | Core Data | 10 | 2 | 0 | 8 | [██░░░░░░░░] 20% |
+| 02 | Core Data | 10 | 3 | 0 | 7 | [███░░░░░░░] 30% |
 | 03 | Stock Management | 10 | 0 | 0 | 10 | [░░░░░░░░░░] 0% |
 | 04 | Sales | 26 | 0 | 0 | 26 | [░░░░░░░░░░] 0% |
 | 05 | Supply Chain | 15 | 0 | 0 | 15 | [░░░░░░░░░░] 0% |
@@ -44,7 +44,7 @@
 **Objetivo:** Establecer base funcional del sistema
 **Épicas:** 01 Foundation, 02 Core Data
 **Total US:** 16
-**Progreso:** [█████░░░░░] 50% (8/16 completadas)
+**Progreso:** [█████▌░░░░] 56.25% (9/16 completadas)
 
 ---
 
@@ -111,7 +111,7 @@
 ## Epic 02: Core Data - Gestión de Productos y Categorías
 
 **Prioridad:** ⭐⭐⭐ ALTA
-**Progreso:** [██░░░░░░░░] 20% (2/10 completadas)
+**Progreso:** [███░░░░░░░] 30% (3/10 completadas)
 **Carpeta:** `context/user_stories/epic_02_core_data/`
 
 ### ✅ Historias de Usuario
@@ -140,12 +140,31 @@
   - productService con todos los métodos API ✅
 - **Fecha de completación:** 2025-10-29
 
-#### [ ] US-PROD-002: Listar Productos
+#### [x] US-PROD-002: Listar Productos
 - **Archivo:** `context/user_stories/epic_02_core_data/US-PROD-002_listar_productos.md`
 - **Prioridad:** ALTA
 - **Estimación:** 5 pts
-- **Estado:** ⏸️ Pendiente
-- **Criterios de Aceptación:** 6
+- **Estado:** ✅ COMPLETADA
+- **Criterios de Aceptación:** 8 ✅
+- **Progreso Frontend:** ✅ 100% - Todos los CA implementados
+  - CA-1: Estructura de tabla con 7 columnas ✅
+  - CA-2: Paginación completa (20 por defecto, selector 10/20/50/100) ✅
+  - CA-3: Indicadores visuales de stock (badges, colores de fila) ✅
+  - CA-4: Ordenamiento bidireccional en 5 columnas ✅
+  - CA-5: Botón "Nuevo Producto" con navegación ✅
+  - CA-6: ProductStats con 4 tarjetas de estadísticas ✅
+  - CA-7: Acciones rápidas (Ver, Editar, Eliminar) con confirmación ✅
+  - CA-8: Vista responsive con ProductCardView para móviles ✅
+- **Progreso Backend:** ✅ 100% - API completa y optimizada
+  - GET /api/products con paginación, filtros, ordenamiento ✅
+  - Estadísticas calculadas con queries SQL agregadas (optimizado) ✅
+  - Respuestas con datos completos de productos y categorías ✅
+- **Mejoras Implementadas:**
+  - Lazy loading de imágenes (loading="lazy") ✅
+  - Vista responsive: cards en móvil (< 960px), tabla en desktop ✅
+  - Optimización backend: queries agregadas en lugar de cargar en memoria ✅
+  - ProductCardView: grid 1/2/3 columnas con menú dropdown ✅
+- **Fecha de completación:** 2025-10-30
 
 #### [ ] US-PROD-003: Buscar y Filtrar Productos
 - **Archivo:** `context/user_stories/epic_02_core_data/US-PROD-003_buscar_filtrar_productos.md`

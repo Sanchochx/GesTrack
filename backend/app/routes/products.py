@@ -22,6 +22,7 @@ from app.utils.image_handler import (
 )
 from marshmallow import ValidationError
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy import func, case
 from werkzeug.datastructures import FileStorage
 
 products_bp = Blueprint('products', __name__, url_prefix='/api/products')
@@ -299,15 +300,35 @@ def get_products():
             query = query.filter(Product.stock_quantity <= Product.min_stock_level)
 
         # CA-6: Calcular estadísticas ANTES de aplicar paginación
+        # OPTIMIZADO: Usar queries agregadas SQL en lugar de cargar todos en memoria
         total_products = query.count()
 
-        # Estadísticas de stock
-        all_products = query.all()
+        # Estadísticas de stock usando SQL agregadas (más eficiente)
+        stock_stats = db.session.query(
+            func.count(case((Product.stock_quantity > Product.min_stock_level, 1))).label('normal_stock'),
+            func.count(case(
+                ((Product.stock_quantity > 0) & (Product.stock_quantity <= Product.min_stock_level), 1)
+            )).label('low_stock'),
+            func.count(case((Product.stock_quantity == 0, 1))).label('out_of_stock')
+        ).filter(Product.is_active == True)
+
+        # Aplicar los mismos filtros que la query principal
+        if search:
+            stock_stats = stock_stats.filter(
+                (Product.name.ilike(f'%{search}%')) | (Product.sku.ilike(f'%{search}%'))
+            )
+        if category_id:
+            stock_stats = stock_stats.filter(Product.category_id == category_id)
+        if low_stock_only:
+            stock_stats = stock_stats.filter(Product.stock_quantity <= Product.min_stock_level)
+
+        stock_counts = stock_stats.first()
+
         stats = {
             'total': total_products,
-            'normal_stock': sum(1 for p in all_products if p.stock_quantity > p.min_stock_level),
-            'low_stock': sum(1 for p in all_products if 0 < p.stock_quantity <= p.min_stock_level),
-            'out_of_stock': sum(1 for p in all_products if p.stock_quantity == 0)
+            'normal_stock': stock_counts.normal_stock or 0,
+            'low_stock': stock_counts.low_stock or 0,
+            'out_of_stock': stock_counts.out_of_stock or 0
         }
 
         # CA-4: Aplicar ordenamiento

@@ -129,8 +129,8 @@ def save_product_image(file_storage, sku, upload_folder):
         with open(filepath, 'wb') as f:
             f.write(optimized_image.getbuffer())
 
-        # Retornar nombre de archivo relativo para BD
-        return True, f'products/{filename}'
+        # Retornar URL completa con prefijo /uploads/ para acceso desde frontend
+        return True, f'/uploads/products/{filename}'
 
     except Exception as e:
         return False, f'Error al guardar imagen: {str(e)}'
@@ -169,4 +169,4 @@ def get_default_product_image():
     Returns:
         str: URL de imagen por defecto
     """
-    return f'products/default/{DEFAULT_PRODUCT_IMAGE}'
+    return f'/uploads/products/default/{DEFAULT_PRODUCT_IMAGE}'

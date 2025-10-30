@@ -171,10 +171,13 @@ const CategoryDialog = ({ open, onClose, category = null, onSuccess }) => {
 
     try {
       let response;
+      // Excluir campos read-only antes de enviar
+      const { is_default, ...dataToSend } = formData;
+
       if (isEditMode) {
-        response = await categoryService.updateCategory(category.id, formData);
+        response = await categoryService.updateCategory(category.id, dataToSend);
       } else {
-        response = await categoryService.createCategory(formData);
+        response = await categoryService.createCategory(dataToSend);
       }
 
       if (response.success) {

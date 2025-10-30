@@ -1,5 +1,5 @@
 import os
-from flask import Flask, jsonify
+from flask import Flask, jsonify, send_from_directory
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from flask_jwt_extended import JWTManager
@@ -69,5 +69,15 @@ def create_app(config_name=None):
     @app.route('/health')
     def health():
         return jsonify({'status': 'healthy'}), 200
+
+    # Endpoint para servir archivos estáticos (imágenes de productos)
+    @app.route('/uploads/<path:filename>')
+    def uploaded_file(filename):
+        """
+        Servir archivos subidos (imágenes de productos, etc.)
+        Ejemplo: /uploads/products/10_2f39200a.png
+        """
+        upload_folder = app.config['UPLOAD_FOLDER']
+        return send_from_directory(upload_folder, filename)
 
     return app
