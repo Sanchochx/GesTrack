@@ -244,6 +244,7 @@ def get_products():
     """
     GET /api/products
     US-PROD-002: Listar productos con paginación, ordenamiento y estadísticas
+    US-PROD-003: Buscar y filtrar productos
 
     Criterios de Aceptación implementados:
     - CA-1: Estructura de tabla con todas las columnas
@@ -251,6 +252,7 @@ def get_products():
     - CA-3: Indicadores de stock bajo
     - CA-4: Ordenamiento por múltiples columnas
     - CA-6: Contador total y estadísticas
+    - US-PROD-003 CA-4: Filtro por estado de stock
 
     Query params:
         - page: Número de página (default: 1)
@@ -259,7 +261,8 @@ def get_products():
         - order: Orden (asc, desc) - default: asc
         - search: Buscar por nombre o SKU (opcional)
         - category_id: Filtrar por categoría (opcional)
-        - low_stock_only: Filtrar solo productos con stock bajo (opcional)
+        - stock_status: Estado de stock (all, normal, low, out) (opcional)
+        - low_stock_only: [DEPRECATED] Filtrar solo productos con stock bajo (opcional)
     """
     try:
         # CA-2: Parámetros de paginación
@@ -278,6 +281,7 @@ def get_products():
         search = request.args.get('search', '').strip()
         category_id = request.args.get('category_id')
         low_stock_only = request.args.get('low_stock_only', 'false').lower() == 'true'
+        stock_status = request.args.get('stock_status', '').strip().lower()  # US-PROD-003
 
         # Query base - productos activos
         query = Product.query.filter(Product.is_active == True)
@@ -295,8 +299,18 @@ def get_products():
         if category_id:
             query = query.filter(Product.category_id == category_id)
 
-        # CA-3: Filtrar productos con stock bajo
-        if low_stock_only:
+        # US-PROD-003 CA-4: Filtrar por estado de stock
+        if stock_status == 'normal':
+            query = query.filter(Product.stock_quantity > Product.min_stock_level)
+        elif stock_status == 'low':
+            query = query.filter(
+                Product.stock_quantity <= Product.min_stock_level,
+                Product.stock_quantity > 0
+            )
+        elif stock_status == 'out':
+            query = query.filter(Product.stock_quantity == 0)
+        # CA-3: Mantener compatibilidad con low_stock_only (legacy)
+        elif low_stock_only:
             query = query.filter(Product.stock_quantity <= Product.min_stock_level)
 
         # CA-6: Calcular estadísticas ANTES de aplicar paginación
@@ -319,7 +333,18 @@ def get_products():
             )
         if category_id:
             stock_stats = stock_stats.filter(Product.category_id == category_id)
-        if low_stock_only:
+
+        # US-PROD-003: Aplicar filtro de stock status
+        if stock_status == 'normal':
+            stock_stats = stock_stats.filter(Product.stock_quantity > Product.min_stock_level)
+        elif stock_status == 'low':
+            stock_stats = stock_stats.filter(
+                Product.stock_quantity <= Product.min_stock_level,
+                Product.stock_quantity > 0
+            )
+        elif stock_status == 'out':
+            stock_stats = stock_stats.filter(Product.stock_quantity == 0)
+        elif low_stock_only:
             stock_stats = stock_stats.filter(Product.stock_quantity <= Product.min_stock_level)
 
         stock_counts = stock_stats.first()

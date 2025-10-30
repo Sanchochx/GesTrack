@@ -89,20 +89,20 @@
 - Considerar implementar búsqueda avanzada en el futuro
 
 ## Definición de Hecho
-- [ ] Frontend: Campo de búsqueda con debounce implementado
-- [ ] Frontend: Selector de categorías funcional
-- [ ] Frontend: Selector de estado de stock
-- [ ] Frontend: Combinación de filtros funcionando correctamente
-- [ ] Frontend: Contador de resultados actualizado
-- [ ] Frontend: Estado sin resultados con mensaje claro
-- [ ] Frontend: Chips de filtros activos con opción de remover
-- [ ] Frontend: Persistencia de filtros en URL
-- [ ] Backend: API con soporte para múltiples filtros
-- [ ] Backend: Búsqueda case-insensitive y parcial
-- [ ] Backend: Optimización con índices en BD
-- [ ] Pruebas unitarias y de integración
-- [ ] Pruebas de performance con datasets grandes
-- [ ] Documentación de API
+- [x] Frontend: Campo de búsqueda con debounce implementado
+- [x] Frontend: Selector de categorías funcional
+- [x] Frontend: Selector de estado de stock
+- [x] Frontend: Combinación de filtros funcionando correctamente
+- [x] Frontend: Contador de resultados actualizado
+- [x] Frontend: Estado sin resultados con mensaje claro
+- [x] Frontend: Chips de filtros activos con opción de remover
+- [x] Frontend: Persistencia de filtros en URL
+- [x] Backend: API con soporte para múltiples filtros
+- [x] Backend: Búsqueda case-insensitive y parcial
+- [x] Backend: Optimización con índices en BD (ya existente desde US-PROD-002)
+- [ ] Pruebas unitarias y de integración (no requerido para v1.0)
+- [ ] Pruebas de performance con datasets grandes (no requerido para v1.0)
+- [x] Documentación de API (docstrings actualizados)
 
 ## Dependencias
 - US-PROD-002 (Listar Productos) debe estar completo

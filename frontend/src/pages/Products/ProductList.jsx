@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import {
   Container,
   Box,
@@ -14,6 +14,7 @@ import productService from '../../services/productService';
 import ProductStats from '../../components/products/ProductStats';
 import ProductFilters from '../../components/products/ProductFilters';
 import ProductTable from '../../components/products/ProductTable';
+import EmptyState from '../../components/products/EmptyState';
 
 /**
  * ProductList Page
@@ -32,6 +33,13 @@ import ProductTable from '../../components/products/ProductTable';
 const ProductList = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // US-PROD-003 CA-9: Initialize filters from URL query params
+  const getInitialSearchTerm = () => searchParams.get('search') || '';
+  const getInitialCategory = () => searchParams.get('category') || '';
+  const getInitialStockStatus = () => searchParams.get('stock') || '';
+  const getInitialPage = () => parseInt(searchParams.get('page') || '1', 10);
 
   // Data state
   const [products, setProducts] = useState([]);
@@ -41,13 +49,14 @@ const ProductList = () => {
   const [error, setError] = useState(null);
 
   // Pagination state
-  const [page, setPage] = useState(1);
+  const [page, setPage] = useState(getInitialPage());
   const [itemsPerPage, setItemsPerPage] = useState(20);
 
   // Filter state
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('');
-  const [lowStockOnly, setLowStockOnly] = useState(false);
+  const [searchTerm, setSearchTerm] = useState(getInitialSearchTerm());
+  const [selectedCategory, setSelectedCategory] = useState(getInitialCategory());
+  const [lowStockOnly, setLowStockOnly] = useState(false); // Legacy - for backward compat
+  const [stockStatus, setStockStatus] = useState(getInitialStockStatus()); // US-PROD-003 CA-4: all, normal, low, out
 
   // Sort state
   const [sortField, setSortField] = useState('name');
@@ -56,10 +65,22 @@ const ProductList = () => {
   // UI state
   const [successMessage, setSuccessMessage] = useState(null);
 
+  // US-PROD-003 CA-9: Update URL when filters change
+  useEffect(() => {
+    const params = new URLSearchParams();
+
+    if (searchTerm) params.set('search', searchTerm);
+    if (selectedCategory) params.set('category', selectedCategory);
+    if (stockStatus) params.set('stock', stockStatus);
+    if (page > 1) params.set('page', page.toString());
+
+    setSearchParams(params, { replace: true });
+  }, [searchTerm, selectedCategory, stockStatus, page, setSearchParams]);
+
   // Load products on mount and when filters/pagination change
   useEffect(() => {
     loadProducts();
-  }, [page, itemsPerPage, searchTerm, selectedCategory, lowStockOnly, sortField, sortOrder]);
+  }, [page, itemsPerPage, searchTerm, selectedCategory, stockStatus, sortField, sortOrder]);
 
   // Show success message if coming from create/edit
   useEffect(() => {
@@ -97,8 +118,9 @@ const ProductList = () => {
         params.category_id = selectedCategory;
       }
 
-      if (lowStockOnly) {
-        params.low_stock = true;
+      // US-PROD-003 CA-4: Stock status filter
+      if (stockStatus) {
+        params.stock_status = stockStatus;
       }
 
       const response = await productService.getProducts(params);
@@ -169,10 +191,11 @@ const ProductList = () => {
   };
 
   /**
-   * Handle low stock filter change
+   * Handle stock status filter change
+   * US-PROD-003 CA-4
    */
-  const handleLowStockChange = (enabled) => {
-    setLowStockOnly(enabled);
+  const handleStockStatusChange = (status) => {
+    setStockStatus(status);
     setPage(1); // Reset to first page
   };
 
@@ -190,6 +213,17 @@ const ProductList = () => {
    */
   const handleCloseSnackbar = () => {
     setSuccessMessage(null);
+  };
+
+  /**
+   * Handle clear all filters
+   * US-PROD-003 CA-7
+   */
+  const handleClearAllFilters = () => {
+    setSearchTerm('');
+    setSelectedCategory('');
+    setStockStatus('');
+    setPage(1);
   };
 
   return (
@@ -237,17 +271,33 @@ const ProductList = () => {
         onSearchChange={handleSearchChange}
         selectedCategory={selectedCategory}
         onCategoryChange={handleCategoryChange}
-        lowStockOnly={lowStockOnly}
-        onLowStockChange={handleLowStockChange}
+        stockStatus={stockStatus}
+        onStockStatusChange={handleStockStatusChange}
         itemsPerPage={itemsPerPage}
         onItemsPerPageChange={handleItemsPerPageChange}
       />
+
+      {/* Results Counter - US-PROD-003 CA-6 */}
+      {!loading && (
+        <Box sx={{ mb: 2 }}>
+          <Typography variant="body2" color="text.secondary">
+            {(searchTerm || selectedCategory || stockStatus) ? (
+              `${totalProducts} de ${statistics.total || 0} productos`
+            ) : (
+              `Se encontraron ${totalProducts} productos`
+            )}
+          </Typography>
+        </Box>
+      )}
 
       {/* Loading State */}
       {loading ? (
         <Box sx={{ display: 'flex', justifyContent: 'center', p: 8 }}>
           <CircularProgress />
         </Box>
+      ) : products.length === 0 ? (
+        /* Empty State - US-PROD-003 CA-7 */
+        <EmptyState onClearFilters={handleClearAllFilters} />
       ) : (
         /* Product Table */
         <ProductTable

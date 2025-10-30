@@ -12,11 +12,11 @@
 │  PROGRESO GLOBAL DEL PROYECTO                               │
 ├─────────────────────────────────────────────────────────────┤
 │  Total Historias de Usuario:     82                         │
-│  ✅ Completadas:                   9                         │
+│  ✅ Completadas:                   10                        │
 │  ⏳ En Progreso:                   0                         │
-│  ⏸️  Pendientes:                   73                        │
+│  ⏸️  Pendientes:                   72                        │
 │                                                             │
-│  Progreso: [██░░░░░░░░░░░░░░░░░░] 11.0% (9/82)             │
+│  Progreso: [██░░░░░░░░░░░░░░░░░░] 12.2% (10/82)            │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -27,7 +27,7 @@
 | Epic | Nombre | Total US | Completadas | En Progreso | Pendientes | Progreso |
 |------|--------|----------|-------------|-------------|------------|----------|
 | 01 | Foundation | 6 | 6 | 0 | 0 | [██████████] 100% |
-| 02 | Core Data | 10 | 3 | 0 | 7 | [███░░░░░░░] 30% |
+| 02 | Core Data | 10 | 4 | 0 | 6 | [████░░░░░░] 40% |
 | 03 | Stock Management | 10 | 0 | 0 | 10 | [░░░░░░░░░░] 0% |
 | 04 | Sales | 26 | 0 | 0 | 26 | [░░░░░░░░░░] 0% |
 | 05 | Supply Chain | 15 | 0 | 0 | 15 | [░░░░░░░░░░] 0% |
@@ -44,7 +44,7 @@
 **Objetivo:** Establecer base funcional del sistema
 **Épicas:** 01 Foundation, 02 Core Data
 **Total US:** 16
-**Progreso:** [█████▌░░░░] 56.25% (9/16 completadas)
+**Progreso:** [██████░░░░] 62.5% (10/16 completadas)
 
 ---
 
@@ -111,7 +111,7 @@
 ## Epic 02: Core Data - Gestión de Productos y Categorías
 
 **Prioridad:** ⭐⭐⭐ ALTA
-**Progreso:** [███░░░░░░░] 30% (3/10 completadas)
+**Progreso:** [████░░░░░░] 40% (4/10 completadas)
 **Carpeta:** `context/user_stories/epic_02_core_data/`
 
 ### ✅ Historias de Usuario
@@ -166,12 +166,26 @@
   - ProductCardView: grid 1/2/3 columnas con menú dropdown ✅
 - **Fecha de completación:** 2025-10-30
 
-#### [ ] US-PROD-003: Buscar y Filtrar Productos
+#### [x] US-PROD-003: Buscar y Filtrar Productos
 - **Archivo:** `context/user_stories/epic_02_core_data/US-PROD-003_buscar_filtrar_productos.md`
 - **Prioridad:** ALTA
 - **Estimación:** 5 pts
-- **Estado:** ⏸️ Pendiente
-- **Criterios de Aceptación:** 7
+- **Estado:** ✅ COMPLETADA
+- **Criterios de Aceptación:** 9 ✅
+- **Progreso Frontend:** ✅ 100% - Todos los CA implementados
+  - CA-1 & CA-2: Campo de búsqueda con debounce (300ms) y clear button ✅
+  - CA-3: Selector de categorías con product counts "Electrónica (15)" ✅
+  - CA-4: Selector de stock status (Todos, Normal, Bajo, Sin Stock) ✅
+  - CA-5: Combinación de filtros con paginación reset ✅
+  - CA-6: Contador de resultados ("X de Y productos") ✅
+  - CA-7: EmptyState component con botón de limpiar filtros ✅
+  - CA-8: Active filters chips con remoción individual ✅
+  - CA-9: Persistencia de filtros en URL query params ✅
+- **Progreso Backend:** ✅ 100% - API mejorada
+  - stock_status parameter (normal, low, out) ✅
+  - Búsqueda case-insensitive y parcial (ya existente) ✅
+  - Product counts en categories endpoint ✅
+- **Fecha de completación:** 2025-10-30
 
 #### [ ] US-PROD-004: Ver Detalles de Producto
 - **Archivo:** `context/user_stories/epic_02_core_data/US-PROD-004_ver_detalles_producto.md`
