@@ -1,79 +1,188 @@
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   Container,
-  Paper,
   Box,
   Typography,
-  Button,
+  CircularProgress,
   Alert,
+  Button,
+  Snackbar,
 } from '@mui/material';
 import {
   ArrowBack as ArrowBackIcon,
-  Construction as ConstructionIcon,
 } from '@mui/icons-material';
+import ProductForm from '../../components/forms/ProductForm';
+import productService from '../../services/productService';
 
 /**
- * EditProduct - Página de edición de producto (Placeholder)
- * Muestra mensaje que la funcionalidad está en desarrollo
- * La implementación completa será parte de US-PROD-005
+ * EditProduct - Página de edición de producto
+ * US-PROD-005: Editar Producto
+ *
+ * Funcionalidades:
+ * - Cargar datos actuales del producto (CA-1)
+ * - Usar ProductForm en modo edición
+ * - Navegar de regreso después de guardar (CA-9)
+ * - Manejo de errores (CA-10)
  */
 const EditProduct = () => {
   const { id } = useParams();
   const navigate = useNavigate();
 
+  const [productData, setProductData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [successMessage, setSuccessMessage] = useState('');
+  const [showSnackbar, setShowSnackbar] = useState(false);
+
+  // Cargar datos del producto
+  useEffect(() => {
+    loadProduct();
+  }, [id]);
+
+  /**
+   * US-PROD-005 CA-1: Cargar datos actuales del producto
+   */
+  const loadProduct = async () => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const response = await productService.getProduct(id);
+      if (response.success) {
+        setProductData(response.data);
+      } else {
+        setError('No se pudo cargar el producto');
+      }
+    } catch (err) {
+      console.error('Error loading product:', err);
+      setError(err.error?.message || 'Error al cargar el producto');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  /**
+   * US-PROD-005 CA-9: Handle success after saving
+   */
+  const handleSuccess = (data, message) => {
+    setSuccessMessage(message);
+    setShowSnackbar(true);
+    // Wait a moment before navigating to show the success message
+    setTimeout(() => {
+      navigate(`/products/${id}`);
+    }, 1500);
+  };
+
+  /**
+   * Handle cancel - go back to product details
+   */
+  const handleCancel = () => {
+    navigate(`/products/${id}`);
+  };
+
+  /**
+   * Handle back button click
+   */
   const handleBack = () => {
     navigate(`/products/${id}`);
   };
 
-  const handleBackToList = () => {
-    navigate('/products');
+  /**
+   * Close snackbar
+   */
+  const handleCloseSnackbar = () => {
+    setShowSnackbar(false);
   };
 
-  return (
-    <Container maxWidth="md" sx={{ mt: 4, mb: 4 }}>
-      <Paper sx={{ p: 4, textAlign: 'center' }}>
-        <ConstructionIcon sx={{ fontSize: 80, color: 'warning.main', mb: 2 }} />
-
-        <Typography variant="h4" gutterBottom>
-          Funcionalidad en Desarrollo
+  // Loading state
+  if (loading) {
+    return (
+      <Container maxWidth="md" sx={{ mt: 4, mb: 4, textAlign: 'center' }}>
+        <CircularProgress size={60} />
+        <Typography variant="h6" sx={{ mt: 2 }}>
+          Cargando producto...
         </Typography>
+      </Container>
+    );
+  }
 
-        <Typography variant="body1" color="text.secondary" paragraph>
-          La edición de productos está planificada para implementarse en la historia de usuario{' '}
-          <strong>US-PROD-005: Editar Producto</strong>.
-        </Typography>
-
-        <Alert severity="info" sx={{ mt: 3, mb: 3, textAlign: 'left' }}>
-          <Typography variant="subtitle2" gutterBottom>
-            Funcionalidades planificadas:
-          </Typography>
-          <ul style={{ margin: 0, paddingLeft: 20 }}>
-            <li>Cargar datos actuales del producto</li>
-            <li>Editar nombre, descripción y SKU</li>
-            <li>Modificar precios (costo y venta)</li>
-            <li>Cambiar categoría</li>
-            <li>Actualizar niveles de stock</li>
-            <li>Cambiar o eliminar imagen del producto</li>
-            <li>Validaciones en tiempo real</li>
-          </ul>
+  // Error state
+  if (error) {
+    return (
+      <Container maxWidth="md" sx={{ mt: 4, mb: 4 }}>
+        <Alert severity="error" sx={{ mb: 3 }}>
+          {error}
         </Alert>
-
-        <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2 }}>
+        <Box sx={{ display: 'flex', gap: 2 }}>
           <Button
             variant="outlined"
             startIcon={<ArrowBackIcon />}
             onClick={handleBack}
           >
-            Ver Detalles del Producto
+            Volver
           </Button>
           <Button
             variant="contained"
-            onClick={handleBackToList}
+            onClick={loadProduct}
           >
-            Volver a Lista de Productos
+            Reintentar
           </Button>
         </Box>
-      </Paper>
+      </Container>
+    );
+  }
+
+  // Product not found
+  if (!productData) {
+    return (
+      <Container maxWidth="md" sx={{ mt: 4, mb: 4 }}>
+        <Alert severity="warning" sx={{ mb: 3 }}>
+          Producto no encontrado
+        </Alert>
+        <Button
+          variant="outlined"
+          startIcon={<ArrowBackIcon />}
+          onClick={() => navigate('/products')}
+        >
+          Volver a Lista de Productos
+        </Button>
+      </Container>
+    );
+  }
+
+  return (
+    <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
+      {/* Back button */}
+      <Box sx={{ mb: 2 }}>
+        <Button
+          variant="text"
+          startIcon={<ArrowBackIcon />}
+          onClick={handleBack}
+          sx={{ mb: 2 }}
+        >
+          Volver a Detalles
+        </Button>
+      </Box>
+
+      {/* Product Form */}
+      <ProductForm
+        initialData={productData}
+        onSuccess={handleSuccess}
+        onCancel={handleCancel}
+      />
+
+      {/* Success Snackbar */}
+      <Snackbar
+        open={showSnackbar}
+        autoHideDuration={3000}
+        onClose={handleCloseSnackbar}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert onClose={handleCloseSnackbar} severity="success" sx={{ width: '100%' }}>
+          {successMessage}
+        </Alert>
+      </Snackbar>
     </Container>
   );
 };

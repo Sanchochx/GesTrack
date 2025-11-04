@@ -12,11 +12,11 @@
 │  PROGRESO GLOBAL DEL PROYECTO                               │
 ├─────────────────────────────────────────────────────────────┤
 │  Total Historias de Usuario:     82                         │
-│  ✅ Completadas:                   11                        │
+│  ✅ Completadas:                   12                        │
 │  ⏳ En Progreso:                   0                         │
-│  ⏸️  Pendientes:                   71                        │
+│  ⏸️  Pendientes:                   70                        │
 │                                                             │
-│  Progreso: [██░░░░░░░░░░░░░░░░░░] 13.4% (11/82)            │
+│  Progreso: [██░░░░░░░░░░░░░░░░░░] 14.6% (12/82)            │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -27,7 +27,7 @@
 | Epic | Nombre | Total US | Completadas | En Progreso | Pendientes | Progreso |
 |------|--------|----------|-------------|-------------|------------|----------|
 | 01 | Foundation | 6 | 6 | 0 | 0 | [██████████] 100% |
-| 02 | Core Data | 10 | 5 | 0 | 5 | [█████░░░░░] 50% |
+| 02 | Core Data | 10 | 6 | 0 | 4 | [██████░░░░] 60% |
 | 03 | Stock Management | 10 | 0 | 0 | 10 | [░░░░░░░░░░] 0% |
 | 04 | Sales | 26 | 0 | 0 | 26 | [░░░░░░░░░░] 0% |
 | 05 | Supply Chain | 15 | 0 | 0 | 15 | [░░░░░░░░░░] 0% |
@@ -44,7 +44,7 @@
 **Objetivo:** Establecer base funcional del sistema
 **Épicas:** 01 Foundation, 02 Core Data
 **Total US:** 16
-**Progreso:** [██████░░░░] 68.75% (11/16 completadas)
+**Progreso:** [███████░░░] 75% (12/16 completadas)
 
 ---
 
@@ -111,7 +111,7 @@
 ## Epic 02: Core Data - Gestión de Productos y Categorías
 
 **Prioridad:** ⭐⭐⭐ ALTA
-**Progreso:** [█████░░░░░] 50% (5/10 completadas)
+**Progreso:** [██████░░░░] 60% (6/10 completadas)
 **Carpeta:** `context/user_stories/epic_02_core_data/`
 
 ### ✅ Historias de Usuario
@@ -211,12 +211,32 @@
   - Breadcrumbs de navegación (Inicio > Productos > {Nombre}) ✅
 - **Fecha de completación:** 2025-11-04
 
-#### [ ] US-PROD-005: Editar Producto
+#### [x] US-PROD-005: Editar Producto
 - **Archivo:** `context/user_stories/epic_02_core_data/US-PROD-005_editar_producto.md`
 - **Prioridad:** ALTA
 - **Estimación:** 5 pts
-- **Estado:** ⏸️ Pendiente
-- **Criterios de Aceptación:** 7
+- **Estado:** ✅ COMPLETADA
+- **Criterios de Aceptación:** 11 ✅
+- **Progreso Backend:** ✅ 100% - API PUT/PATCH completa
+  - CA-1: Formulario precargado con datos del producto ✅
+  - CA-2: Campo SKU no editable con tooltip ✅
+  - CA-3: Validación de campos editables ✅
+  - CA-4: Validación de precios con confirmación ✅
+  - CA-5: Recálculo automático de margen con comparación ✅
+  - CA-6: Actualización de imagen con preview ✅
+  - CA-7: Confirmación de cambios importantes (>20%, categoría) ✅
+  - CA-8: Registro de auditoría (updated_at automático) ✅
+  - CA-9: Mensajes de confirmación y navegación ✅
+  - CA-10: Manejo completo de errores ✅
+  - CA-11: Botón cancelar con confirmación de cambios ✅
+- **Progreso Frontend:** ✅ 100% - Completado
+  - ProductForm mejorado con modo edición/creación ✅
+  - EditProduct page funcional con carga de datos ✅
+  - SKU read-only con estilos y tooltip ✅
+  - Validaciones en tiempo real ✅
+  - Diálogos de confirmación (precios, cambios significativos, cancelar) ✅
+  - Navegación post-actualización ✅
+- **Fecha de completación:** 2025-11-04
 
 #### [ ] US-PROD-006: Eliminar Producto
 - **Archivo:** `context/user_stories/epic_02_core_data/US-PROD-006_eliminar_producto.md`

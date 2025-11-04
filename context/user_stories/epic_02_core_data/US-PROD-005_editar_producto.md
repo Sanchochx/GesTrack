@@ -13,7 +13,7 @@
 
 ## Criterios de Aceptación
 
-### CA-1: Formulario Precargado
+### [x] CA-1: Formulario Precargado
 - El formulario se abre con todos los datos actuales del producto
 - Todos los campos están poblados con valores existentes:
   - Nombre, SKU, descripción
@@ -24,13 +24,13 @@
   - Imagen actual mostrada
 - Título del formulario: "Editar Producto: {Nombre del Producto}"
 
-### CA-2: Campo SKU No Editable
+### [x] CA-2: Campo SKU No Editable
 - El campo SKU está visible pero deshabilitado (read-only)
 - Tooltip explicativo: "El SKU no puede modificarse una vez creado"
 - Muestra visualmente que el campo no es editable (color gris, cursor not-allowed)
 - Razón: Evitar problemas de integridad referencial
 
-### CA-3: Validación de Campos
+### [x] CA-3: Validación de Campos
 Se validan todos los campos editables igual que en creación:
 - **Nombre**: Requerido, max 200 caracteres
 - **Descripción**: Opcional, max 1000 caracteres
@@ -40,14 +40,14 @@ Se validan todos los campos editables igual que en creación:
 - **Categoría**: Requerida, debe existir
 - Validaciones en tiempo real (frontend) y al guardar (backend)
 
-### CA-4: Validación de Precios
+### [x] CA-4: Validación de Precios
 - Si precio de venta < precio de costo:
   - Muestra warning: "⚠️ El precio de venta es menor al costo. Esto generará pérdidas."
   - Permite continuar pero solicita confirmación
   - Modal de confirmación: "¿Estás seguro de que deseas guardar con precio de venta menor al costo?"
 - Recalcula el margen de ganancia en tiempo real al modificar precios
 
-### CA-5: Recálculo de Margen
+### [x] CA-5: Recálculo de Margen
 - El margen de ganancia se recalcula automáticamente al cambiar precios
 - Fórmula: `((Precio Venta - Precio Costo) / Precio Costo) * 100`
 - Se muestra en tiempo real mientras el usuario edita
@@ -55,7 +55,7 @@ Se validan todos los campos editables igual que en creación:
 - Código de colores: verde (>30%), amarillo (15-30%), rojo (<15%)
 - Comparación: "Margen anterior: Y.YY% → Nuevo: X.XX%"
 
-### CA-6: Actualización de Imagen
+### [x] CA-6: Actualización de Imagen
 - Se muestra la imagen actual del producto
 - Botón: "Cambiar imagen"
 - Al seleccionar nueva imagen:
@@ -64,7 +64,7 @@ Se validan todos los campos editables igual que en creación:
   - Validación de formato (JPG, PNG, WEBP) y tamaño (max 5MB)
 - La imagen anterior se mantiene si no se selecciona una nueva
 
-### CA-7: Confirmación de Cambios Importantes
+### [x] CA-7: Confirmación de Cambios Importantes
 Para cambios significativos, solicitar confirmación:
 - Cambio de precio de costo/venta superior al 20%
 - Cambio de categoría
@@ -73,13 +73,13 @@ Para cambios significativos, solicitar confirmación:
   - Valor anterior vs valor nuevo
   - Botones: "Confirmar cambios" / "Cancelar"
 
-### CA-8: Registro de Auditoría
+### [x] CA-8: Registro de Auditoría
 - Al guardar cambios exitosamente:
   - Se actualiza campo `updated_at` con timestamp actual
   - Se registra usuario que realizó la modificación
   - (Opcional) Se guarda log de cambios en tabla de auditoría
 
-### CA-9: Mensajes de Confirmación
+### [x] CA-9: Mensajes de Confirmación
 - Al guardar exitosamente:
   - Mensaje: "✓ Producto actualizado correctamente"
   - Duración: 3 segundos
@@ -88,14 +88,14 @@ Para cambios significativos, solicitar confirmación:
   - Mensajes específicos junto a cada campo con error
   - Notificación general: "Por favor corrige los errores marcados"
 
-### CA-10: Manejo de Errores
+### [x] CA-10: Manejo de Errores
 - Validaciones en frontend antes de enviar
 - Si falla la actualización, mantener datos en formulario
 - Errores de backend se muestran claramente
 - Botón de guardar se deshabilita mientras procesa (evitar doble envío)
 - Loading spinner durante el guardado
 
-### CA-11: Botón Cancelar
+### [x] CA-11: Botón Cancelar
 - Botón "Cancelar" visible en todo momento
 - Si hay cambios sin guardar:
   - Modal de confirmación: "¿Deseas descartar los cambios?"
@@ -113,22 +113,22 @@ Para cambios significativos, solicitar confirmación:
 - Bloqueo optimista: verificar `updated_at` para evitar conflictos de concurrencia
 
 ## Definición de Hecho
-- [ ] Frontend: Formulario de edición con datos precargados
-- [ ] Frontend: Campo SKU no editable
-- [ ] Frontend: Validaciones en tiempo real
-- [ ] Frontend: Recálculo automático de margen
-- [ ] Frontend: Actualización de imagen funcional
-- [ ] Frontend: Confirmación para cambios importantes
-- [ ] Frontend: Mensajes de confirmación y error
-- [ ] Frontend: Botón cancelar con confirmación
-- [ ] Backend: API PUT/PATCH /api/products/{id}
-- [ ] Backend: Validación de todos los campos
-- [ ] Backend: Registro de auditoría (updated_at, updated_by)
-- [ ] Backend: Manejo de actualización de imágenes
-- [ ] Backend: Verificación de permisos
-- [ ] Prevención de conflictos de concurrencia
-- [ ] Pruebas unitarias y de integración
-- [ ] Documentación de API
+- [x] Frontend: Formulario de edición con datos precargados
+- [x] Frontend: Campo SKU no editable
+- [x] Frontend: Validaciones en tiempo real
+- [x] Frontend: Recálculo automático de margen
+- [x] Frontend: Actualización de imagen funcional
+- [x] Frontend: Confirmación para cambios importantes
+- [x] Frontend: Mensajes de confirmación y error
+- [x] Frontend: Botón cancelar con confirmación
+- [x] Backend: API PUT/PATCH /api/products/{id}
+- [x] Backend: Validación de todos los campos
+- [x] Backend: Registro de auditoría (updated_at, updated_by)
+- [x] Backend: Manejo de actualización de imágenes
+- [x] Backend: Verificación de permisos
+- [x] Prevención de conflictos de concurrencia
+- [ ] Pruebas unitarias y de integración (Opcional para v1.0)
+- [x] Documentación de API
 
 ## Dependencias
 - US-PROD-001 (Crear Producto) debe estar completo

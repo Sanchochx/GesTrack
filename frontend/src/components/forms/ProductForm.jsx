@@ -16,11 +16,13 @@ import {
   DialogContentText,
   CircularProgress,
   Chip,
+  Tooltip,
 } from '@mui/material';
 import {
   Save as SaveIcon,
   Cancel as CancelIcon,
   Warning as WarningIcon,
+  Info as InfoIcon,
 } from '@mui/icons-material';
 import productService from '../../services/productService';
 import ImageUpload from './ImageUpload';
@@ -28,14 +30,17 @@ import ImageUpload from './ImageUpload';
 /**
  * ProductForm Component
  * US-PROD-001: Create Product
+ * US-PROD-005: Edit Product
  *
  * Comprehensive form for creating/editing products with:
  * - All required fields (CA-1)
- * - Real-time SKU validation (CA-2)
- * - Price validation with warning (CA-3)
- * - Live profit margin calculation (CA-4)
- * - Image upload (CA-5)
- * - Error handling (CA-8)
+ * - Real-time SKU validation (CA-2) - Read-only when editing (US-PROD-005 CA-2)
+ * - Price validation with warning (CA-3, CA-4)
+ * - Live profit margin calculation (CA-4, CA-5)
+ * - Image upload/update (CA-5, CA-6)
+ * - Significant changes detection (CA-7)
+ * - Error handling (CA-8, CA-10)
+ * - Cancel confirmation (CA-11)
  */
 const ProductForm = ({ initialData = null, onSuccess, onCancel }) => {
   const navigate = useNavigate();
@@ -49,9 +54,14 @@ const ProductForm = ({ initialData = null, onSuccess, onCancel }) => {
     cost_price: '',
     sale_price: '',
     initial_stock: '',
+    min_stock_level: '',
     category_id: '',
     image: null,
+    current_image_url: '',
   });
+
+  // Original values for comparison (US-PROD-005 CA-7)
+  const [originalData, setOriginalData] = useState(null);
 
   // UI state
   const [loading, setLoading] = useState(false);
@@ -60,22 +70,36 @@ const ProductForm = ({ initialData = null, onSuccess, onCancel }) => {
   const [skuValidation, setSkuValidation] = useState({ valid: null, message: '' });
   const [skuChecking, setSkuChecking] = useState(false);
   const [profitMargin, setProfitMargin] = useState(null);
+  const [originalMargin, setOriginalMargin] = useState(null);
   const [showPriceWarning, setShowPriceWarning] = useState(false);
+  const [showSignificantChanges, setShowSignificantChanges] = useState(false);
+  const [significantChanges, setSignificantChanges] = useState([]);
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
   const [fieldErrors, setFieldErrors] = useState({});
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
-  // Load initial data if editing
+  // US-PROD-005 CA-1: Load initial data if editing
   useEffect(() => {
     if (initialData) {
-      setFormData({
+      const formValues = {
         name: initialData.name || '',
         sku: initialData.sku || '',
         description: initialData.description || '',
         cost_price: initialData.cost_price || '',
         sale_price: initialData.sale_price || '',
-        initial_stock: initialData.current_stock || '',
+        initial_stock: initialData.stock_quantity || '',
+        min_stock_level: initialData.min_stock_level || '',
         category_id: initialData.category_id || '',
         image: null,
-      });
+        current_image_url: initialData.image_url || '',
+      };
+      setFormData(formValues);
+      setOriginalData(formValues);
+
+      // Calculate original margin
+      if (initialData.profit_margin !== undefined) {
+        setOriginalMargin(initialData.profit_margin);
+      }
     }
   }, [initialData]);
 
@@ -84,10 +108,25 @@ const ProductForm = ({ initialData = null, onSuccess, onCancel }) => {
     loadCategories();
   }, []);
 
-  // Calculate profit margin when prices change (CA-4)
+  // US-PROD-005 CA-5: Calculate profit margin when prices change
   useEffect(() => {
     calculateProfitMargin();
   }, [formData.cost_price, formData.sale_price]);
+
+  // Detect unsaved changes (US-PROD-005 CA-11)
+  useEffect(() => {
+    if (isEditMode && originalData) {
+      const changed =
+        formData.name !== originalData.name ||
+        formData.description !== originalData.description ||
+        formData.cost_price !== originalData.cost_price ||
+        formData.sale_price !== originalData.sale_price ||
+        formData.min_stock_level !== originalData.min_stock_level ||
+        formData.category_id !== originalData.category_id ||
+        formData.image !== null;
+      setHasUnsavedChanges(changed);
+    }
+  }, [formData, originalData, isEditMode]);
 
   /**
    * Load categories from API
@@ -107,6 +146,7 @@ const ProductForm = ({ initialData = null, onSuccess, onCancel }) => {
   /**
    * Calculate profit margin
    * US-PROD-001 - CA-4: Real-time profit margin calculation
+   * US-PROD-005 - CA-5: Recalculate with color coding
    * Formula: ((sale_price - cost_price) / cost_price) * 100
    */
   const calculateProfitMargin = () => {
@@ -123,7 +163,7 @@ const ProductForm = ({ initialData = null, onSuccess, onCancel }) => {
 
   /**
    * Get margin color based on percentage
-   * Green: >30%, Yellow: 15-30%, Red: <15%
+   * US-PROD-005 CA-5: Green: >30%, Yellow: 15-30%, Red: <15%
    */
   const getMarginColor = (margin) => {
     if (margin > 30) return 'success';
@@ -141,7 +181,7 @@ const ProductForm = ({ initialData = null, onSuccess, onCancel }) => {
       return;
     }
 
-    // Skip validation if editing and SKU hasn't changed
+    // US-PROD-005 CA-2: Skip validation if editing and SKU hasn't changed
     if (isEditMode && sku === initialData?.sku) {
       setSkuValidation({ valid: true, message: 'SKU actual' });
       return;
@@ -152,8 +192,8 @@ const ProductForm = ({ initialData = null, onSuccess, onCancel }) => {
       const response = await productService.validateSKU(sku);
       if (response.success) {
         setSkuValidation({
-          valid: response.data.available,
-          message: response.data.available ? 'SKU disponible' : 'SKU ya existe',
+          valid: response.data.is_available,
+          message: response.data.is_available ? 'SKU disponible' : 'SKU ya existe',
         });
       }
     } catch (err) {
@@ -164,6 +204,58 @@ const ProductForm = ({ initialData = null, onSuccess, onCancel }) => {
     } finally {
       setSkuChecking(false);
     }
+  };
+
+  /**
+   * US-PROD-005 CA-7: Detect significant changes
+   * Returns array of significant changes
+   */
+  const detectSignificantChanges = () => {
+    if (!isEditMode || !originalData) return [];
+
+    const changes = [];
+
+    // Check price changes > 20%
+    const origCost = parseFloat(originalData.cost_price);
+    const newCost = parseFloat(formData.cost_price);
+    if (origCost > 0 && newCost > 0) {
+      const costChange = Math.abs(((newCost - origCost) / origCost) * 100);
+      if (costChange >= 20) {
+        changes.push({
+          field: 'Precio de Costo',
+          oldValue: `$${origCost.toFixed(2)}`,
+          newValue: `$${newCost.toFixed(2)}`,
+          changePercent: costChange.toFixed(1),
+        });
+      }
+    }
+
+    const origSale = parseFloat(originalData.sale_price);
+    const newSale = parseFloat(formData.sale_price);
+    if (origSale > 0 && newSale > 0) {
+      const saleChange = Math.abs(((newSale - origSale) / origSale) * 100);
+      if (saleChange >= 20) {
+        changes.push({
+          field: 'Precio de Venta',
+          oldValue: `$${origSale.toFixed(2)}`,
+          newValue: `$${newSale.toFixed(2)}`,
+          changePercent: saleChange.toFixed(1),
+        });
+      }
+    }
+
+    // Check category change
+    if (formData.category_id !== originalData.category_id) {
+      const origCategory = categories.find(c => c.id === originalData.category_id);
+      const newCategory = categories.find(c => c.id === formData.category_id);
+      changes.push({
+        field: 'Categoría',
+        oldValue: origCategory?.name || 'N/A',
+        newValue: newCategory?.name || 'N/A',
+      });
+    }
+
+    return changes;
   };
 
   /**
@@ -188,12 +280,13 @@ const ProductForm = ({ initialData = null, onSuccess, onCancel }) => {
    * US-PROD-001 - CA-2: Validate on blur
    */
   const handleSKUBlur = () => {
-    validateSKU(formData.sku);
+    if (!isEditMode) {
+      validateSKU(formData.sku);
+    }
   };
 
   /**
-   * Handle image change
-   * US-PROD-001 - CA-5: Image upload
+   * US-PROD-005 CA-6: Handle image change
    */
   const handleImageChange = (file) => {
     setFormData(prev => ({
@@ -204,6 +297,7 @@ const ProductForm = ({ initialData = null, onSuccess, onCancel }) => {
 
   /**
    * Validate form before submission
+   * US-PROD-005 CA-3: Validate editable fields
    */
   const validateForm = () => {
     const errors = {};
@@ -212,10 +306,12 @@ const ProductForm = ({ initialData = null, onSuccess, onCancel }) => {
       errors.name = 'El nombre es requerido';
     }
 
-    if (!formData.sku.trim()) {
-      errors.sku = 'El SKU es requerido';
-    } else if (skuValidation.valid === false) {
-      errors.sku = 'El SKU ya existe';
+    if (!isEditMode) {
+      if (!formData.sku.trim()) {
+        errors.sku = 'El SKU es requerido';
+      } else if (skuValidation.valid === false) {
+        errors.sku = 'El SKU ya existe';
+      }
     }
 
     const cost = parseFloat(formData.cost_price);
@@ -229,16 +325,23 @@ const ProductForm = ({ initialData = null, onSuccess, onCancel }) => {
       errors.sale_price = 'El precio de venta debe ser mayor a 0';
     }
 
-    // US-PROD-001 - CA-3: Price validation warning
+    // US-PROD-005 CA-4: Price validation warning
     if (cost > 0 && sale > 0 && sale < cost) {
       // Will show warning dialog, but not a validation error
       setShowPriceWarning(true);
       return false; // Prevent submission until user confirms
     }
 
-    const stock = parseInt(formData.initial_stock);
-    if (!formData.initial_stock || stock < 0) {
-      errors.initial_stock = 'El stock inicial debe ser 0 o mayor';
+    if (!isEditMode) {
+      const stock = parseInt(formData.initial_stock);
+      if (formData.initial_stock === '' || stock < 0) {
+        errors.initial_stock = 'El stock inicial debe ser 0 o mayor';
+      }
+    }
+
+    const minStock = parseInt(formData.min_stock_level);
+    if (formData.min_stock_level !== '' && minStock < 0) {
+      errors.min_stock_level = 'El punto de reorden no puede ser negativo';
     }
 
     if (!formData.category_id) {
@@ -246,17 +349,37 @@ const ProductForm = ({ initialData = null, onSuccess, onCancel }) => {
     }
 
     setFieldErrors(errors);
+
+    // US-PROD-005 CA-7: Check for significant changes
+    if (Object.keys(errors).length === 0 && isEditMode) {
+      const changes = detectSignificantChanges();
+      if (changes.length > 0) {
+        setSignificantChanges(changes);
+        setShowSignificantChanges(true);
+        return false; // Show confirmation dialog
+      }
+    }
+
     return Object.keys(errors).length === 0;
   };
 
   /**
-   * Handle price warning confirmation
-   * US-PROD-001 - CA-3: Allow continuing with warning
+   * US-PROD-005 CA-4: Handle price warning confirmation
    */
   const handlePriceWarningConfirm = () => {
     setShowPriceWarning(false);
-    // Proceed with submission
-    submitForm();
+    // Check for significant changes after price confirmation
+    if (isEditMode) {
+      const changes = detectSignificantChanges();
+      if (changes.length > 0) {
+        setSignificantChanges(changes);
+        setShowSignificantChanges(true);
+      } else {
+        submitForm(true); // force_price_below_cost = true
+      }
+    } else {
+      submitForm(true);
+    }
   };
 
   /**
@@ -267,9 +390,28 @@ const ProductForm = ({ initialData = null, onSuccess, onCancel }) => {
   };
 
   /**
-   * Submit form data
+   * US-PROD-005 CA-7: Handle significant changes confirmation
    */
-  const submitForm = async () => {
+  const handleSignificantChangesConfirm = () => {
+    setShowSignificantChanges(false);
+    const cost = parseFloat(formData.cost_price);
+    const sale = parseFloat(formData.sale_price);
+    const forcePriceWarning = sale < cost;
+    submitForm(forcePriceWarning);
+  };
+
+  /**
+   * Handle significant changes cancel
+   */
+  const handleSignificantChangesCancel = () => {
+    setShowSignificantChanges(false);
+  };
+
+  /**
+   * Submit form data
+   * US-PROD-005 CA-8, CA-9, CA-10: Submit with auditing and error handling
+   */
+  const submitForm = async (forcePriceBelowCost = false) => {
     setLoading(true);
     setError(null);
 
@@ -277,14 +419,30 @@ const ProductForm = ({ initialData = null, onSuccess, onCancel }) => {
       // Create FormData for multipart/form-data
       const formDataToSend = new FormData();
       formDataToSend.append('name', formData.name.trim());
-      formDataToSend.append('sku', formData.sku.trim());
+
+      if (!isEditMode) {
+        formDataToSend.append('sku', formData.sku.trim());
+      }
+
       formDataToSend.append('description', formData.description.trim());
       formDataToSend.append('cost_price', parseFloat(formData.cost_price));
       formDataToSend.append('sale_price', parseFloat(formData.sale_price));
-      formDataToSend.append('initial_stock', parseInt(formData.initial_stock));
+
+      if (!isEditMode) {
+        formDataToSend.append('initial_stock', parseInt(formData.initial_stock));
+      }
+
+      if (formData.min_stock_level !== '') {
+        formDataToSend.append('min_stock_level', parseInt(formData.min_stock_level) || 10);
+      }
+
       formDataToSend.append('category_id', formData.category_id);
 
-      // Add image if provided (CA-5)
+      if (forcePriceBelowCost) {
+        formDataToSend.append('force_price_below_cost', 'true');
+      }
+
+      // US-PROD-005 CA-6: Add image if provided
       if (formData.image) {
         formDataToSend.append('image', formData.image);
       }
@@ -297,22 +455,23 @@ const ProductForm = ({ initialData = null, onSuccess, onCancel }) => {
       }
 
       if (response.success) {
-        // Success callback
+        // US-PROD-005 CA-9: Success callback
         if (onSuccess) {
-          onSuccess(response.data);
+          onSuccess(response.data, isEditMode ? 'Producto actualizado correctamente' : 'Producto creado correctamente');
         } else {
           // Default: navigate to product list
           navigate('/products', {
             state: {
               message: isEditMode
-                ? 'Producto actualizado exitosamente'
-                : 'Producto creado exitosamente'
+                ? 'Producto actualizado correctamente'
+                : 'Producto creado correctamente',
+              severity: 'success'
             }
           });
         }
       }
     } catch (err) {
-      // US-PROD-001 - CA-8: Error handling
+      // US-PROD-005 CA-10: Error handling
       console.error('Error saving product:', err);
 
       // Handle field-specific errors
@@ -343,20 +502,37 @@ const ProductForm = ({ initialData = null, onSuccess, onCancel }) => {
   };
 
   /**
-   * Handle cancel
+   * US-PROD-005 CA-11: Handle cancel with confirmation
    */
   const handleCancel = () => {
+    if (hasUnsavedChanges) {
+      setShowCancelConfirm(true);
+    } else {
+      proceedCancel();
+    }
+  };
+
+  /**
+   * Proceed with cancel action
+   */
+  const proceedCancel = () => {
+    setShowCancelConfirm(false);
     if (onCancel) {
       onCancel();
     } else {
-      navigate('/products');
+      if (isEditMode) {
+        navigate(`/products/${initialData.id}`);
+      } else {
+        navigate('/products');
+      }
     }
   };
 
   return (
     <Paper elevation={3} sx={{ p: 4, maxWidth: 800, mx: 'auto' }}>
+      {/* US-PROD-005 CA-1: Title with product name */}
       <Typography variant="h5" gutterBottom>
-        {isEditMode ? 'Editar Producto' : 'Crear Nuevo Producto'}
+        {isEditMode ? `Editar Producto: ${initialData?.name}` : 'Crear Nuevo Producto'}
       </Typography>
 
       {/* Global error message */}
@@ -383,32 +559,46 @@ const ProductForm = ({ initialData = null, onSuccess, onCancel }) => {
             />
           </Grid>
 
-          {/* SKU - CA-1, CA-2 */}
+          {/* SKU - US-PROD-005 CA-2: Read-only when editing */}
           <Grid item xs={12} md={4}>
-            <TextField
-              required
-              fullWidth
-              label="SKU"
-              name="sku"
-              value={formData.sku}
-              onChange={handleChange}
-              onBlur={handleSKUBlur}
-              error={!!fieldErrors.sku || skuValidation.valid === false}
-              helperText={
-                fieldErrors.sku ||
-                (skuChecking ? 'Validando...' : skuValidation.message)
-              }
-              disabled={loading}
-              InputProps={{
-                endAdornment: skuChecking ? (
-                  <CircularProgress size={20} />
-                ) : skuValidation.valid === true ? (
-                  <Chip label="✓" color="success" size="small" />
-                ) : skuValidation.valid === false ? (
-                  <Chip label="✗" color="error" size="small" />
-                ) : null,
-              }}
-            />
+            <Tooltip
+              title={isEditMode ? "El SKU no puede modificarse una vez creado" : ""}
+              arrow
+            >
+              <TextField
+                required
+                fullWidth
+                label="SKU"
+                name="sku"
+                value={formData.sku}
+                onChange={handleChange}
+                onBlur={handleSKUBlur}
+                error={!!fieldErrors.sku || skuValidation.valid === false}
+                helperText={
+                  fieldErrors.sku ||
+                  (skuChecking ? 'Validando...' : skuValidation.message)
+                }
+                disabled={loading || isEditMode}
+                InputProps={{
+                  readOnly: isEditMode,
+                  endAdornment: isEditMode ? (
+                    <InfoIcon color="action" />
+                  ) : skuChecking ? (
+                    <CircularProgress size={20} />
+                  ) : skuValidation.valid === true ? (
+                    <Chip label="✓" color="success" size="small" />
+                  ) : skuValidation.valid === false ? (
+                    <Chip label="✗" color="error" size="small" />
+                  ) : null,
+                }}
+                sx={isEditMode ? {
+                  '& .MuiInputBase-input': {
+                    cursor: 'not-allowed',
+                    backgroundColor: '#f5f5f5',
+                  }
+                } : {}}
+              />
+            </Tooltip>
           </Grid>
 
           {/* Description - CA-1 */}
@@ -461,7 +651,7 @@ const ProductForm = ({ initialData = null, onSuccess, onCancel }) => {
             />
           </Grid>
 
-          {/* Profit Margin - CA-4 */}
+          {/* Profit Margin - US-PROD-005 CA-5: Show comparison */}
           <Grid item xs={12} md={4}>
             <Box
               sx={{
@@ -479,11 +669,19 @@ const ProductForm = ({ initialData = null, onSuccess, onCancel }) => {
                 Margen de Ganancia
               </Typography>
               {profitMargin !== null ? (
-                <Chip
-                  label={`${profitMargin.toFixed(2)}%`}
-                  color={getMarginColor(profitMargin)}
-                  sx={{ fontSize: '1.1rem', fontWeight: 'bold', mt: 1 }}
-                />
+                <>
+                  <Chip
+                    label={`${profitMargin.toFixed(2)}%`}
+                    color={getMarginColor(profitMargin)}
+                    sx={{ fontSize: '1.1rem', fontWeight: 'bold', mt: 1 }}
+                  />
+                  {/* US-PROD-005 CA-5: Show comparison with original */}
+                  {isEditMode && originalMargin !== null && Math.abs(profitMargin - originalMargin) > 0.01 && (
+                    <Typography variant="caption" color="textSecondary" sx={{ mt: 0.5 }}>
+                      Anterior: {originalMargin.toFixed(2)}%
+                    </Typography>
+                  )}
+                </>
               ) : (
                 <Typography variant="body2" color="textSecondary">
                   --
@@ -492,25 +690,43 @@ const ProductForm = ({ initialData = null, onSuccess, onCancel }) => {
             </Box>
           </Grid>
 
-          {/* Initial Stock - CA-1 */}
-          <Grid item xs={12} md={6}>
+          {/* US-PROD-005 CA-1: Stock is read-only when editing */}
+          {!isEditMode && (
+            <Grid item xs={12} md={6}>
+              <TextField
+                required
+                fullWidth
+                type="number"
+                label="Stock Inicial"
+                name="initial_stock"
+                value={formData.initial_stock}
+                onChange={handleChange}
+                error={!!fieldErrors.initial_stock}
+                helperText={fieldErrors.initial_stock}
+                disabled={loading}
+                inputProps={{ min: 0, step: 1 }}
+              />
+            </Grid>
+          )}
+
+          {/* US-PROD-005: Reorder Point */}
+          <Grid item xs={12} md={isEditMode ? 12 : 6}>
             <TextField
-              required
               fullWidth
               type="number"
-              label="Stock Inicial"
-              name="initial_stock"
-              value={formData.initial_stock}
+              label="Punto de Reorden"
+              name="min_stock_level"
+              value={formData.min_stock_level}
               onChange={handleChange}
-              error={!!fieldErrors.initial_stock}
-              helperText={fieldErrors.initial_stock}
-              disabled={loading || isEditMode}
+              error={!!fieldErrors.min_stock_level}
+              helperText={fieldErrors.min_stock_level || 'Nivel mínimo de stock antes de alertar'}
+              disabled={loading}
               inputProps={{ min: 0, step: 1 }}
             />
           </Grid>
 
           {/* Category - CA-1 */}
-          <Grid item xs={12} md={6}>
+          <Grid item xs={12}>
             <TextField
               required
               fullWidth
@@ -534,22 +750,25 @@ const ProductForm = ({ initialData = null, onSuccess, onCancel }) => {
             </TextField>
           </Grid>
 
-          {/* Image Upload - CA-5 */}
+          {/* US-PROD-005 CA-6: Image Upload with current image preview */}
           <Grid item xs={12}>
             <Typography variant="subtitle2" gutterBottom>
               Imagen del Producto
             </Typography>
             <ImageUpload
               value={formData.image}
+              currentImageUrl={formData.current_image_url}
               onChange={handleImageChange}
               error={!!fieldErrors.image}
               helperText={fieldErrors.image}
+              showChangeButton={isEditMode && formData.current_image_url}
             />
           </Grid>
 
           {/* Action Buttons */}
           <Grid item xs={12}>
             <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
+              {/* US-PROD-005 CA-11: Cancel button */}
               <Button
                 variant="outlined"
                 startIcon={<CancelIcon />}
@@ -562,7 +781,7 @@ const ProductForm = ({ initialData = null, onSuccess, onCancel }) => {
                 type="submit"
                 variant="contained"
                 startIcon={loading ? <CircularProgress size={20} /> : <SaveIcon />}
-                disabled={loading || skuChecking || skuValidation.valid === false}
+                disabled={loading || skuChecking || (!isEditMode && skuValidation.valid === false)}
               >
                 {loading ? 'Guardando...' : isEditMode ? 'Actualizar' : 'Crear Producto'}
               </Button>
@@ -571,7 +790,7 @@ const ProductForm = ({ initialData = null, onSuccess, onCancel }) => {
         </Grid>
       </Box>
 
-      {/* Price Warning Dialog - CA-3 */}
+      {/* US-PROD-005 CA-4: Price Warning Dialog */}
       <Dialog
         open={showPriceWarning}
         onClose={handlePriceWarningCancel}
@@ -582,8 +801,11 @@ const ProductForm = ({ initialData = null, onSuccess, onCancel }) => {
         </DialogTitle>
         <DialogContent>
           <DialogContentText>
-            El precio de venta (${formData.sale_price}) es menor que el precio de costo (${formData.cost_price}).
-            Esto resultará en una pérdida. ¿Desea continuar de todos modos?
+            ⚠️ El precio de venta (${formData.sale_price}) es menor al costo (${formData.cost_price}).
+            Esto generará pérdidas de ${(parseFloat(formData.cost_price) - parseFloat(formData.sale_price)).toFixed(2)} por unidad.
+          </DialogContentText>
+          <DialogContentText sx={{ mt: 2, fontWeight: 'bold' }}>
+            ¿Estás seguro de que deseas guardar con precio de venta menor al costo?
           </DialogContentText>
         </DialogContent>
         <DialogActions>
@@ -591,7 +813,72 @@ const ProductForm = ({ initialData = null, onSuccess, onCancel }) => {
             Cancelar
           </Button>
           <Button onClick={handlePriceWarningConfirm} color="warning" variant="contained">
-            Continuar
+            Confirmar cambios
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* US-PROD-005 CA-7: Significant Changes Dialog */}
+      <Dialog
+        open={showSignificantChanges}
+        onClose={handleSignificantChangesCancel}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <InfoIcon color="info" />
+          Confirmar Cambios Importantes
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Se detectaron los siguientes cambios significativos:
+          </DialogContentText>
+          <Box sx={{ mt: 2 }}>
+            {significantChanges.map((change, index) => (
+              <Alert key={index} severity="info" sx={{ mb: 1 }}>
+                <Typography variant="subtitle2">{change.field}</Typography>
+                <Typography variant="body2">
+                  <strong>Antes:</strong> {change.oldValue} → <strong>Ahora:</strong> {change.newValue}
+                  {change.changePercent && (
+                    <> ({change.changePercent}% de cambio)</>
+                  )}
+                </Typography>
+              </Alert>
+            ))}
+          </Box>
+          <DialogContentText sx={{ mt: 2 }}>
+            ¿Deseas confirmar estos cambios?
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleSignificantChangesCancel} color="primary">
+            Cancelar
+          </Button>
+          <Button onClick={handleSignificantChangesConfirm} color="primary" variant="contained">
+            Confirmar cambios
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* US-PROD-005 CA-11: Cancel Confirmation Dialog */}
+      <Dialog
+        open={showCancelConfirm}
+        onClose={() => setShowCancelConfirm(false)}
+      >
+        <DialogTitle>
+          ¿Descartar cambios?
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Tienes cambios sin guardar. ¿Estás seguro de que deseas descartarlos?
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setShowCancelConfirm(false)} color="primary">
+            Seguir editando
+          </Button>
+          <Button onClick={proceedCancel} color="error" variant="contained">
+            Descartar
           </Button>
         </DialogActions>
       </Dialog>

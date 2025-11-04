@@ -104,6 +104,9 @@ class ProductCreateSchema(Schema):
 class ProductUpdateSchema(Schema):
     """Schema para actualizar un producto existente"""
 
+    class Meta:
+        unknown = 'exclude'  # Ignore unknown fields like force_price_below_cost
+
     # Todos los campos son opcionales en actualización
     name = fields.Str(required=False)
     sku = fields.Str(required=False)
