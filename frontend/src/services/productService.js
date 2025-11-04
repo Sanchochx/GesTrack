@@ -106,12 +106,18 @@ const productService = {
 
   /**
    * Elimina un producto
+   * US-PROD-006: Delete product
    * @param {string} productId - ID del producto
+   * @param {Object} options - Opciones de eliminación
+   * @param {string} options.reason - Razón de eliminación (opcional)
+   * @param {boolean} options.force_with_stock - Forzar eliminación con stock
    * @returns {Promise} - Promesa con la respuesta del servidor
    */
-  async deleteProduct(productId) {
+  async deleteProduct(productId, options = {}) {
     try {
-      const response = await api.delete(`/products/${productId}`);
+      const response = await api.delete(`/products/${productId}`, {
+        data: options
+      });
       return response.data;
     } catch (error) {
       if (error.response && error.response.data) {

@@ -25,12 +25,14 @@ import StockBadge from './StockBadge';
 /**
  * ProductCardView - Vista en cards para dispositivos móviles
  * Muestra los productos en un grid responsive de cards
+ * US-PROD-006: Restricción de eliminación solo para Admin
  */
 const ProductCardView = ({
   products = [],
   onView,
   onEdit,
   onDelete,
+  isAdmin = false, // US-PROD-006 CA-1
 }) => {
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedProduct, setSelectedProduct] = useState(null);
@@ -268,11 +270,24 @@ const ProductCardView = ({
           <ListItemText>Editar</ListItemText>
         </MenuItem>
         <Divider />
-        <MenuItem onClick={handleDelete}>
+        {/* US-PROD-006 CA-1: Solo Admin puede eliminar */}
+        <MenuItem
+          onClick={handleDelete}
+          disabled={!isAdmin}
+        >
           <ListItemIcon>
-            <DeleteIcon fontSize="small" color="error" />
+            <DeleteIcon
+              fontSize="small"
+              color={isAdmin ? "error" : "disabled"}
+            />
           </ListItemIcon>
-          <ListItemText sx={{ color: 'error.main' }}>Eliminar</ListItemText>
+          <ListItemText
+            sx={{ color: isAdmin ? 'error.main' : 'text.disabled' }}
+            secondary={!isAdmin ? "Solo administradores" : null}
+            secondaryTypographyProps={{ variant: 'caption' }}
+          >
+            Eliminar
+          </ListItemText>
         </MenuItem>
       </Menu>
     </>

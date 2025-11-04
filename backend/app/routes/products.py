@@ -4,10 +4,12 @@ Endpoints para CRUD completo de productos (US-PROD-001)
 """
 from flask import Blueprint, request, jsonify, current_app
 from flask_jwt_extended import jwt_required, get_jwt_identity
+from datetime import datetime
 from app import db
 from app.models.product import Product
 from app.models.category import Category
 from app.models.inventory_movement import InventoryMovement
+from app.models.product_deletion_audit import ProductDeletionAudit
 from app.schemas.product_schema import (
     product_create_schema,
     product_update_schema,
@@ -283,8 +285,11 @@ def get_products():
         low_stock_only = request.args.get('low_stock_only', 'false').lower() == 'true'
         stock_status = request.args.get('stock_status', '').strip().lower()  # US-PROD-003
 
-        # Query base - productos activos
-        query = Product.query.filter(Product.is_active == True)
+        # Query base - productos activos y no eliminados (US-PROD-006 CA-9)
+        query = Product.query.filter(
+            Product.is_active == True,
+            Product.deleted_at == None
+        )
 
         # Aplicar búsqueda
         if search:
@@ -318,13 +323,17 @@ def get_products():
         total_products = query.count()
 
         # Estadísticas de stock usando SQL agregadas (más eficiente)
+        # US-PROD-006 CA-9: Excluir productos eliminados
         stock_stats = db.session.query(
             func.count(case((Product.stock_quantity > Product.min_stock_level, 1))).label('normal_stock'),
             func.count(case(
                 ((Product.stock_quantity > 0) & (Product.stock_quantity <= Product.min_stock_level), 1)
             )).label('low_stock'),
             func.count(case((Product.stock_quantity == 0, 1))).label('out_of_stock')
-        ).filter(Product.is_active == True)
+        ).filter(
+            Product.is_active == True,
+            Product.deleted_at == None
+        )
 
         # Aplicar los mismos filtros que la query principal
         if search:
@@ -793,6 +802,138 @@ def update_product(product_id):
             'error': {
                 'code': 'SERVER_ERROR',
                 'message': 'Error al actualizar producto',
+                'details': str(e)
+            }
+        }), 500
+
+
+@products_bp.route('/<product_id>', methods=['DELETE'])
+@jwt_required()
+@require_role(['Admin'])  # US-PROD-006 CA-1: Solo Admin puede eliminar
+def delete_product(product_id):
+    """
+    DELETE /api/products/:id
+    US-PROD-006: Eliminar producto (soft delete)
+
+    Criterios de Aceptación implementados:
+    - CA-1: Solo Admin puede eliminar productos
+    - CA-3: Validación de pedidos asociados (preparado para cuando existan modelos)
+    - CA-4: Validación de stock existente
+    - CA-5: Registro en tabla de auditoría
+    - CA-6: Eliminación de imagen del servidor
+    - CA-9: Soft delete con deleted_at
+    - CA-7 & CA-8: Mensajes y manejo de errores
+
+    Body (JSON opcional):
+        - reason: Razón de eliminación (opcional)
+        - force_with_stock: Confirmar eliminación con stock (booleano)
+    """
+    try:
+        # Obtener usuario actual
+        current_user_id = get_jwt_identity()
+
+        # Buscar producto
+        product = Product.query.get(product_id)
+
+        if not product:
+            return jsonify({
+                'success': False,
+                'error': {
+                    'code': 'NOT_FOUND',
+                    'message': 'Producto no encontrado'
+                }
+            }), 404
+
+        # Verificar si ya está eliminado
+        if product.deleted_at is not None:
+            return jsonify({
+                'success': False,
+                'error': {
+                    'code': 'ALREADY_DELETED',
+                    'message': 'Este producto ya ha sido eliminado'
+                }
+            }), 400
+
+        # Obtener datos del body (JSON)
+        data = request.get_json() or {}
+        reason = data.get('reason', None)
+        force_with_stock = data.get('force_with_stock', False)
+
+        # CA-3: Validar pedidos asociados
+        # TODO: Cuando se implementen los modelos Order y PurchaseOrder, agregar validación aquí
+        # Por ahora, dejamos preparada la estructura para futuras validaciones
+        has_orders = False  # Placeholder - cuando existan modelos, verificar aquí
+
+        if has_orders:
+            return jsonify({
+                'success': False,
+                'error': {
+                    'code': 'HAS_ASSOCIATED_ORDERS',
+                    'message': 'No se puede eliminar este producto porque tiene pedidos asociados',
+                    'details': {
+                        'purchase_orders_count': 0,  # Placeholder
+                        'sales_orders_count': 0,  # Placeholder
+                        'suggestion': 'Puedes marcarlo como inactivo en su lugar'
+                    }
+                }
+            }), 400
+
+        # CA-4: Validar stock existente
+        if product.stock_quantity > 0 and not force_with_stock:
+            return jsonify({
+                'success': False,
+                'error': {
+                    'code': 'HAS_STOCK',
+                    'message': f'Este producto tiene {product.stock_quantity} unidades en stock',
+                    'details': {
+                        'requires_confirmation': True,
+                        'stock_quantity': product.stock_quantity
+                    }
+                }
+            }), 400
+
+        # CA-5: Crear registro de auditoría
+        audit_record = ProductDeletionAudit.create_audit_record(
+            product=product,
+            user_id=current_user_id,
+            reason=reason
+        )
+        db.session.add(audit_record)
+
+        # CA-9: Soft delete - marcar como eliminado
+        product.deleted_at = datetime.utcnow()
+        product.is_active = False
+
+        # CA-6: Eliminar imagen del servidor (si no es la default)
+        if product.image_url and product.image_url != get_default_product_image():
+            try:
+                delete_product_image(product.image_url, current_app.config['UPLOAD_FOLDER'])
+            except Exception as img_error:
+                # Log del error pero no falla la eliminación
+                current_app.logger.warning(f'Error al eliminar imagen: {str(img_error)}')
+
+        # Commit de cambios
+        db.session.commit()
+
+        # CA-7: Respuesta exitosa
+        return jsonify({
+            'success': True,
+            'message': 'Producto eliminado correctamente',
+            'data': {
+                'product_id': product_id,
+                'deleted_at': product.deleted_at.isoformat(),
+                'audit_id': audit_record.id
+            }
+        }), 200
+
+    except Exception as e:
+        # CA-8: Manejo de errores
+        db.session.rollback()
+        return jsonify({
+            'success': False,
+            'error': {
+                'code': 'SERVER_ERROR',
+                'message': 'Error al eliminar producto',
                 'details': str(e)
             }
         }), 500

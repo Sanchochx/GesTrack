@@ -38,6 +38,7 @@ class Product(db.Model):
     # Timestamps
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
+    deleted_at = db.Column(db.DateTime, nullable=True)  # US-PROD-006 CA-9: Soft delete
 
     # Relaciones
     category = db.relationship('Category', back_populates='products')
@@ -60,7 +61,8 @@ class Product(db.Model):
             'image_url': self.image_url,
             'is_active': self.is_active,
             'created_at': self.created_at.isoformat() if self.created_at else None,
-            'updated_at': self.updated_at.isoformat() if self.updated_at else None
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None,
+            'deleted_at': self.deleted_at.isoformat() if self.deleted_at else None
         }
 
     @staticmethod

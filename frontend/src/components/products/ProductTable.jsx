@@ -32,7 +32,8 @@ import {
 import { useNavigate } from 'react-router-dom';
 import StockBadge from './StockBadge';
 import ProductCardView from './ProductCardView';
-import productService from '../../services/productService';
+import DeleteProductDialog from './DeleteProductDialog';
+import authService from '../../services/authService';
 
 /**
  * ProductTable Component
@@ -64,8 +65,10 @@ const ProductTable = ({
 
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [productToDelete, setProductToDelete] = useState(null);
-  const [deleting, setDeleting] = useState(false);
-  const [deleteError, setDeleteError] = useState(null);
+
+  // US-PROD-006 CA-1: Verificar si el usuario es Admin
+  const user = authService.getCurrentUser();
+  const isAdmin = user?.role === 'Admin';
 
   /**
    * Handle sort column click
@@ -94,50 +97,30 @@ const ProductTable = ({
 
   /**
    * Handle delete product request
-   * CA-7: Quick actions - delete
+   * US-PROD-006 CA-7: Quick actions - delete
    */
   const handleDeleteRequest = (product) => {
     setProductToDelete(product);
-    setDeleteError(null);
     setDeleteDialogOpen(true);
   };
 
   /**
-   * Handle delete product confirmation
+   * Handle delete dialog close
+   * US-PROD-006
    */
-  const handleDeleteConfirm = async () => {
-    if (!productToDelete) return;
-
-    setDeleting(true);
-    setDeleteError(null);
-
-    try {
-      const response = await productService.deleteProduct(productToDelete.id);
-
-      if (response.success) {
-        setDeleteDialogOpen(false);
-        setProductToDelete(null);
-        onProductDeleted && onProductDeleted();
-      } else {
-        setDeleteError(response.error?.message || 'Error al eliminar el producto');
-      }
-    } catch (err) {
-      console.error('Error deleting product:', err);
-      setDeleteError(err.error?.message || 'Error al eliminar el producto');
-    } finally {
-      setDeleting(false);
-    }
+  const handleDeleteDialogClose = () => {
+    setDeleteDialogOpen(false);
+    setProductToDelete(null);
   };
 
   /**
-   * Handle delete dialog close
+   * Handle product deletion success
+   * US-PROD-006 CA-7
    */
-  const handleDeleteCancel = () => {
-    if (!deleting) {
-      setDeleteDialogOpen(false);
-      setProductToDelete(null);
-      setDeleteError(null);
-    }
+  const handleProductDeleted = () => {
+    setDeleteDialogOpen(false);
+    setProductToDelete(null);
+    onProductDeleted && onProductDeleted();
   };
 
   /**
@@ -192,6 +175,7 @@ const ProductTable = ({
             onView={handleView}
             onEdit={handleEdit}
             onDelete={handleDeleteRequest}
+            isAdmin={isAdmin} // US-PROD-006 CA-1
           />
           {/* Pagination for mobile */}
           {products.length > 0 && (
@@ -358,14 +342,18 @@ const ProductTable = ({
                           <EditIcon fontSize="small" />
                         </IconButton>
                       </Tooltip>
-                      <Tooltip title="Eliminar">
-                        <IconButton
-                          size="small"
-                          color="error"
-                          onClick={() => handleDeleteRequest(product)}
-                        >
-                          <DeleteIcon fontSize="small" />
-                        </IconButton>
+                      {/* US-PROD-006 CA-1: Solo mostrar eliminar para Admin */}
+                      <Tooltip title={isAdmin ? "Eliminar" : "Solo administradores pueden eliminar"}>
+                        <span>
+                          <IconButton
+                            size="small"
+                            color="error"
+                            onClick={() => handleDeleteRequest(product)}
+                            disabled={!isAdmin}
+                          >
+                            <DeleteIcon fontSize="small" />
+                          </IconButton>
+                        </span>
                       </Tooltip>
                     </TableCell>
                   </TableRow>
@@ -394,72 +382,13 @@ const ProductTable = ({
         </TableContainer>
       )}
 
-      {/* Delete Confirmation Dialog */}
-      <Dialog
+      {/* US-PROD-006: Delete Product Dialog */}
+      <DeleteProductDialog
         open={deleteDialogOpen}
-        onClose={handleDeleteCancel}
-        maxWidth="sm"
-        fullWidth
-      >
-        <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <WarningIcon color="warning" />
-          Eliminar Producto
-        </DialogTitle>
-
-        <DialogContent>
-          {deleteError && (
-            <Box sx={{ mb: 2, p: 2, backgroundColor: '#ffebee', borderRadius: 1 }}>
-              <Typography variant="body2" color="error">
-                {deleteError}
-              </Typography>
-            </Box>
-          )}
-
-          <DialogContentText>
-            ¿Estás seguro de que deseas eliminar el producto{' '}
-            <strong>{productToDelete?.name}</strong>?
-          </DialogContentText>
-
-          {productToDelete && (
-            <Box
-              sx={{
-                mt: 2,
-                p: 2,
-                backgroundColor: 'grey.100',
-                borderRadius: 1,
-              }}
-            >
-              <Typography variant="body2">
-                <strong>SKU:</strong> {productToDelete.sku}
-              </Typography>
-              <Typography variant="body2">
-                <strong>Precio:</strong> {formatPrice(productToDelete.sale_price)}
-              </Typography>
-              <Typography variant="body2">
-                <strong>Stock:</strong> {productToDelete.stock_quantity} unidades
-              </Typography>
-            </Box>
-          )}
-
-          <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
-            Esta acción no se puede deshacer.
-          </Typography>
-        </DialogContent>
-
-        <DialogActions sx={{ px: 3, pb: 2 }}>
-          <Button onClick={handleDeleteCancel} disabled={deleting}>
-            Cancelar
-          </Button>
-          <Button
-            onClick={handleDeleteConfirm}
-            color="error"
-            variant="contained"
-            disabled={deleting}
-          >
-            {deleting ? 'Eliminando...' : 'Eliminar'}
-          </Button>
-        </DialogActions>
-      </Dialog>
+        product={productToDelete}
+        onClose={handleDeleteDialogClose}
+        onDeleted={handleProductDeleted}
+      />
     </>
   );
 };

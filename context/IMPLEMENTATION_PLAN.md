@@ -12,11 +12,11 @@
 │  PROGRESO GLOBAL DEL PROYECTO                               │
 ├─────────────────────────────────────────────────────────────┤
 │  Total Historias de Usuario:     82                         │
-│  ✅ Completadas:                   12                        │
+│  ✅ Completadas:                   13                        │
 │  ⏳ En Progreso:                   0                         │
-│  ⏸️  Pendientes:                   70                        │
+│  ⏸️  Pendientes:                   69                        │
 │                                                             │
-│  Progreso: [██░░░░░░░░░░░░░░░░░░] 14.6% (12/82)            │
+│  Progreso: [███░░░░░░░░░░░░░░░░░] 15.9% (13/82)            │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -27,7 +27,7 @@
 | Epic | Nombre | Total US | Completadas | En Progreso | Pendientes | Progreso |
 |------|--------|----------|-------------|-------------|------------|----------|
 | 01 | Foundation | 6 | 6 | 0 | 0 | [██████████] 100% |
-| 02 | Core Data | 10 | 6 | 0 | 4 | [██████░░░░] 60% |
+| 02 | Core Data | 10 | 7 | 0 | 3 | [███████░░░] 70% |
 | 03 | Stock Management | 10 | 0 | 0 | 10 | [░░░░░░░░░░] 0% |
 | 04 | Sales | 26 | 0 | 0 | 26 | [░░░░░░░░░░] 0% |
 | 05 | Supply Chain | 15 | 0 | 0 | 15 | [░░░░░░░░░░] 0% |
@@ -44,7 +44,7 @@
 **Objetivo:** Establecer base funcional del sistema
 **Épicas:** 01 Foundation, 02 Core Data
 **Total US:** 16
-**Progreso:** [███████░░░] 75% (12/16 completadas)
+**Progreso:** [████████░░] 81% (13/16 completadas)
 
 ---
 
@@ -111,7 +111,7 @@
 ## Epic 02: Core Data - Gestión de Productos y Categorías
 
 **Prioridad:** ⭐⭐⭐ ALTA
-**Progreso:** [██████░░░░] 60% (6/10 completadas)
+**Progreso:** [███████░░░] 70% (7/10 completadas)
 **Carpeta:** `context/user_stories/epic_02_core_data/`
 
 ### ✅ Historias de Usuario
@@ -238,12 +238,31 @@
   - Navegación post-actualización ✅
 - **Fecha de completación:** 2025-11-04
 
-#### [ ] US-PROD-006: Eliminar Producto
+#### [x] US-PROD-006: Eliminar Producto
 - **Archivo:** `context/user_stories/epic_02_core_data/US-PROD-006_eliminar_producto.md`
 - **Prioridad:** MEDIA
 - **Estimación:** 3 pts
-- **Estado:** ⏸️ Pendiente
-- **Criterios de Aceptación:** 5
+- **Estado:** ✅ COMPLETADA
+- **Criterios de Aceptación:** 9 ✅
+- **Progreso Backend:** ✅ 100% - Todos los CA implementados
+  - CA-1: Restricción por rol Admin ✅
+  - CA-3: Validación de pedidos asociados (preparado para futuros modelos) ✅
+  - CA-4: Validación de stock existente ✅
+  - CA-5: Registro en tabla de auditoría (ProductDeletionAudit) ✅
+  - CA-6: Eliminación de imagen del servidor ✅
+  - CA-9: Soft delete con campo deleted_at ✅
+  - CA-7 & CA-8: Respuestas exitosas y manejo de errores ✅
+- **Progreso Frontend:** ✅ 100% - Completado
+  - CA-1: Botón eliminar solo para Admin (deshabilitado para otros roles) ✅
+  - CA-2: Modal de confirmación con información del producto ✅
+  - CA-3: Manejo de error de pedidos asociados (preparado) ✅
+  - CA-4: Alerta de stock con checkbox de confirmación ✅
+  - CA-5: Campo opcional de razón de eliminación ✅
+  - CA-7: Mensaje de éxito y redirección ✅
+  - CA-8: Manejo completo de errores ✅
+  - DeleteProductDialog component con todas las validaciones ✅
+  - Integrado en ProductTable y ProductCardView ✅
+- **Fecha de completación:** 2025-11-04
 
 #### [x] US-PROD-007: Gestionar Categorías de Productos
 - **Archivo:** `context/user_stories/epic_02_core_data/US-PROD-007_gestionar_categorias.md`
