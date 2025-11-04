@@ -442,7 +442,15 @@ def get_products():
 def get_product(product_id):
     """
     GET /api/products/:id
-    CA-7: Obtener detalles de un producto específico
+    US-PROD-004: Obtener detalles completos de un producto específico
+
+    Incluye:
+    - Información básica del producto
+    - Información de categoría
+    - Margen de ganancia calculado
+    - Estado de stock y alertas
+    - Últimos 5 movimientos de inventario
+    - Productos similares (misma categoría)
     """
     try:
         product = Product.query.get(product_id)
@@ -458,7 +466,12 @@ def get_product(product_id):
 
         # Preparar respuesta con datos completos
         product_data = product.to_dict()
+
+        # CA-2: Cálculo de margen de ganancia
         product_data['profit_margin'] = product.calculate_profit_margin()
+        product_data['profit_per_unit'] = float(product.sale_price - product.cost_price) if product.sale_price and product.cost_price else 0.0
+
+        # CA-1: Información de categoría completa
         if product.category:
             product_data['category'] = {
                 'id': product.category.id,
@@ -466,6 +479,65 @@ def get_product(product_id):
                 'color': product.category.color,
                 'icon': product.category.icon
             }
+        else:
+            product_data['category'] = None
+
+        # CA-3 & CA-4: Estado de stock e indicadores de alerta
+        stock_percentage = 0
+        if product.min_stock_level and product.min_stock_level > 0:
+            stock_percentage = min(100, (product.stock_quantity / product.min_stock_level * 100))
+
+        product_data['stock_status'] = {
+            'is_low_stock': product.stock_quantity <= product.min_stock_level and product.stock_quantity > 0,
+            'is_out_of_stock': product.stock_quantity == 0,
+            'is_normal': product.stock_quantity > product.min_stock_level,
+            'reorder_units': max(0, product.min_stock_level - product.stock_quantity) if product.stock_quantity <= product.min_stock_level else 0,
+            'stock_percentage': stock_percentage
+        }
+
+        # CA-7: Últimos 5 movimientos de inventario
+        recent_movements = InventoryMovement.query.filter_by(
+            product_id=product_id
+        ).order_by(
+            InventoryMovement.created_at.desc()
+        ).limit(5).all()
+
+        product_data['recent_movements'] = [
+            {
+                'id': mov.id,
+                'movement_type': mov.movement_type,
+                'quantity': mov.quantity,
+                'previous_stock': mov.previous_stock,
+                'new_stock': mov.new_stock,
+                'reason': mov.reason,
+                'reference': mov.reference,
+                'notes': mov.notes,
+                'created_at': mov.created_at.isoformat() if mov.created_at else None,
+                'user_id': mov.user_id
+            }
+            for mov in recent_movements
+        ]
+
+        # CA-7: Productos similares (misma categoría, máximo 5)
+        similar_products = Product.query.filter(
+            Product.category_id == product.category_id,
+            Product.id != product.id,
+            Product.is_active == True
+        ).order_by(
+            Product.name.asc()
+        ).limit(5).all()
+
+        product_data['similar_products'] = [
+            {
+                'id': p.id,
+                'name': p.name,
+                'sku': p.sku,
+                'sale_price': float(p.sale_price) if p.sale_price else 0.0,
+                'stock_quantity': p.stock_quantity,
+                'image_url': p.image_url
+            }
+            for p in similar_products
+        ]
 
         return jsonify({
             'success': True,

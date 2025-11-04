@@ -12,11 +12,11 @@
 │  PROGRESO GLOBAL DEL PROYECTO                               │
 ├─────────────────────────────────────────────────────────────┤
 │  Total Historias de Usuario:     82                         │
-│  ✅ Completadas:                   10                        │
+│  ✅ Completadas:                   11                        │
 │  ⏳ En Progreso:                   0                         │
-│  ⏸️  Pendientes:                   72                        │
+│  ⏸️  Pendientes:                   71                        │
 │                                                             │
-│  Progreso: [██░░░░░░░░░░░░░░░░░░] 12.2% (10/82)            │
+│  Progreso: [██░░░░░░░░░░░░░░░░░░] 13.4% (11/82)            │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -27,7 +27,7 @@
 | Epic | Nombre | Total US | Completadas | En Progreso | Pendientes | Progreso |
 |------|--------|----------|-------------|-------------|------------|----------|
 | 01 | Foundation | 6 | 6 | 0 | 0 | [██████████] 100% |
-| 02 | Core Data | 10 | 4 | 0 | 6 | [████░░░░░░] 40% |
+| 02 | Core Data | 10 | 5 | 0 | 5 | [█████░░░░░] 50% |
 | 03 | Stock Management | 10 | 0 | 0 | 10 | [░░░░░░░░░░] 0% |
 | 04 | Sales | 26 | 0 | 0 | 26 | [░░░░░░░░░░] 0% |
 | 05 | Supply Chain | 15 | 0 | 0 | 15 | [░░░░░░░░░░] 0% |
@@ -44,7 +44,7 @@
 **Objetivo:** Establecer base funcional del sistema
 **Épicas:** 01 Foundation, 02 Core Data
 **Total US:** 16
-**Progreso:** [██████░░░░] 62.5% (10/16 completadas)
+**Progreso:** [██████░░░░] 68.75% (11/16 completadas)
 
 ---
 
@@ -111,7 +111,7 @@
 ## Epic 02: Core Data - Gestión de Productos y Categorías
 
 **Prioridad:** ⭐⭐⭐ ALTA
-**Progreso:** [████░░░░░░] 40% (4/10 completadas)
+**Progreso:** [█████░░░░░] 50% (5/10 completadas)
 **Carpeta:** `context/user_stories/epic_02_core_data/`
 
 ### ✅ Historias de Usuario
@@ -187,12 +187,29 @@
   - Product counts en categories endpoint ✅
 - **Fecha de completación:** 2025-10-30
 
-#### [ ] US-PROD-004: Ver Detalles de Producto
+#### [x] US-PROD-004: Ver Detalles de Producto
 - **Archivo:** `context/user_stories/epic_02_core_data/US-PROD-004_ver_detalles_producto.md`
 - **Prioridad:** MEDIA
 - **Estimación:** 3 pts
-- **Estado:** ⏸️ Pendiente
-- **Criterios de Aceptación:** 5
+- **Estado:** ✅ COMPLETADA
+- **Criterios de Aceptación:** 9 ✅
+- **Progreso Backend:** ✅ 100% - API mejorada con info completa
+  - GET /api/products/{id} con toda la información ✅
+  - Información de categoría, estado de stock, margen de ganancia ✅
+  - Últimos 5 movimientos de inventario ✅
+  - Productos similares (misma categoría) ✅
+- **Progreso Frontend:** ✅ 100% - Completado
+  - CA-1: Información básica (imagen, nombre, SKU, descripción, categoría, estado) ✅
+  - CA-2: Precios con margen de ganancia y código de colores (verde >30%, amarillo 15-30%, rojo <15%) ✅
+  - CA-3: Información de inventario con barra de progreso visual ✅
+  - CA-4: Alertas de stock bajo y sin stock con botones de acción ✅
+  - CA-5: Metadatos con fechas relativas ("hace 2 días") y absolutas en hover ✅
+  - CA-6: Botones de acción (Volver, Ver Historial, Crear Pedido, Editar, Eliminar) ✅
+  - CA-7: Enlaces relacionados (categoría clickeable, movimientos recientes, productos similares) ✅
+  - CA-8: Vista responsive (desktop 2 columnas, tablet/móvil stack vertical) ✅
+  - CA-9: Placeholder con icono "Sin imagen disponible" y botón "Agregar imagen" ✅
+  - Breadcrumbs de navegación (Inicio > Productos > {Nombre}) ✅
+- **Fecha de completación:** 2025-11-04
 
 #### [ ] US-PROD-005: Editar Producto
 - **Archivo:** `context/user_stories/epic_02_core_data/US-PROD-005_editar_producto.md`

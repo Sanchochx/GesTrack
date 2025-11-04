@@ -94,20 +94,20 @@ Barra de acciones con botones:
 - Caché de detalles de producto (10 minutos)
 
 ## Definición de Hecho
-- [ ] Frontend: Vista de detalles de producto implementada
-- [ ] Frontend: Secciones de información básica, precios, inventario
-- [ ] Frontend: Alertas de stock bajo visibles
-- [ ] Frontend: Metadatos de creación y actualización
-- [ ] Frontend: Botones de acción con permisos
-- [ ] Frontend: Enlaces relacionados funcionales
-- [ ] Frontend: Vista responsive
-- [ ] Frontend: Manejo de imagen no disponible
-- [ ] Backend: API GET /api/products/{id}
-- [ ] Backend: Incluir información de relaciones
-- [ ] Breadcrumbs de navegación
-- [ ] Código de colores para margen de ganancia
-- [ ] Pruebas unitarias y de integración
-- [ ] Documentación de API
+- [x] Frontend: Vista de detalles de producto implementada
+- [x] Frontend: Secciones de información básica, precios, inventario
+- [x] Frontend: Alertas de stock bajo visibles
+- [x] Frontend: Metadatos de creación y actualización
+- [x] Frontend: Botones de acción con permisos
+- [x] Frontend: Enlaces relacionados funcionales
+- [x] Frontend: Vista responsive
+- [x] Frontend: Manejo de imagen no disponible
+- [x] Backend: API GET /api/products/{id}
+- [x] Backend: Incluir información de relaciones
+- [x] Breadcrumbs de navegación
+- [x] Código de colores para margen de ganancia
+- [ ] Pruebas unitarias y de integración (opcional en v1.0)
+- [x] Documentación de API (comentarios en código)
 
 ## Dependencias
 - US-PROD-001 (Crear Producto) debe estar completo
