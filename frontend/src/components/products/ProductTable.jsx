@@ -236,18 +236,21 @@ const ProductTable = ({
                 </TableRow>
               ) : (
                 products.map((product) => {
-                const isLowStock = product.stock_quantity <= product.min_stock_level;
+                // US-PROD-008 CA-3: Determinar estado del stock usando reorder_point
+                const reorderPoint = product.reorder_point || product.min_stock_level || 10;
                 const isOutOfStock = product.stock_quantity === 0;
+                const isLowStock = product.stock_quantity > 0 && product.stock_quantity <= reorderPoint;
 
                 return (
                   <TableRow
                     key={product.id}
                     hover
                     sx={{
+                      // US-PROD-008 CA-3: Resaltar fila según estado de stock
                       backgroundColor: isOutOfStock
-                        ? '#ffebee'
+                        ? '#ffebee'  // Rojo tenue para sin stock
                         : isLowStock
-                        ? '#fff3e0'
+                        ? '#fff3e0'  // Naranja/amarillo tenue para stock bajo
                         : 'inherit',
                       '&:hover': {
                         backgroundColor: isOutOfStock
@@ -313,10 +316,11 @@ const ProductTable = ({
                       </Typography>
                     </TableCell>
 
-                    {/* Stock with Badge */}
+                    {/* Stock with Badge - US-PROD-008 CA-3 */}
                     <TableCell>
                       <StockBadge
                         stock={product.stock_quantity}
+                        reorderPoint={product.reorder_point}
                         minStockLevel={product.min_stock_level}
                         showQuantity={true}
                       />

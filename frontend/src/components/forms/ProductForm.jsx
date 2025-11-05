@@ -55,6 +55,7 @@ const ProductForm = ({ initialData = null, onSuccess, onCancel }) => {
     sale_price: '',
     initial_stock: '',
     min_stock_level: '',
+    reorder_point: '',  // US-PROD-008 CA-1: Punto de reorden
     category_id: '',
     image: null,
     current_image_url: '',
@@ -89,6 +90,7 @@ const ProductForm = ({ initialData = null, onSuccess, onCancel }) => {
         sale_price: initialData.sale_price || '',
         initial_stock: initialData.stock_quantity || '',
         min_stock_level: initialData.min_stock_level || '',
+        reorder_point: initialData.reorder_point || '',  // US-PROD-008 CA-1
         category_id: initialData.category_id || '',
         image: null,
         current_image_url: initialData.image_url || '',
@@ -122,6 +124,7 @@ const ProductForm = ({ initialData = null, onSuccess, onCancel }) => {
         formData.cost_price !== originalData.cost_price ||
         formData.sale_price !== originalData.sale_price ||
         formData.min_stock_level !== originalData.min_stock_level ||
+        formData.reorder_point !== originalData.reorder_point ||  // US-PROD-008 CA-1
         formData.category_id !== originalData.category_id ||
         formData.image !== null;
       setHasUnsavedChanges(changed);
@@ -341,7 +344,13 @@ const ProductForm = ({ initialData = null, onSuccess, onCancel }) => {
 
     const minStock = parseInt(formData.min_stock_level);
     if (formData.min_stock_level !== '' && minStock < 0) {
-      errors.min_stock_level = 'El punto de reorden no puede ser negativo';
+      errors.min_stock_level = 'El nivel mínimo de stock no puede ser negativo';
+    }
+
+    // US-PROD-008 CA-1: Validar punto de reorden
+    const reorderPoint = parseInt(formData.reorder_point);
+    if (formData.reorder_point !== '' && reorderPoint < 0) {
+      errors.reorder_point = 'El punto de reorden no puede ser negativo';
     }
 
     if (!formData.category_id) {
@@ -434,6 +443,11 @@ const ProductForm = ({ initialData = null, onSuccess, onCancel }) => {
 
       if (formData.min_stock_level !== '') {
         formDataToSend.append('min_stock_level', parseInt(formData.min_stock_level) || 10);
+      }
+
+      // US-PROD-008 CA-1: Agregar punto de reorden
+      if (formData.reorder_point !== '') {
+        formDataToSend.append('reorder_point', parseInt(formData.reorder_point) || 10);
       }
 
       formDataToSend.append('category_id', formData.category_id);
@@ -709,20 +723,22 @@ const ProductForm = ({ initialData = null, onSuccess, onCancel }) => {
             </Grid>
           )}
 
-          {/* US-PROD-005: Reorder Point */}
+          {/* US-PROD-008 CA-1: Punto de Reorden */}
           <Grid item xs={12} md={isEditMode ? 12 : 6}>
-            <TextField
-              fullWidth
-              type="number"
-              label="Punto de Reorden"
-              name="min_stock_level"
-              value={formData.min_stock_level}
-              onChange={handleChange}
-              error={!!fieldErrors.min_stock_level}
-              helperText={fieldErrors.min_stock_level || 'Nivel mínimo de stock antes de alertar'}
-              disabled={loading}
-              inputProps={{ min: 0, step: 1 }}
-            />
+            <Tooltip title="Cantidad mínima antes de alertar para reabastecer" arrow placement="top">
+              <TextField
+                fullWidth
+                type="number"
+                label="Punto de Reorden"
+                name="reorder_point"
+                value={formData.reorder_point}
+                onChange={handleChange}
+                error={!!fieldErrors.reorder_point}
+                helperText={fieldErrors.reorder_point || 'Cantidad mínima antes de alertar para reabastecer'}
+                disabled={loading}
+                inputProps={{ min: 0, step: 1 }}
+              />
+            </Tooltip>
           </Grid>
 
           {/* Category - CA-1 */}

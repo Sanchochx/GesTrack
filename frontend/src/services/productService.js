@@ -143,6 +143,24 @@ const productService = {
       throw { success: false, error: { message: 'Error de conexión con el servidor' } };
     }
   },
+
+  /**
+   * Obtiene productos con stock bajo
+   * US-PROD-008 CA-4: Vista dedicada de productos con stock bajo
+   * @param {Object} params - Parámetros de consulta (page, per_page, sort_by, order)
+   * @returns {Promise} - Promesa con la lista de productos con stock bajo y estadísticas
+   */
+  async getLowStockProducts(params = {}) {
+    try {
+      const response = await api.get('/products/low-stock', { params });
+      return response.data;
+    } catch (error) {
+      if (error.response && error.response.data) {
+        throw error.response.data;
+      }
+      throw { success: false, error: { message: 'Error de conexión con el servidor' } };
+    }
+  },
 };
 
 export default productService;

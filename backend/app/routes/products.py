@@ -137,7 +137,8 @@ def create_product():
             cost_price=validated_data['cost_price'],
             sale_price=validated_data['sale_price'],
             stock_quantity=validated_data['initial_stock'],
-            min_stock_level=validated_data.get('reorder_point', 10),
+            min_stock_level=10,  # Default min stock level
+            reorder_point=validated_data.get('reorder_point', 10),  # US-PROD-008 CA-1
             category_id=validated_data['category_id'],
             image_url=image_url,
             is_active=True
@@ -446,6 +447,113 @@ def get_products():
         }), 500
 
 
+@products_bp.route('/low-stock', methods=['GET'])
+@jwt_required()
+def get_low_stock_products():
+    """
+    GET /api/products/low-stock
+    US-PROD-008 CA-2 & CA-4: Obtener productos con stock bajo
+
+    Query params:
+        - page: Número de página (default: 1)
+        - per_page: Elementos por página (default: 20)
+        - sort_by: Campo para ordenar (default: stock_quantity)
+        - order: Orden ascendente/descendente (asc/desc, default: asc)
+
+    Returns:
+        Lista de productos donde stock_quantity <= reorder_point
+        Ordenados por stock más bajo primero (productos sin stock al inicio)
+    """
+    try:
+        # Parámetros de paginación
+        page = request.args.get('page', 1, type=int)
+        per_page = request.args.get('per_page', 20, type=int)
+        sort_by = request.args.get('sort_by', 'stock_quantity', type=str)
+        order = request.args.get('order', 'asc', type=str)
+
+        # US-PROD-008 CA-2: Query para productos con stock bajo
+        # stock_quantity <= reorder_point AND stock_quantity > 0 OR stock_quantity = 0
+        query = Product.query.filter(
+            Product.is_active == True,
+            Product.deleted_at == None,
+            Product.stock_quantity <= Product.reorder_point
+        )
+
+        # Ordenamiento
+        if hasattr(Product, sort_by):
+            order_column = getattr(Product, sort_by)
+            if order == 'desc':
+                query = query.order_by(order_column.desc())
+            else:
+                query = query.order_by(order_column.asc())
+        else:
+            # Default: ordenar por stock, productos sin stock primero
+            query = query.order_by(Product.stock_quantity.asc())
+
+        # Paginación
+        pagination = query.paginate(
+            page=page,
+            per_page=per_page,
+            error_out=False
+        )
+
+        products = pagination.items
+
+        # Serializar productos con información adicional
+        products_data = []
+        for product in products:
+            product_dict = product.to_dict()
+            product_dict['profit_margin'] = product.calculate_profit_margin()
+            product_dict['stock_status'] = product.get_stock_status()
+
+            # CA-4: Información adicional para vista de stock bajo
+            product_dict['difference'] = product.reorder_point - product.stock_quantity
+
+            # Información de categoría
+            if product.category:
+                product_dict['category'] = {
+                    'id': product.category.id,
+                    'name': product.category.name,
+                    'color': product.category.color,
+                    'icon': product.category.icon
+                }
+
+            products_data.append(product_dict)
+
+        # Estadísticas adicionales
+        total_low_stock = query.count()
+        out_of_stock_count = Product.query.filter(
+            Product.is_active == True,
+            Product.deleted_at == None,
+            Product.stock_quantity == 0
+        ).count()
+
+        return jsonify({
+            'success': True,
+            'data': products_data,
+            'pagination': {
+                'page': page,
+                'per_page': per_page,
+                'total': pagination.total,
+                'pages': pagination.pages
+            },
+            'stats': {
+                'total_low_stock': total_low_stock,
+                'out_of_stock': out_of_stock_count
+            }
+        }), 200
+
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': {
+                'code': 'SERVER_ERROR',
+                'message': 'Error al obtener productos con stock bajo',
+                'details': str(e)
+            }
+        }), 500
+
+
 @products_bp.route('/<product_id>', methods=['GET'])
 @jwt_required()
 def get_product(product_id):
@@ -636,6 +744,8 @@ def update_product(product_id):
             form_data['sale_price'] = float(form_data['sale_price'])
         if 'min_stock_level' in form_data:
             form_data['min_stock_level'] = int(form_data['min_stock_level'])
+        if 'reorder_point' in form_data:  # US-PROD-008 CA-1
+            form_data['reorder_point'] = int(form_data['reorder_point'])
 
         # CA-3: Validar datos con schema (excluye SKU y stock_quantity)
         validated_data = product_update_schema.load(form_data)
@@ -747,6 +857,8 @@ def update_product(product_id):
             product.sale_price = validated_data['sale_price']
         if 'min_stock_level' in validated_data:
             product.min_stock_level = validated_data['min_stock_level']
+        if 'reorder_point' in validated_data:  # US-PROD-008 CA-1
+            product.reorder_point = validated_data['reorder_point']
         if 'category_id' in validated_data:
             product.category_id = validated_data['category_id']
         if new_image_url:

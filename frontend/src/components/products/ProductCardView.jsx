@@ -100,10 +100,12 @@ const ProductCardView = ({
     <>
       <Grid container spacing={2}>
         {products.map((product) => {
+          // US-PROD-008 CA-3: Usar reorder_point para determinar stock bajo
+          const reorderPoint = product.reorder_point || product.min_stock_level || 10;
           const isOutOfStock = product.stock_quantity === 0;
           const isLowStock =
             product.stock_quantity > 0 &&
-            product.stock_quantity <= product.min_stock_level;
+            product.stock_quantity <= reorderPoint;
 
           return (
             <Grid item xs={12} sm={6} md={4} key={product.id}>
@@ -118,11 +120,17 @@ const ProductCardView = ({
                     transform: 'translateY(-4px)',
                     boxShadow: 3,
                   },
+                  // US-PROD-008 CA-3: Borde y fondo según estado de stock
                   border: isOutOfStock
                     ? '2px solid #f44336'
                     : isLowStock
                     ? '2px solid #ff9800'
                     : '1px solid #e0e0e0',
+                  backgroundColor: isOutOfStock
+                    ? '#ffebee'
+                    : isLowStock
+                    ? '#fff3e0'
+                    : 'white',
                 }}
                 onClick={() => handleCardClick(product.id)}
               >
@@ -231,8 +239,10 @@ const ProductCardView = ({
                       Stock:
                     </Typography>
                     <StockBadge
-                      stockQuantity={product.stock_quantity}
+                      stock={product.stock_quantity}
+                      reorderPoint={product.reorder_point}
                       minStockLevel={product.min_stock_level}
+                      showQuantity={true}
                     />
                   </Box>
                 </CardContent>

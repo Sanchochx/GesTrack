@@ -32,6 +32,7 @@ import ProductList from './pages/Products/ProductList';
 import CreateProduct from './pages/Products/CreateProduct';
 import ProductDetail from './pages/Products/ProductDetail';
 import EditProduct from './pages/Products/EditProduct';
+import LowStockProducts from './pages/Products/LowStockProducts';  // US-PROD-008 CA-4
 import Categories from './pages/Categories/Categories';
 import ProtectedRoute from './components/common/ProtectedRoute';
 import authService from './services/authService';
@@ -168,6 +169,9 @@ function Navigation() {
               <>
                 <Button color="inherit" href="/products">
                   Productos
+                </Button>
+                <Button color="inherit" href="/products/low-stock" sx={{ color: 'warning.light' }}>
+                  Stock Bajo
                 </Button>
                 <Button color="inherit" href="/categories">
                   Categorías
@@ -321,6 +325,15 @@ function App() {
                 element={
                   <ProtectedRoute allowedRoles={['Admin', 'Gerente de Almacén']}>
                     <CreateProduct />
+                  </ProtectedRoute>
+                }
+              />
+              {/* US-PROD-008 CA-4: Low Stock Products Route */}
+              <Route
+                path="/products/low-stock"
+                element={
+                  <ProtectedRoute allowedRoles={['Admin', 'Gerente de Almacén']}>
+                    <LowStockProducts />
                   </ProtectedRoute>
                 }
               />

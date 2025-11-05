@@ -12,11 +12,11 @@
 │  PROGRESO GLOBAL DEL PROYECTO                               │
 ├─────────────────────────────────────────────────────────────┤
 │  Total Historias de Usuario:     82                         │
-│  ✅ Completadas:                   13                        │
+│  ✅ Completadas:                   14                        │
 │  ⏳ En Progreso:                   0                         │
-│  ⏸️  Pendientes:                   69                        │
+│  ⏸️  Pendientes:                   68                        │
 │                                                             │
-│  Progreso: [███░░░░░░░░░░░░░░░░░] 15.9% (13/82)            │
+│  Progreso: [███░░░░░░░░░░░░░░░░░] 17.1% (14/82)            │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -27,7 +27,7 @@
 | Epic | Nombre | Total US | Completadas | En Progreso | Pendientes | Progreso |
 |------|--------|----------|-------------|-------------|------------|----------|
 | 01 | Foundation | 6 | 6 | 0 | 0 | [██████████] 100% |
-| 02 | Core Data | 10 | 7 | 0 | 3 | [███████░░░] 70% |
+| 02 | Core Data | 10 | 8 | 0 | 2 | [████████░░] 80% |
 | 03 | Stock Management | 10 | 0 | 0 | 10 | [░░░░░░░░░░] 0% |
 | 04 | Sales | 26 | 0 | 0 | 26 | [░░░░░░░░░░] 0% |
 | 05 | Supply Chain | 15 | 0 | 0 | 15 | [░░░░░░░░░░] 0% |
@@ -44,7 +44,7 @@
 **Objetivo:** Establecer base funcional del sistema
 **Épicas:** 01 Foundation, 02 Core Data
 **Total US:** 16
-**Progreso:** [████████░░] 81% (13/16 completadas)
+**Progreso:** [█████████░] 88% (14/16 completadas)
 
 ---
 
@@ -111,7 +111,7 @@
 ## Epic 02: Core Data - Gestión de Productos y Categorías
 
 **Prioridad:** ⭐⭐⭐ ALTA
-**Progreso:** [███████░░░] 70% (7/10 completadas)
+**Progreso:** [████████░░] 80% (8/10 completadas)
 **Carpeta:** `context/user_stories/epic_02_core_data/`
 
 ### ✅ Historias de Usuario
@@ -286,12 +286,29 @@
   - Navegación en AppBar ✅
 - **Fecha de completación:** 2025-10-29
 
-#### [ ] US-PROD-008: Alertas de Stock Bajo
+#### [x] US-PROD-008: Alertas de Stock Bajo
 - **Archivo:** `context/user_stories/epic_02_core_data/US-PROD-008_alertas_stock_bajo.md`
 - **Prioridad:** MEDIA
 - **Estimación:** 5 pts
-- **Estado:** ⏸️ Pendiente
-- **Criterios de Aceptación:** 6
+- **Estado:** ✅ COMPLETADA
+- **Criterios de Aceptación:** 10 (6 core + 4 opcionales)
+- **Progreso Backend:** ✅ 100% - Todos los CA core implementados
+  - CA-1: Campo reorder_point en modelo Product y schemas ✅
+  - CA-2: Métodos is_low_stock(), is_out_of_stock(), get_stock_status() ✅
+  - CA-4: Endpoint GET /api/products/low-stock con paginación ✅
+- **Progreso Frontend:** ✅ 95% - Mayoría implementada
+  - CA-1: Campo reorder_point en ProductForm con validaciones ✅
+  - CA-3: StockBadge actualizado, indicadores visuales en ProductTable y ProductCardView ✅
+  - CA-4: Página LowStockProducts con tabla, estadísticas y alertas ✅
+  - CA-4: Ruta /products/low-stock y navegación ✅
+  - CA-6: Banners de alerta en ProductDetail ✅
+  - CA-5: Contador en Dashboard ⏸️ (pendiente)
+  - CA-10: Botones de acción presentes (funcionalidad completa en Epic 05) ⏸️
+- **Características Opcionales No Implementadas (v1.0):**
+  - CA-7: Notificaciones por email
+  - CA-8: Configuración de alertas por usuario
+  - CA-9: Historial de alertas
+- **Fecha de completación:** 2025-11-04
 
 #### [ ] US-PROD-009: Carga de Imagen de Producto
 - **Archivo:** `context/user_stories/epic_02_core_data/US-PROD-009_carga_imagen_producto.md`

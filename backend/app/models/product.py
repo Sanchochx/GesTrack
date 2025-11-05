@@ -27,6 +27,7 @@ class Product(db.Model):
     # Stock
     stock_quantity = db.Column(db.Integer, nullable=False, default=0)
     min_stock_level = db.Column(db.Integer, nullable=False, default=10)
+    reorder_point = db.Column(db.Integer, nullable=False, default=10)  # US-PROD-008 CA-1: Punto de reorden
 
     # Foreign Keys
     category_id = db.Column(db.String(36), db.ForeignKey('categories.id'), nullable=False)
@@ -57,6 +58,7 @@ class Product(db.Model):
             'sale_price': float(self.sale_price) if self.sale_price else 0.0,
             'stock_quantity': self.stock_quantity,
             'min_stock_level': self.min_stock_level,
+            'reorder_point': self.reorder_point,  # US-PROD-008 CA-1
             'category_id': self.category_id,
             'image_url': self.image_url,
             'is_active': self.is_active,
@@ -95,3 +97,38 @@ class Product(db.Model):
             margin = ((self.sale_price - self.cost_price) / self.cost_price) * 100
             return float(round(margin, 2))
         return 0.0
+
+    def is_low_stock(self):
+        """
+        US-PROD-008 CA-2: Verificar si el producto tiene stock bajo
+
+        Un producto tiene stock bajo cuando:
+        stock_actual <= punto_de_reorden AND stock_actual > 0
+
+        Returns:
+            bool: True si el stock está bajo, False en caso contrario
+        """
+        return self.stock_quantity <= self.reorder_point and self.stock_quantity > 0
+
+    def is_out_of_stock(self):
+        """
+        US-PROD-008 CA-2: Verificar si el producto no tiene stock
+
+        Returns:
+            bool: True si no hay stock, False en caso contrario
+        """
+        return self.stock_quantity == 0
+
+    def get_stock_status(self):
+        """
+        US-PROD-008 CA-2: Obtener el estado del stock del producto
+
+        Returns:
+            str: 'out_of_stock', 'low_stock', o 'normal'
+        """
+        if self.is_out_of_stock():
+            return 'out_of_stock'
+        elif self.is_low_stock():
+            return 'low_stock'
+        else:
+            return 'normal'

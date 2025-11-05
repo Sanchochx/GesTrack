@@ -128,22 +128,22 @@ Desde la vista de stock bajo o alertas:
 - Log de alertas en tabla separada para auditoría
 
 ## Definición de Hecho
-- [ ] Base de datos: Campo reorder_point en tabla products
-- [ ] Frontend: Configuración de punto de reorden en formulario
-- [ ] Frontend: Indicadores visuales en lista de productos
-- [ ] Frontend: Vista dedicada de productos con stock bajo
-- [ ] Frontend: Contador en dashboard
-- [ ] Frontend: Alerta en detalles de producto
-- [ ] Frontend: Acciones rápidas desde alertas
-- [ ] Backend: Query optimizada para detectar stock bajo
-- [ ] Backend: API para obtener productos con stock bajo
-- [ ] Backend: Actualización de estado de alerta al modificar stock
-- [ ] Notificaciones por email (opcional)
-- [ ] Panel de configuración de alertas por usuario (opcional)
-- [ ] Tabla de historial de alertas (opcional)
-- [ ] Pruebas unitarias y de integración
-- [ ] Pruebas de performance con grandes datasets
-- [ ] Documentación de API
+- [x] Base de datos: Campo reorder_point en tabla products
+- [x] Frontend: Configuración de punto de reorden en formulario
+- [x] Frontend: Indicadores visuales en lista de productos
+- [x] Frontend: Vista dedicada de productos con stock bajo
+- [ ] Frontend: Contador en dashboard (pendiente - CA-5)
+- [x] Frontend: Alerta en detalles de producto
+- [ ] Frontend: Acciones rápidas desde alertas (parcial - botones presentes, funcionalidad de pedidos en Epic 05)
+- [x] Backend: Query optimizada para detectar stock bajo
+- [x] Backend: API para obtener productos con stock bajo
+- [x] Backend: Actualización de estado de alerta al modificar stock (métodos is_low_stock, get_stock_status)
+- [ ] Notificaciones por email (opcional - no implementado en v1.0)
+- [ ] Panel de configuración de alertas por usuario (opcional - no implementado en v1.0)
+- [ ] Tabla de historial de alertas (opcional - no implementado en v1.0)
+- [ ] Pruebas unitarias y de integración (no requerido en v1.0)
+- [ ] Pruebas de performance con grandes datasets (no requerido en v1.0)
+- [x] Documentación de API (comentarios en código)
 
 ## Dependencias
 - US-PROD-001 (Crear Producto) debe estar completo

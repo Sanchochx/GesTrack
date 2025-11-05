@@ -265,7 +265,7 @@ const ProductDetail = () => {
         <Typography color="text.primary">{product.name}</Typography>
       </Breadcrumbs>
 
-      {/* CA-4: Alertas de Stock Bajo/Sin Stock */}
+      {/* US-PROD-008 CA-6: Alertas de Stock Bajo/Sin Stock */}
       {product.stock_quantity === 0 && (
         <Alert
           severity="error"
@@ -277,7 +277,7 @@ const ProductDetail = () => {
               size="small"
               onClick={handleCreateOrder}
             >
-              Crear Pedido de Compra
+              Reabastecer Urgente
             </Button>
           }
         >
@@ -290,7 +290,7 @@ const ProductDetail = () => {
         </Alert>
       )}
 
-      {product.stock_quantity > 0 && product.stock_quantity <= product.min_stock_level && (
+      {product.stock_quantity > 0 && product.stock_quantity <= (product.reorder_point || product.min_stock_level || 10) && (
         <Alert
           severity="warning"
           sx={{ mb: 3 }}
@@ -309,8 +309,7 @@ const ProductDetail = () => {
             Este producto tiene stock bajo
           </Typography>
           <Typography variant="body2">
-            Stock actual: {product.stock_quantity} unidades.
-            Se recomienda reabastecer {product.stock_status?.reorder_units || 0} unidades.
+            Stock actual: {product.stock_quantity} unidades | Punto de reorden: {product.reorder_point || product.min_stock_level || 10} unidades
           </Typography>
         </Alert>
       )}

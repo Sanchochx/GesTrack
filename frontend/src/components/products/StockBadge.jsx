@@ -8,16 +8,20 @@ import {
 /**
  * StockBadge Component
  * US-PROD-002: List Products
+ * US-PROD-008 CA-3: Stock status indicators
  *
  * Displays stock status with visual indicators:
  * - CA-3: Low stock warning (stock <= reorder point)
  * - CA-3: Out of stock badge (stock = 0)
  * - Visual color coding and tooltips
  */
-const StockBadge = ({ stock, minStockLevel = 10, showQuantity = true }) => {
+const StockBadge = ({ stock, reorderPoint = 10, minStockLevel, showQuantity = true }) => {
+  // US-PROD-008 CA-3: Usar reorder_point para determinar stock bajo
+  const reorderLevel = reorderPoint || minStockLevel || 10;
+
   const isOutOfStock = stock === 0;
-  const isLowStock = stock > 0 && stock <= minStockLevel;
-  const isNormalStock = stock > minStockLevel;
+  const isLowStock = stock > 0 && stock <= reorderLevel;
+  const isNormalStock = stock > reorderLevel;
 
   /**
    * Get badge configuration based on stock status
@@ -39,7 +43,7 @@ const StockBadge = ({ stock, minStockLevel = 10, showQuantity = true }) => {
         label: showQuantity ? `${stock} unidades` : 'STOCK BAJO',
         color: 'warning',
         icon: <WarningIcon />,
-        tooltip: `Stock bajo: ${stock} unidades (reorden en ${minStockLevel} unidades)`,
+        tooltip: `Stock bajo: ${stock} unidades (punto de reorden: ${reorderLevel})`,  // US-PROD-008 CA-3
         backgroundColor: '#fff3e0',
         textColor: '#e65100',
       };

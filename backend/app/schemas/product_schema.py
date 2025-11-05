@@ -115,6 +115,7 @@ class ProductUpdateSchema(Schema):
     sale_price = fields.Decimal(required=False, places=2)
     stock_quantity = fields.Int(required=False)
     min_stock_level = fields.Int(required=False)
+    reorder_point = fields.Int(required=False)  # US-PROD-008 CA-1
     category_id = fields.Str(required=False)
     image_url = fields.Str(required=False, allow_none=True)
     is_active = fields.Bool(required=False)
@@ -169,6 +170,12 @@ class ProductUpdateSchema(Schema):
         if value is not None and value < 0:
             raise ValidationError('El nivel mínimo de stock no puede ser negativo')
 
+    @validates('reorder_point')
+    def validate_reorder_point(self, value):
+        """US-PROD-008 CA-1: Validar punto de reorden si se proporciona"""
+        if value is not None and value < 0:
+            raise ValidationError('El punto de reorden no puede ser negativo')
+
 
 class ProductResponseSchema(Schema):
     """Schema para respuestas de producto (incluye campos calculados)"""
@@ -181,6 +188,7 @@ class ProductResponseSchema(Schema):
     sale_price = fields.Decimal(places=2, as_string=True)
     stock_quantity = fields.Int()
     min_stock_level = fields.Int()
+    reorder_point = fields.Int()  # US-PROD-008 CA-1
     category_id = fields.Str()
     image_url = fields.Str(allow_none=True)
     is_active = fields.Bool()
@@ -189,6 +197,9 @@ class ProductResponseSchema(Schema):
 
     # CA-4: Campo calculado - margen de ganancia
     profit_margin = fields.Method('calculate_profit_margin')
+
+    # US-PROD-008 CA-2: Campo calculado - estado del stock
+    stock_status = fields.Method('get_stock_status')
 
     # Relaciones
     category = fields.Method('get_category_info')
@@ -210,6 +221,10 @@ class ProductResponseSchema(Schema):
                 'icon': obj.category.icon
             }
         return None
+
+    def get_stock_status(self, obj):
+        """US-PROD-008 CA-2: Obtener estado del stock"""
+        return obj.get_stock_status()
 
 
 # Instancias de esquemas para uso en rutas
