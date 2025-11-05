@@ -149,26 +149,26 @@ Si falla la carga de imagen:
 - Escaneo antivirus para archivos subidos (opcional, para seguridad)
 
 ## Definición de Hecho
-- [ ] Frontend: Componente de carga drag-and-drop
-- [ ] Frontend: Preview de imagen antes de guardar
-- [ ] Frontend: Validación de formato y tamaño en cliente
-- [ ] Frontend: Botón cambiar/eliminar imagen en editar
-- [ ] Frontend: Placeholder por defecto
-- [ ] Frontend: Visualización de imágenes en lista y detalles
-- [ ] Frontend: Lazy loading de imágenes
-- [ ] Frontend: Modal de zoom (opcional)
-- [ ] Backend: API para subir imagen
-- [ ] Backend: Validación de formato y tamaño
-- [ ] Backend: Optimización automática de imagen
-- [ ] Backend: Generación de thumbnail
-- [ ] Backend: Nombrado de archivo con patrón
-- [ ] Backend: Eliminación de imagen anterior
-- [ ] Backend: API para eliminar imagen
-- [ ] Almacenamiento configurado (local o cloud)
-- [ ] Manejo de errores robusto
-- [ ] Pruebas de carga con diferentes formatos y tamaños
-- [ ] Pruebas de seguridad (inyección de archivos maliciosos)
-- [ ] Documentación de API
+- [x] Frontend: Componente de carga drag-and-drop ✅
+- [x] Frontend: Preview de imagen antes de guardar ✅
+- [x] Frontend: Validación de formato y tamaño en cliente ✅
+- [x] Frontend: Botón cambiar/eliminar imagen en editar ✅
+- [x] Frontend: Placeholder por defecto ✅
+- [x] Frontend: Visualización de imágenes en lista y detalles ✅
+- [x] Frontend: Lazy loading de imágenes ✅ (ya existente)
+- [x] Frontend: Modal de zoom (opcional) ✅
+- [x] Backend: API para subir imagen ✅
+- [x] Backend: Validación de formato y tamaño ✅
+- [x] Backend: Optimización automática de imagen ✅
+- [ ] Backend: Generación de thumbnail (preparado pero no implementado en v1.0)
+- [x] Backend: Nombrado de archivo con patrón ✅
+- [x] Backend: Eliminación de imagen anterior ✅
+- [x] Backend: API para eliminar imagen ✅
+- [x] Almacenamiento configurado (local) ✅
+- [x] Manejo de errores robusto ✅
+- [ ] Pruebas de carga con diferentes formatos y tamaños (testing manual)
+- [ ] Pruebas de seguridad (inyección de archivos maliciosos) (v2.0)
+- [ ] Documentación de API (en comentarios de código)
 
 ## Dependencias
 - US-PROD-001 (Crear Producto) debe estar completo

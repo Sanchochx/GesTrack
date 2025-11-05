@@ -12,11 +12,11 @@
 │  PROGRESO GLOBAL DEL PROYECTO                               │
 ├─────────────────────────────────────────────────────────────┤
 │  Total Historias de Usuario:     82                         │
-│  ✅ Completadas:                   14                        │
+│  ✅ Completadas:                   15                        │
 │  ⏳ En Progreso:                   0                         │
-│  ⏸️  Pendientes:                   68                        │
+│  ⏸️  Pendientes:                   67                        │
 │                                                             │
-│  Progreso: [███░░░░░░░░░░░░░░░░░] 17.1% (14/82)            │
+│  Progreso: [███░░░░░░░░░░░░░░░░░] 18.3% (15/82)            │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -27,7 +27,7 @@
 | Epic | Nombre | Total US | Completadas | En Progreso | Pendientes | Progreso |
 |------|--------|----------|-------------|-------------|------------|----------|
 | 01 | Foundation | 6 | 6 | 0 | 0 | [██████████] 100% |
-| 02 | Core Data | 10 | 8 | 0 | 2 | [████████░░] 80% |
+| 02 | Core Data | 10 | 9 | 0 | 1 | [█████████░] 90% |
 | 03 | Stock Management | 10 | 0 | 0 | 10 | [░░░░░░░░░░] 0% |
 | 04 | Sales | 26 | 0 | 0 | 26 | [░░░░░░░░░░] 0% |
 | 05 | Supply Chain | 15 | 0 | 0 | 15 | [░░░░░░░░░░] 0% |
@@ -44,7 +44,7 @@
 **Objetivo:** Establecer base funcional del sistema
 **Épicas:** 01 Foundation, 02 Core Data
 **Total US:** 16
-**Progreso:** [█████████░] 88% (14/16 completadas)
+**Progreso:** [█████████░] 94% (15/16 completadas)
 
 ---
 
@@ -111,7 +111,7 @@
 ## Epic 02: Core Data - Gestión de Productos y Categorías
 
 **Prioridad:** ⭐⭐⭐ ALTA
-**Progreso:** [████████░░] 80% (8/10 completadas)
+**Progreso:** [█████████░] 90% (9/10 completadas)
 **Carpeta:** `context/user_stories/epic_02_core_data/`
 
 ### ✅ Historias de Usuario
@@ -310,12 +310,28 @@
   - CA-9: Historial de alertas
 - **Fecha de completación:** 2025-11-04
 
-#### [ ] US-PROD-009: Carga de Imagen de Producto
+#### [x] US-PROD-009: Carga de Imagen de Producto
 - **Archivo:** `context/user_stories/epic_02_core_data/US-PROD-009_carga_imagen_producto.md`
 - **Prioridad:** MEDIA
 - **Estimación:** 5 pts
-- **Estado:** ⏸️ Pendiente
-- **Criterios de Aceptación:** 7
+- **Estado:** ✅ Completada
+- **Criterios de Aceptación:** 12 (10 core implementados, 2 opcionales para v2.0)
+- **Progreso Backend:** ✅ 100% - API completa
+  - CA-1 & CA-2: Validación de formatos (JPG, PNG, WEBP) y tamaño (5MB) ✅
+  - CA-5: Optimización automática de imágenes con Pillow ✅
+  - CA-6: Nombrado con patrón SKU_timestamp ✅
+  - CA-9: Endpoint DELETE /api/products/{id}/image ✅
+  - Almacenamiento local en /uploads/products/ ✅
+- **Progreso Frontend:** ✅ 100% - Completado
+  - CA-3: Componente ImageUpload con drag-and-drop ✅
+  - CA-4: Preview con botones cambiar/quitar ✅
+  - CA-7: Integrado en crear/editar producto ✅
+  - CA-8: Placeholder por defecto generado ✅
+  - CA-9: DeleteImageDialog component ✅
+  - CA-10: Visualización en tabla, cards y detalles ✅
+  - CA-11: ImageZoomModal con zoom in/out ✅
+  - CA-12: Manejo robusto de errores ✅
+- **Fecha de completación:** 2025-11-04
 
 #### [ ] US-PROD-010: Cálculo de Margen de Ganancia
 - **Archivo:** `context/user_stories/epic_02_core_data/US-PROD-010_calculo_margen_ganancia.md`

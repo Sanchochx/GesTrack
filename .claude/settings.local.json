@@ -31,7 +31,8 @@
       "Bash(find:*)",
       "Bash(nul)",
       "Bash(xargs rmdir /s /q 2)",
-      "Bash(powershell \"Stop-Process 19048 -Force; Stop-Process 12904 -Force; Stop-Process 26300 -Force\")"
+      "Bash(powershell \"Stop-Process 19048 -Force; Stop-Process 12904 -Force; Stop-Process 26300 -Force\")",
+      "Bash(python3:*)"
     ],
     "deny": [],
     "ask": []

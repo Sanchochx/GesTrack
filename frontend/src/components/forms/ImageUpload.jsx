@@ -17,10 +17,12 @@ import {
  * ImageUpload Component
  * US-PROD-001 - CA-5: Image upload with validation and preview
  * US-PROD-005 - CA-6: Support for current image display and update
+ * US-PROD-009 - CA-3: Drag and drop support
  *
  * Reusable component for uploading and previewing images
  * Validates format (JPG, PNG, WEBP) and size (max 5MB)
  * Supports displaying current image when editing
+ * Supports drag and drop file upload
  */
 const ImageUpload = ({
   value,
@@ -32,6 +34,7 @@ const ImageUpload = ({
 }) => {
   const [preview, setPreview] = useState(null);
   const [validationError, setValidationError] = useState('');
+  const [isDragging, setIsDragging] = useState(false); // US-PROD-009 CA-3: Drag state
   const fileInputRef = useRef(null);
 
   // Supported formats and max size (5MB)
@@ -118,6 +121,59 @@ const ImageUpload = ({
     fileInputRef.current?.click();
   };
 
+  /**
+   * US-PROD-009 CA-3: Handle drag events
+   */
+  const handleDragEnter = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+  };
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+
+    const files = e.dataTransfer.files;
+    if (files && files.length > 0) {
+      const file = files[0];
+
+      // Validate file
+      const error = validateImage(file);
+      if (error) {
+        setValidationError(error);
+        setPreview(currentImageUrl);
+        onChange(null);
+        return;
+      }
+
+      // Clear validation error
+      setValidationError('');
+
+      // Create preview
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPreview(reader.result);
+      };
+      reader.readAsDataURL(file);
+
+      // Pass file to parent
+      onChange(file);
+    }
+  };
+
   // Determine if showing current image (not a new upload)
   const isShowingCurrentImage = preview === currentImageUrl && !value;
 
@@ -133,16 +189,28 @@ const ImageUpload = ({
 
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
         {/* Preview or Placeholder */}
+        {/* US-PROD-009 CA-3: Add drag-and-drop handlers and visual feedback */}
         <Box
+          onDragEnter={handleDragEnter}
+          onDragLeave={handleDragLeave}
+          onDragOver={handleDragOver}
+          onDrop={handleDrop}
+          onClick={!preview ? handleClick : undefined}
           sx={{
             display: 'flex',
             justifyContent: 'center',
             alignItems: 'center',
             minHeight: 200,
-            border: error || validationError ? '2px dashed #d32f2f' : '2px dashed #ccc',
+            border: error || validationError
+              ? '2px dashed #d32f2f'
+              : isDragging
+              ? '2px dashed #1976d2'
+              : '2px dashed #ccc',
             borderRadius: 2,
-            backgroundColor: '#f5f5f5',
+            backgroundColor: isDragging ? '#e3f2fd' : '#f5f5f5',
             position: 'relative',
+            cursor: !preview ? 'pointer' : 'default',
+            transition: 'all 0.2s ease',
           }}
         >
           {preview ? (
@@ -191,16 +259,20 @@ const ImageUpload = ({
                 sx={{
                   width: 80,
                   height: 80,
-                  backgroundColor: '#e0e0e0',
+                  backgroundColor: isDragging ? '#1976d2' : '#e0e0e0',
+                  transition: 'background-color 0.2s ease',
                 }}
               >
-                <ImageIcon sx={{ fontSize: 40, color: '#9e9e9e' }} />
+                <ImageIcon sx={{ fontSize: 40, color: isDragging ? '#fff' : '#9e9e9e' }} />
               </Avatar>
+              {/* US-PROD-009 CA-3: Drag and drop text */}
               <Typography variant="body2" color="textSecondary" align="center">
-                No hay imagen seleccionada
+                {isDragging
+                  ? 'Suelta la imagen aquí'
+                  : 'Arrastra una imagen o haz clic para seleccionar'}
               </Typography>
               <Typography variant="caption" color="textSecondary" align="center">
-                Formatos: JPG, PNG, WEBP (máx. 5MB)
+                JPG, PNG, WEBP (máx. 5MB)
               </Typography>
             </Box>
           )}

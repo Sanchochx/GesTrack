@@ -1049,3 +1049,84 @@ def delete_product(product_id):
                 'details': str(e)
             }
         }), 500
+
+
+@products_bp.route('/<product_id>/image', methods=['DELETE'])
+@jwt_required()
+@require_role(['Admin', 'Gerente de Almacén'])
+def delete_product_image_endpoint(product_id):
+    """
+    DELETE /api/products/<product_id>/image
+    US-PROD-009 CA-9: Eliminar imagen de un producto
+
+    El producto mantiene sus datos pero la imagen se elimina
+    y se reemplaza por la imagen por defecto
+
+    Returns:
+        - 200: Imagen eliminada exitosamente
+        - 404: Producto no encontrado
+        - 400: El producto no tiene imagen o ya usa la imagen por defecto
+        - 500: Error del servidor
+    """
+    try:
+        # Buscar el producto
+        product = Product.query.filter_by(
+            id=product_id,
+            is_active=True,
+            deleted_at=None
+        ).first()
+
+        if not product:
+            return jsonify({
+                'success': False,
+                'error': {
+                    'code': 'PRODUCT_NOT_FOUND',
+                    'message': 'Producto no encontrado'
+                }
+            }), 404
+
+        # Verificar si tiene imagen personalizada
+        default_image = get_default_product_image()
+        if not product.image_url or product.image_url == default_image:
+            return jsonify({
+                'success': False,
+                'error': {
+                    'code': 'NO_CUSTOM_IMAGE',
+                    'message': 'El producto no tiene una imagen personalizada para eliminar'
+                }
+            }), 400
+
+        # Guardar URL de imagen anterior para eliminar el archivo
+        old_image_url = product.image_url
+
+        # Actualizar producto con imagen por defecto
+        product.image_url = default_image
+
+        # Eliminar archivo físico del servidor
+        try:
+            delete_product_image(old_image_url, current_app.config['UPLOAD_FOLDER'])
+        except Exception as img_error:
+            # Log del error pero continuar
+            current_app.logger.warning(f'Error al eliminar archivo de imagen: {str(img_error)}')
+
+        db.session.commit()
+
+        return jsonify({
+            'success': True,
+            'message': 'Imagen eliminada correctamente',
+            'data': {
+                'product_id': product_id,
+                'image_url': product.image_url
+            }
+        }), 200
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({
+            'success': False,
+            'error': {
+                'code': 'SERVER_ERROR',
+                'message': 'Error al eliminar imagen',
+                'details': str(e)
+            }
+        }), 500

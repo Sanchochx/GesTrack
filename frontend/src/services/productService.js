@@ -161,6 +161,25 @@ const productService = {
       throw { success: false, error: { message: 'Error de conexión con el servidor' } };
     }
   },
+
+  /**
+   * Elimina la imagen de un producto
+   * US-PROD-009 CA-9: Eliminar imagen de producto
+   * El producto mantiene sus datos pero la imagen se reemplaza por la imagen por defecto
+   * @param {string} productId - ID del producto
+   * @returns {Promise} - Promesa con la respuesta del servidor
+   */
+  async deleteProductImage(productId) {
+    try {
+      const response = await api.delete(`/products/${productId}/image`);
+      return response.data;
+    } catch (error) {
+      if (error.response && error.response.data) {
+        throw error.response.data;
+      }
+      throw { success: false, error: { message: 'Error de conexión con el servidor' } };
+    }
+  },
 };
 
 export default productService;

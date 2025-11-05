@@ -47,6 +47,7 @@ import {
 import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale/es';
 import StockBadge from '../../components/products/StockBadge';
+import ImageZoomModal from '../../components/common/ImageZoomModal';
 import productService from '../../services/productService';
 
 /**
@@ -74,6 +75,7 @@ const ProductDetail = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [imageError, setImageError] = useState(false);
+  const [zoomModalOpen, setZoomModalOpen] = useState(false); // US-PROD-009 CA-11: Zoom modal state
 
   useEffect(() => {
     loadProduct();
@@ -384,20 +386,47 @@ const ProductDetail = () => {
         <Grid item xs={12} md={5}>
           <Card>
             {!imageError && product.image_url ? (
-              <CardMedia
-                component="img"
-                image={product.image_url}
-                alt={product.name}
+              <Box
+                onClick={() => setZoomModalOpen(true)}
                 sx={{
-                  width: '100%',
-                  height: 'auto',
-                  maxHeight: 500,
-                  objectFit: 'contain',
-                  backgroundColor: '#f5f5f5',
-                  p: 2,
+                  cursor: 'zoom-in',
+                  position: 'relative',
+                  '&:hover': {
+                    opacity: 0.9,
+                  },
                 }}
-                onError={() => setImageError(true)}
-              />
+              >
+                <CardMedia
+                  component="img"
+                  image={product.image_url}
+                  alt={product.name}
+                  sx={{
+                    width: '100%',
+                    height: 'auto',
+                    maxHeight: 500,
+                    objectFit: 'contain',
+                    backgroundColor: '#f5f5f5',
+                    p: 2,
+                  }}
+                  onError={() => setImageError(true)}
+                />
+                {/* US-PROD-009 CA-11: Hint de zoom */}
+                <Typography
+                  variant="caption"
+                  sx={{
+                    position: 'absolute',
+                    bottom: 8,
+                    right: 8,
+                    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+                    color: 'white',
+                    px: 1,
+                    py: 0.5,
+                    borderRadius: 1,
+                  }}
+                >
+                  Click para ampliar
+                </Typography>
+              </Box>
             ) : (
               <Box
                 sx={{
@@ -801,6 +830,16 @@ const ProductDetail = () => {
           )}
         </Grid>
       </Grid>
+
+      {/* US-PROD-009 CA-11: Modal de zoom de imagen */}
+      {product && !imageError && product.image_url && (
+        <ImageZoomModal
+          open={zoomModalOpen}
+          onClose={() => setZoomModalOpen(false)}
+          imageUrl={product.image_url}
+          alt={product.name}
+        />
+      )}
     </Container>
   );
 };
