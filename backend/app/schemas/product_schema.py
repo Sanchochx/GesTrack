@@ -205,7 +205,15 @@ class ProductResponseSchema(Schema):
     category = fields.Method('get_category_info')
 
     def calculate_profit_margin(self, obj):
-        """CA-4: Calcular margen de ganancia"""
+        """
+        US-PROD-010 CA-1 y CA-2: Calcular y formatear margen de ganancia
+
+        Fórmula: Margen (%) = ((Precio Venta - Precio Costo) / Precio Costo) × 100
+
+        Returns:
+            float: Margen de ganancia en porcentaje con exactamente 2 decimales.
+                   Retorna 0.0 si cost_price es 0 o None para evitar división por cero.
+        """
         if obj.cost_price and obj.sale_price and obj.cost_price > 0:
             margin = ((obj.sale_price - obj.cost_price) / obj.cost_price) * 100
             return float(round(margin, 2))

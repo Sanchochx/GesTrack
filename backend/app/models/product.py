@@ -88,10 +88,22 @@ class Product(db.Model):
 
     def calculate_profit_margin(self):
         """
-        CA-4: Calcular margen de ganancia
+        US-PROD-010 CA-1: Calcular margen de ganancia del producto
+
+        Fórmula: Margen (%) = ((Precio de Venta - Precio de Costo) / Precio de Costo) × 100
+
+        Ejemplos:
+            - Costo $100, Venta $150 = 50.00%
+            - Costo $50, Venta $60 = 20.00%
+            - Costo $80, Venta $80 = 0.00%
+            - Costo $100, Venta $90 = -10.00%
 
         Returns:
-            float: Margen de ganancia en porcentaje
+            float: Margen de ganancia en porcentaje con 2 decimales.
+                   Retorna 0.0 si cost_price es 0 o None para evitar división por cero.
+
+        Note:
+            El margen se redondea a 2 decimales para consistencia en toda la aplicación.
         """
         if self.cost_price and self.sale_price and self.cost_price > 0:
             margin = ((self.sale_price - self.cost_price) / self.cost_price) * 100
