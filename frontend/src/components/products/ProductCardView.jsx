@@ -21,6 +21,7 @@ import {
   Delete as DeleteIcon,
 } from '@mui/icons-material';
 import StockBadge from './StockBadge';
+import ProfitMarginBadge from './ProfitMarginBadge';
 
 /**
  * ProductCardView - Vista en cards para dispositivos móviles
@@ -225,6 +226,25 @@ const ProductCardView = ({
                     >
                       {formatPrice(product.sale_price)}
                     </Typography>
+                  </Box>
+
+                  {/* Profit Margin - US-PROD-010 CA-5 */}
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      mb: 1,
+                    }}
+                  >
+                    <Typography variant="body2" color="text.secondary">
+                      Margen:
+                    </Typography>
+                    <ProfitMarginBadge
+                      profitMargin={product.profit_margin}
+                      size="small"
+                      showIcon={true}
+                    />
                   </Box>
 
                   {/* Stock */}

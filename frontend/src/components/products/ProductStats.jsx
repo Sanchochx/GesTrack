@@ -29,8 +29,8 @@ const ProductStats = ({ statistics = {} }) => {
       title: 'Total de Productos',
       value: total,
       icon: InventoryIcon,
-      color: '#1976d2',
-      bgColor: '#e3f2fd',
+      color: '#2e7d32',
+      bgColor: '#e8f5e9',
     },
     {
       title: 'Stock Normal',

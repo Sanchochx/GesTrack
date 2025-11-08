@@ -26,6 +26,7 @@ import {
 } from '@mui/icons-material';
 import productService from '../../services/productService';
 import ImageUpload from './ImageUpload';
+import ProfitMarginBadge from '../products/ProfitMarginBadge';
 
 /**
  * ProductForm Component
@@ -78,6 +79,10 @@ const ProductForm = ({ initialData = null, onSuccess, onCancel }) => {
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
   const [fieldErrors, setFieldErrors] = useState({});
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+
+  // US-PROD-010 CA-7: Low/negative margin alerts
+  const [showNegativeMarginDialog, setShowNegativeMarginDialog] = useState(false);
+  const [showLowMarginWarning, setShowLowMarginWarning] = useState(false);
 
   // US-PROD-005 CA-1: Load initial data if editing
   useEffect(() => {
@@ -335,6 +340,22 @@ const ProductForm = ({ initialData = null, onSuccess, onCancel }) => {
       return false; // Prevent submission until user confirms
     }
 
+    // US-PROD-010 CA-7: Check for negative or very low margin
+    if (cost > 0 && sale > 0) {
+      const margin = ((sale - cost) / cost) * 100;
+
+      // Negative margin: Show modal confirmation
+      if (margin < 0) {
+        setShowNegativeMarginDialog(true);
+        return false; // Prevent submission until user confirms
+      }
+
+      // Very low margin (0-5%): Show soft warning (doesn't prevent submission)
+      if (margin >= 0 && margin <= 5) {
+        setShowLowMarginWarning(true);
+      }
+    }
+
     if (!isEditMode) {
       const stock = parseInt(formData.initial_stock);
       if (formData.initial_stock === '' || stock < 0) {
@@ -417,10 +438,26 @@ const ProductForm = ({ initialData = null, onSuccess, onCancel }) => {
   };
 
   /**
+   * US-PROD-010 CA-7: Handle negative margin confirmation
+   */
+  const handleNegativeMarginConfirm = () => {
+    setShowNegativeMarginDialog(false);
+    submitForm(false, true); // Proceed with negative margin
+  };
+
+  /**
+   * US-PROD-010 CA-7: Handle negative margin cancel
+   */
+  const handleNegativeMarginCancel = () => {
+    setShowNegativeMarginDialog(false);
+  };
+
+  /**
    * Submit form data
    * US-PROD-005 CA-8, CA-9, CA-10: Submit with auditing and error handling
+   * US-PROD-010 CA-7: Accept forceNegativeMargin parameter
    */
-  const submitForm = async (forcePriceBelowCost = false) => {
+  const submitForm = async (forcePriceBelowCost = false, forceNegativeMargin = false) => {
     setLoading(true);
     setError(null);
 
@@ -454,6 +491,11 @@ const ProductForm = ({ initialData = null, onSuccess, onCancel }) => {
 
       if (forcePriceBelowCost) {
         formDataToSend.append('force_price_below_cost', 'true');
+      }
+
+      // US-PROD-010 CA-7: Force negative margin if confirmed
+      if (forceNegativeMargin) {
+        formDataToSend.append('force_negative_margin', 'true');
       }
 
       // US-PROD-005 CA-6: Add image if provided
@@ -684,11 +726,14 @@ const ProductForm = ({ initialData = null, onSuccess, onCancel }) => {
               </Typography>
               {profitMargin !== null ? (
                 <>
-                  <Chip
-                    label={`${profitMargin.toFixed(2)}%`}
-                    color={getMarginColor(profitMargin)}
-                    sx={{ fontSize: '1.1rem', fontWeight: 'bold', mt: 1 }}
-                  />
+                  {/* US-PROD-010 CA-4: Real-time profit margin calculation */}
+                  <Box sx={{ mt: 1 }}>
+                    <ProfitMarginBadge
+                      profitMargin={profitMargin}
+                      size="medium"
+                      showIcon={true}
+                    />
+                  </Box>
                   {/* US-PROD-005 CA-5: Show comparison with original */}
                   {isEditMode && originalMargin !== null && Math.abs(profitMargin - originalMargin) > 0.01 && (
                     <Typography variant="caption" color="textSecondary" sx={{ mt: 0.5 }}>
@@ -833,6 +878,49 @@ const ProductForm = ({ initialData = null, onSuccess, onCancel }) => {
           </Button>
         </DialogActions>
       </Dialog>
+
+      {/* US-PROD-010 CA-7: Negative Margin Alert Dialog */}
+      <Dialog
+        open={showNegativeMarginDialog}
+        onClose={handleNegativeMarginCancel}
+      >
+        <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <WarningIcon color="error" />
+          ⚠️ Margen de Ganancia Negativo
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            <strong>Atención:</strong> El precio de venta es menor que el costo, resultando en un margen de ganancia negativo de{' '}
+            <strong>{profitMargin !== null ? profitMargin.toFixed(2) : '0.00'}%</strong>.
+          </DialogContentText>
+          <DialogContentText sx={{ mt: 2 }}>
+            Esto significa que <strong>perderás dinero</strong> con cada venta de este producto.
+          </DialogContentText>
+          <DialogContentText sx={{ mt: 2, fontWeight: 'bold', color: 'error.main' }}>
+            ¿Estás seguro de que deseas continuar con un margen negativo?
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleNegativeMarginCancel} color="primary">
+            Cancelar y Ajustar Precio
+          </Button>
+          <Button onClick={handleNegativeMarginConfirm} color="error" variant="contained">
+            Confirmar de Todos Modos
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* US-PROD-010 CA-7: Low Margin Warning (non-blocking) */}
+      {showLowMarginWarning && (
+        <Alert
+          severity="warning"
+          onClose={() => setShowLowMarginWarning(false)}
+          sx={{ mb: 2 }}
+        >
+          <strong>Margen bajo:</strong> El margen de ganancia es de solo {profitMargin !== null ? profitMargin.toFixed(2) : '0.00'}% (0-5%).
+          Considera ajustar el precio de venta para mejorar la rentabilidad.
+        </Alert>
+      )}
 
       {/* US-PROD-005 CA-7: Significant Changes Dialog */}
       <Dialog

@@ -47,6 +47,7 @@ import {
 import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale/es';
 import StockBadge from '../../components/products/StockBadge';
+import ProfitMarginBadge from '../../components/products/ProfitMarginBadge';
 import ImageZoomModal from '../../components/common/ImageZoomModal';
 import productService from '../../services/productService';
 
@@ -594,7 +595,7 @@ const ProductDetail = () => {
                 <Box
                   sx={{
                     p: 2,
-                    backgroundColor: '#e3f2fd',
+                    backgroundColor: '#e8f5e9',
                     borderRadius: 1,
                     textAlign: 'center'
                   }}
@@ -609,7 +610,7 @@ const ProductDetail = () => {
               </Grid>
             </Grid>
 
-            {/* CA-2: Margen de ganancia con código de colores */}
+            {/* CA-2, US-PROD-010 CA-6: Margen de ganancia con código de colores */}
             <Box
               sx={{
                 mt: 2,
@@ -622,20 +623,15 @@ const ProductDetail = () => {
             >
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <Box>
-                  <Typography variant="body2" color="text.secondary">
+                  <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
                     Margen de Ganancia
                   </Typography>
-                  <Typography
-                    variant="h6"
-                    color={`${getProfitMarginColor(profitMargin)}.main`}
-                    sx={{ display: 'flex', alignItems: 'center', fontWeight: 'bold' }}
-                  >
-                    <TrendingUpIcon sx={{ mr: 0.5 }} />
-                    {profitMargin.toFixed(2)}%
-                  </Typography>
-                  <Typography variant="caption" color="text.secondary">
-                    {profitMargin > 30 ? 'Excelente margen' : profitMargin >= 15 ? 'Margen aceptable' : 'Margen bajo'}
-                  </Typography>
+                  {/* US-PROD-010 CA-6: Display profit margin with badge */}
+                  <ProfitMarginBadge
+                    profitMargin={profitMargin}
+                    size="medium"
+                    showIcon={true}
+                  />
                 </Box>
                 <Box sx={{ textAlign: 'right' }}>
                   <Typography variant="body2" color="text.secondary">

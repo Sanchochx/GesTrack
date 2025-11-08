@@ -31,6 +31,7 @@ import {
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import StockBadge from './StockBadge';
+import ProfitMarginBadge from './ProfitMarginBadge';
 import ProductCardView from './ProductCardView';
 import DeleteProductDialog from './DeleteProductDialog';
 import authService from '../../services/authService';
@@ -154,6 +155,7 @@ const ProductTable = ({
   /**
    * Table column configuration
    * CA-1: Table structure
+   * US-PROD-010 CA-5: Added profit margin column
    */
   const columns = [
     { id: 'image', label: 'Imagen', sortable: false, width: '100px' },
@@ -161,6 +163,7 @@ const ProductTable = ({
     { id: 'sku', label: 'SKU', sortable: true },
     { id: 'category', label: 'Categoría', sortable: true },
     { id: 'sale_price', label: 'Precio de Venta', sortable: true },
+    { id: 'profit_margin', label: 'Margen', sortable: true }, // US-PROD-010 CA-5
     { id: 'stock_quantity', label: 'Stock Actual', sortable: true },
     { id: 'actions', label: 'Acciones', sortable: false, align: 'right' },
   ];
@@ -314,6 +317,15 @@ const ProductTable = ({
                       <Typography variant="body1" fontWeight="medium">
                         {formatPrice(product.sale_price)}
                       </Typography>
+                    </TableCell>
+
+                    {/* Profit Margin - US-PROD-010 CA-5 */}
+                    <TableCell>
+                      <ProfitMarginBadge
+                        profitMargin={product.profit_margin}
+                        size="small"
+                        showIcon={true}
+                      />
                     </TableCell>
 
                     {/* Stock with Badge - US-PROD-008 CA-3 */}

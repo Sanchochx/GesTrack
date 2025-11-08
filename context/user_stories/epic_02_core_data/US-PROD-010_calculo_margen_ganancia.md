@@ -143,21 +143,21 @@ Si se guarda histórico de cambios de precios:
 - Índice en campo `profit_margin` para ordenamiento rápido
 
 ## Definición de Hecho
-- [ ] Backend: Campo profit_margin en tabla products
-- [ ] Backend: Función de cálculo de margen
-- [ ] Backend: Actualización automática al cambiar precios
-- [ ] Frontend: Cálculo en tiempo real en formularios
-- [ ] Frontend: Visualización con código de colores
-- [ ] Frontend: Mostrar margen en lista de productos (opcional)
-- [ ] Frontend: Sección de rentabilidad en detalles
-- [ ] Frontend: Alertas de margen bajo o negativo
+- [x] Backend: Campo profit_margin en tabla products
+- [x] Backend: Función de cálculo de margen
+- [x] Backend: Actualización automática al cambiar precios
+- [x] Frontend: Cálculo en tiempo real en formularios
+- [x] Frontend: Visualización con código de colores
+- [x] Frontend: Mostrar margen en lista de productos (opcional)
+- [x] Frontend: Sección de rentabilidad en detalles
+- [x] Frontend: Alertas de margen bajo o negativo
 - [ ] Frontend: Calculadora de precio sugerido (opcional)
-- [ ] Validación de márgenes negativos con confirmación
-- [ ] Formato consistente (X.XX%)
+- [x] Validación de márgenes negativos con confirmación
+- [x] Formato consistente (X.XX%)
 - [ ] Estadísticas de márgenes en dashboard (opcional)
-- [ ] Pruebas unitarias de función de cálculo
-- [ ] Pruebas de casos extremos (costo = 0, precios iguales, etc.)
-- [ ] Documentación de fórmula y lógica
+- [x] Pruebas unitarias de función de cálculo
+- [x] Pruebas de casos extremos (costo = 0, precios iguales, etc.)
+- [x] Documentación de fórmula y lógica
 
 ## Dependencias
 - US-PROD-001 (Crear Producto) debe estar completo

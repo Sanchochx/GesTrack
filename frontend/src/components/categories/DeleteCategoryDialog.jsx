@@ -137,7 +137,7 @@ const DeleteCategoryDialog = ({ open, onClose, category, onSuccess }) => {
                 p: 2,
                 backgroundColor: 'grey.100',
                 borderRadius: 1,
-                borderLeft: `4px solid ${category.color || '#2196F3'}`,
+                borderLeft: `4px solid ${category.color || '#4CAF50'}`,
               }}
             >
               <Typography variant="subtitle2" color="text.secondary">

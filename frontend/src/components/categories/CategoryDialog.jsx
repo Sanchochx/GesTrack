@@ -40,7 +40,7 @@ const CategoryDialog = ({ open, onClose, category = null, onSuccess }) => {
   const [formData, setFormData] = useState({
     name: '',
     description: '',
-    color: '#2196F3',
+    color: '#4CAF50',
     icon: 'category',
     is_default: false,
   });
@@ -89,7 +89,7 @@ const CategoryDialog = ({ open, onClose, category = null, onSuccess }) => {
       setFormData({
         name: category.name || '',
         description: category.description || '',
-        color: category.color || '#2196F3',
+        color: category.color || '#4CAF50',
         icon: category.icon || 'category',
         is_default: category.is_default || false,
       });
@@ -104,7 +104,7 @@ const CategoryDialog = ({ open, onClose, category = null, onSuccess }) => {
         setFormData({
           name: '',
           description: '',
-          color: '#2196F3',
+          color: '#4CAF50',
           icon: 'category',
           is_default: false,
         });

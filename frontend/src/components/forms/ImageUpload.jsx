@@ -204,10 +204,10 @@ const ImageUpload = ({
             border: error || validationError
               ? '2px dashed #d32f2f'
               : isDragging
-              ? '2px dashed #1976d2'
+              ? '2px dashed #4CAF50'
               : '2px dashed #ccc',
             borderRadius: 2,
-            backgroundColor: isDragging ? '#e3f2fd' : '#f5f5f5',
+            backgroundColor: isDragging ? '#e8f5e9' : '#f5f5f5',
             position: 'relative',
             cursor: !preview ? 'pointer' : 'default',
             transition: 'all 0.2s ease',
@@ -259,7 +259,7 @@ const ImageUpload = ({
                 sx={{
                   width: 80,
                   height: 80,
-                  backgroundColor: isDragging ? '#1976d2' : '#e0e0e0',
+                  backgroundColor: isDragging ? '#4CAF50' : '#e0e0e0',
                   transition: 'background-color 0.2s ease',
                 }}
               >

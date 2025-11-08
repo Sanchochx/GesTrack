@@ -302,10 +302,10 @@ const Categories = () => {
                   }}
                 >
                   <TableCell>
-                    <Tooltip title={category.color || '#2196F3'}>
+                    <Tooltip title={category.color || '#4CAF50'}>
                       <CircleIcon
                         sx={{
-                          color: category.color || '#2196F3',
+                          color: category.color || '#4CAF50',
                           fontSize: 24,
                         }}
                       />
