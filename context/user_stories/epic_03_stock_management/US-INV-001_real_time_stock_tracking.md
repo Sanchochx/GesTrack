@@ -14,42 +14,46 @@
 ## Criterios de Aceptación
 
 ### CA-1: Actualización Automática en Pedidos
-- El stock se reduce automáticamente al crear un pedido
-- El stock se restaura si se cancela un pedido pendiente
-- El stock NO se modifica si se marca pedido como "Entregado" (ya fue reducido al crearlo)
-- La actualización se refleja inmediatamente en todas las vistas del sistema
+> **DIFERIDO:** Este criterio está pendiente hasta completar Epic 04 (Sistema de Pedidos).
+> La infraestructura de actualización de stock está lista para integrarse cuando se implemente el sistema de órdenes.
+- [ ] El stock se reduce automáticamente al crear un pedido
+- [ ] El stock se restaura si se cancela un pedido pendiente
+- [ ] El stock NO se modifica si se marca pedido como "Entregado" (ya fue reducido al crearlo)
+- [ ] La actualización se refleja inmediatamente en todas las vistas del sistema
 
 ### CA-2: Actualización en Recepciones de Proveedor
-- El stock aumenta automáticamente al recibir una orden de compra de proveedor
-- Se valida que la cantidad recibida coincida con lo esperado
-- Si hay discrepancia, se requiere confirmación del usuario
-- Se registra el movimiento en el historial
+> **DIFERIDO:** Este criterio está pendiente hasta completar Epic 05 (Sistema de Proveedores).
+> La infraestructura de actualización de stock está lista para integrarse cuando se implemente el sistema de compras.
+- [ ] El stock aumenta automáticamente al recibir una orden de compra de proveedor
+- [ ] Se valida que la cantidad recibida coincida con lo esperado
+- [ ] Si hay discrepancia, se requiere confirmación del usuario
+- [ ] Se registra el movimiento en el historial
 
 ### CA-3: Sincronización en Tiempo Real
-- Los cambios de stock se reflejan inmediatamente en todas las sesiones activas
-- Múltiples usuarios ven la misma información actualizada simultáneamente
-- Se utiliza WebSockets o polling para actualizaciones en tiempo real
-- Indicador visual cuando hay actualizaciones pendientes de sincronizar
+- [x] Los cambios de stock se reflejan inmediatamente en todas las sesiones activas
+- [x] Múltiples usuarios ven la misma información actualizada simultáneamente
+- [x] Se utiliza WebSockets o polling para actualizaciones en tiempo real
+- [x] Indicador visual cuando hay actualizaciones pendientes de sincronizar
 
 ### CA-4: Timestamp de Última Actualización
-- Cada producto muestra fecha y hora de última actualización de stock
-- Formato: "Actualizado: DD/MM/YYYY HH:MM"
-- Se muestra el usuario que realizó la última modificación
-- Al hacer hover sobre el timestamp, se muestra detalle del último movimiento
+- [x] Cada producto muestra fecha y hora de última actualización de stock
+- [x] Formato: "Actualizado: DD/MM/YYYY HH:MM"
+- [x] Se muestra el usuario que realizó la última modificación
+- [x] Al hacer hover sobre el timestamp, se muestra detalle del último movimiento
 
 ### CA-5: Manejo de Concurrencia
-- Si dos usuarios intentan modificar stock simultáneamente, se maneja con locks
-- Se muestra error si el stock cambió antes de completar la operación
-- Opción de recargar y reintentar con valores actualizados
-- Las transacciones garantizan consistencia de datos
+- [x] Si dos usuarios intentan modificar stock simultáneamente, se maneja con locks
+- [x] Se muestra error si el stock cambió antes de completar la operación
+- [x] Opción de recargar y reintentar con valores actualizados
+- [x] Las transacciones garantizan consistencia de datos
 
 ### CA-6: Vistas Actualizadas
 Las siguientes vistas deben reflejar stock en tiempo real:
-- Lista de productos
-- Detalles de producto
-- Dashboard de inventario
-- Vista de categorías
-- Formulario de creación de pedidos (stock disponible)
+- [x] Lista de productos
+- [ ] Detalles de producto (pendiente de creación en futuras US)
+- [ ] Dashboard de inventario (pendiente de creación en US-INV-010)
+- [ ] Vista de categorías (actualización automática mediante ProductList)
+- [ ] Formulario de creación de pedidos (pendiente hasta Epic 04)
 
 ## Notas Técnicas
 - Implementar transacciones ACID para operaciones de stock

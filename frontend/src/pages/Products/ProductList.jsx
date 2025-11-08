@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import {
   Container,
@@ -15,6 +15,7 @@ import ProductStats from '../../components/products/ProductStats';
 import ProductFilters from '../../components/products/ProductFilters';
 import ProductTable from '../../components/products/ProductTable';
 import EmptyState from '../../components/products/EmptyState';
+import { useStockUpdates } from '../../hooks/useStockUpdates'; // US-INV-001 CA-3
 
 /**
  * ProductList Page
@@ -64,6 +65,25 @@ const ProductList = () => {
 
   // UI state
   const [successMessage, setSuccessMessage] = useState(null);
+
+  // US-INV-001 CA-3: Real-time stock updates
+  const handleStockUpdate = useCallback((updateData) => {
+    setProducts(prevProducts =>
+      prevProducts.map(product =>
+        product.id === updateData.product_id
+          ? {
+              ...product,
+              stock_quantity: updateData.stock_quantity,
+              stock_last_updated: updateData.stock_last_updated,
+              last_updated_by_name: updateData.last_updated_by_name,
+              version: updateData.version
+            }
+          : product
+      )
+    );
+  }, []);
+
+  const { isConnected } = useStockUpdates(handleStockUpdate);
 
   // US-PROD-003 CA-9: Update URL when filters change
   useEffect(() => {

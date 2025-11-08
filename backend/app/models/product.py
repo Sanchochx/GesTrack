@@ -41,8 +41,18 @@ class Product(db.Model):
     updated_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
     deleted_at = db.Column(db.DateTime, nullable=True)  # US-PROD-006 CA-9: Soft delete
 
+    # US-INV-001 CA-4: Timestamp de última actualización de stock
+    stock_last_updated = db.Column(db.DateTime, nullable=True)
+
+    # US-INV-001 CA-4: Usuario que realizó la última modificación de stock
+    last_updated_by_id = db.Column(db.String(36), db.ForeignKey('users.id'), nullable=True)
+
+    # US-INV-001 CA-5: Versión para optimistic locking (manejo de concurrencia)
+    version = db.Column(db.Integer, nullable=False, default=1)
+
     # Relaciones
     category = db.relationship('Category', back_populates='products')
+    last_updated_by = db.relationship('User', foreign_keys=[last_updated_by_id])
 
     def __repr__(self):
         return f'<Product {self.name} ({self.sku})>'
@@ -64,7 +74,13 @@ class Product(db.Model):
             'is_active': self.is_active,
             'created_at': self.created_at.isoformat() if self.created_at else None,
             'updated_at': self.updated_at.isoformat() if self.updated_at else None,
-            'deleted_at': self.deleted_at.isoformat() if self.deleted_at else None
+            'deleted_at': self.deleted_at.isoformat() if self.deleted_at else None,
+            # US-INV-001 CA-4: Información de última actualización de stock
+            'stock_last_updated': self.stock_last_updated.isoformat() if self.stock_last_updated else None,
+            'last_updated_by_id': self.last_updated_by_id,
+            'last_updated_by_name': self.last_updated_by.full_name if self.last_updated_by else None,
+            # US-INV-001 CA-5: Versión para optimistic locking
+            'version': self.version
         }
 
     @staticmethod
