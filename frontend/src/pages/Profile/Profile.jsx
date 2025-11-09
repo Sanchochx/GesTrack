@@ -205,14 +205,14 @@ function Profile() {
 
   if (!currentUser) {
     return (
-      <Container maxWidth="md" sx={{ mt: 4, textAlign: 'center' }}>
+      <Container maxWidth="md" sx={{ p: 3, mt: 4, textAlign: 'center' }}>
         <CircularProgress />
       </Container>
     );
   }
 
   return (
-    <Container maxWidth="md" sx={{ mt: 4, mb: 4 }}>
+    <Container maxWidth="md" sx={{ p: 3, mt: 4, mb: 4 }}>
       {/* US-AUTH-004: CA-1 - Título de la página */}
       <Typography variant="h4" component="h1" gutterBottom>
         Mi Perfil

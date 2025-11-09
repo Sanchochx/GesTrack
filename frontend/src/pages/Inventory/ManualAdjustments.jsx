@@ -124,8 +124,8 @@ const ManualAdjustments = () => {
   };
 
   return (
-    <Container maxWidth="md">
-      <Box sx={{ py: 4 }}>
+    <Container maxWidth="xl">
+      <Box sx={{ p: 3, py: 4 }}>
         {/* Header */}
         <Box sx={{ mb: 4, display: 'flex', alignItems: 'center', gap: 2 }}>
           <Button

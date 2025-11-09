@@ -247,7 +247,7 @@ const ProductList = () => {
   };
 
   return (
-    <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
+    <Container maxWidth="xl" sx={{ p: 3, mt: 4, mb: 4 }}>
       {/* Page Header */}
       <Box
         sx={{

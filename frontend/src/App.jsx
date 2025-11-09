@@ -314,7 +314,7 @@ function App() {
         <Box sx={{ flexGrow: 1 }}>
           <Navigation />
 
-          <Box sx={{ p: 3 }}>
+          <Box>
             <Routes>
               <Route path="/" element={<Navigate to="/login" replace />} />
               <Route path="/login" element={<Login />} />

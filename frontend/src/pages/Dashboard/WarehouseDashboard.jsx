@@ -31,8 +31,8 @@ const WarehouseDashboard = () => {
   if (!user) return null;
 
   return (
-    <Container maxWidth="lg">
-      <Box sx={{ mt: 4 }}>
+    <Container maxWidth="xl">
+      <Box sx={{ p: 3, mt: 4 }}>
         {/* Mensaje de bienvenida (CA-3) */}
         <Alert severity="success" sx={{ mb: 3 }}>
           ¡Bienvenido/a, {user.full_name}!

@@ -147,8 +147,17 @@ const ResetPassword = () => {
   };
 
   return (
-    <Container maxWidth="sm">
-      <Paper elevation={3} sx={{ p: 4, maxWidth: 450, mx: 'auto', mt: 8 }}>
+    <Box
+      sx={{
+        minHeight: 'calc(100vh - 64px)', // Minus AppBar height
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        p: 3
+      }}
+    >
+      <Container maxWidth="sm">
+        <Paper elevation={3} sx={{ p: 4, maxWidth: 450, mx: 'auto' }}>
         <Box sx={{ textAlign: 'center', mb: 3 }}>
           <LockResetIcon sx={{ fontSize: 48, color: 'primary.main', mb: 1 }} />
           <Typography variant="h4" component="h1" gutterBottom>
@@ -300,7 +309,8 @@ const ResetPassword = () => {
           </>
         )}
       </Paper>
-    </Container>
+      </Container>
+    </Box>
   );
 };
 

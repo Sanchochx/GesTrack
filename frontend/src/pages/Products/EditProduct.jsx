@@ -98,7 +98,7 @@ const EditProduct = () => {
   // Loading state
   if (loading) {
     return (
-      <Container maxWidth="md" sx={{ mt: 4, mb: 4, textAlign: 'center' }}>
+      <Container maxWidth="xl" sx={{ p: 3, mt: 4, mb: 4, textAlign: 'center' }}>
         <CircularProgress size={60} />
         <Typography variant="h6" sx={{ mt: 2 }}>
           Cargando producto...
@@ -110,7 +110,7 @@ const EditProduct = () => {
   // Error state
   if (error) {
     return (
-      <Container maxWidth="md" sx={{ mt: 4, mb: 4 }}>
+      <Container maxWidth="xl" sx={{ p: 3, mt: 4, mb: 4 }}>
         <Alert severity="error" sx={{ mb: 3 }}>
           {error}
         </Alert>
@@ -136,7 +136,7 @@ const EditProduct = () => {
   // Product not found
   if (!productData) {
     return (
-      <Container maxWidth="md" sx={{ mt: 4, mb: 4 }}>
+      <Container maxWidth="xl" sx={{ p: 3, mt: 4, mb: 4 }}>
         <Alert severity="warning" sx={{ mb: 3 }}>
           Producto no encontrado
         </Alert>
@@ -152,7 +152,7 @@ const EditProduct = () => {
   }
 
   return (
-    <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
+    <Container maxWidth="xl" sx={{ p: 3, mt: 4, mb: 4 }}>
       {/* Back button */}
       <Box sx={{ mb: 2 }}>
         <Button

@@ -1,4 +1,4 @@
-import { Container } from '@mui/material';
+import { Container, Box } from '@mui/material';
 import LoginForm from '../../components/forms/LoginForm';
 
 /**
@@ -7,9 +7,19 @@ import LoginForm from '../../components/forms/LoginForm';
  */
 const Login = () => {
   return (
-    <Container maxWidth="sm">
-      <LoginForm />
-    </Container>
+    <Box
+      sx={{
+        minHeight: 'calc(100vh - 64px)', // Minus AppBar height
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        p: 3
+      }}
+    >
+      <Container maxWidth="sm">
+        <LoginForm />
+      </Container>
+    </Box>
   );
 };
 

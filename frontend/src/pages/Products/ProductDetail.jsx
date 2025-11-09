@@ -197,7 +197,7 @@ const ProductDetail = () => {
 
   if (loading) {
     return (
-      <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
+      <Container maxWidth="xl" sx={{ p: 3, mt: 4, mb: 4 }}>
         <Box display="flex" justifyContent="center" alignItems="center" minHeight="400px">
           <CircularProgress />
         </Box>
@@ -207,7 +207,7 @@ const ProductDetail = () => {
 
   if (error) {
     return (
-      <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
+      <Container maxWidth="xl" sx={{ p: 3, mt: 4, mb: 4 }}>
         <Alert severity="error" sx={{ mb: 2 }}>
           {error}
         </Alert>
@@ -224,7 +224,7 @@ const ProductDetail = () => {
 
   if (!product) {
     return (
-      <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
+      <Container maxWidth="xl" sx={{ p: 3, mt: 4, mb: 4 }}>
         <Alert severity="warning" sx={{ mb: 2 }}>
           Producto no encontrado
         </Alert>
@@ -244,7 +244,7 @@ const ProductDetail = () => {
   const stockPercentage = product.stock_status?.stock_percentage || 0;
 
   return (
-    <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
+    <Container maxWidth="xl" sx={{ p: 3, mt: 4, mb: 4 }}>
       {/* CA-1: Breadcrumbs de navegación */}
       <Breadcrumbs sx={{ mb: 2 }} aria-label="breadcrumb">
         <Link

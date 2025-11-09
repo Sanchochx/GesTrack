@@ -1,4 +1,4 @@
-import { Container } from '@mui/material';
+import { Container, Box } from '@mui/material';
 import UserRegistrationForm from '../../components/forms/UserRegistrationForm';
 
 /**
@@ -6,9 +6,19 @@ import UserRegistrationForm from '../../components/forms/UserRegistrationForm';
  */
 const Register = () => {
   return (
-    <Container maxWidth="md">
-      <UserRegistrationForm />
-    </Container>
+    <Box
+      sx={{
+        minHeight: 'calc(100vh - 64px)', // Minus AppBar height
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        p: 3
+      }}
+    >
+      <Container maxWidth="md">
+        <UserRegistrationForm />
+      </Container>
+    </Box>
   );
 };
 
