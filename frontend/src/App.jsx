@@ -34,6 +34,7 @@ import ProductDetail from './pages/Products/ProductDetail';
 import EditProduct from './pages/Products/EditProduct';
 import LowStockProducts from './pages/Products/LowStockProducts';  // US-PROD-008 CA-4
 import Categories from './pages/Categories/Categories';
+import ManualAdjustments from './pages/Inventory/ManualAdjustments';  // US-INV-002
 import ProtectedRoute from './components/common/ProtectedRoute';
 import authService from './services/authService';
 
@@ -172,6 +173,9 @@ function Navigation() {
                 </Button>
                 <Button color="inherit" href="/products/low-stock" sx={{ color: 'warning.light' }}>
                   Stock Bajo
+                </Button>
+                <Button color="inherit" href="/inventory/adjustments">
+                  Ajustes
                 </Button>
                 <Button color="inherit" href="/categories">
                   Categorías
@@ -350,6 +354,16 @@ function App() {
                 element={
                   <ProtectedRoute allowedRoles={['Admin', 'Gerente de Almacén']}>
                     <ProductDetail />
+                  </ProtectedRoute>
+                }
+              />
+
+              {/* US-INV-002: Manual Inventory Adjustments Route */}
+              <Route
+                path="/inventory/adjustments"
+                element={
+                  <ProtectedRoute allowedRoles={['Admin', 'Gerente de Almacén']}>
+                    <ManualAdjustments />
                   </ProtectedRoute>
                 }
               />

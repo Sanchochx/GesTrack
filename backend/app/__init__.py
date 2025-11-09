@@ -50,11 +50,13 @@ def create_app(config_name=None):
     from app.routes.categories import categories_bp
     from app.routes.products import products_bp
     from app.routes.stock import stock_bp  # US-INV-001 CA-3
+    from app.routes.inventory import inventory_bp  # US-INV-002
 
     app.register_blueprint(auth_bp, url_prefix='/api/auth')
     app.register_blueprint(categories_bp)
     app.register_blueprint(products_bp)
     app.register_blueprint(stock_bp)  # US-INV-001 CA-3
+    app.register_blueprint(inventory_bp)  # US-INV-002
 
     # Manejador de errores global
     @app.errorhandler(404)
