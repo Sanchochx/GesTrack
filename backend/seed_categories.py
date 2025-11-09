@@ -25,10 +25,8 @@ def seed_default_category():
 
             db.session.add(general_category)
             db.session.commit()
-
-            print(f"[OK] Categoria por defecto 'General' creada con ID: {general_category.id}")
         else:
-            print(f"[INFO] Ya existe una categoria por defecto: '{default_category.name}'")
+            pass
 
 if __name__ == '__main__':
     seed_default_category()

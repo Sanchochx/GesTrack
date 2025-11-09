@@ -30,25 +30,22 @@ export const useStockUpdates = (onStockUpdate) => {
 
       // Evento de conexión
       socket.on('connect', () => {
-        console.log('✅ Conectado al servidor WebSocket para actualizaciones de stock');
         setIsConnected(true);
       });
 
       // Evento de desconexión
       socket.on('disconnect', () => {
-        console.log('❌ Desconectado del servidor WebSocket');
         setIsConnected(false);
       });
 
       // Evento de confirmación de conexión
       socket.on('connected', (data) => {
-        console.log('📡 Mensaje del servidor:', data.message);
+        // Conexión confirmada
       });
     }
 
     // Listener para actualizaciones de stock
     const handleStockUpdate = (data) => {
-      console.log('📦 Actualización de stock recibida:', data);
       setLastUpdate({
         ...data,
         timestamp: new Date()

@@ -3,8 +3,6 @@ Schemas de validación para Categorías
 Maneja validación y serialización de datos de categorías.
 """
 from marshmallow import Schema, fields, validates, ValidationError, validate
-from app.models.category import Category
-import re
 
 
 class CategorySchema(Schema):

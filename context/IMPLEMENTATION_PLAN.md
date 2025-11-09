@@ -12,12 +12,12 @@
 │  PROGRESO GLOBAL DEL PROYECTO                               │
 ├─────────────────────────────────────────────────────────────┤
 │  Total Historias de Usuario:     82                         │
-│  ✅ Completadas:                   19                        │
+│  ✅ Completadas:                   20                        │
 │  🔄 Parcialmente Completadas:     0                         │
 │  ⏳ En Progreso:                   0                         │
-│  ⏸️  Pendientes:                   63                        │
+│  ⏸️  Pendientes:                   62                        │
 │                                                             │
-│  Progreso: [████░░░░░░░░░░░░░░░░] 23% (19/82)              │
+│  Progreso: [████░░░░░░░░░░░░░░░░] 24% (20/82)              │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -29,7 +29,7 @@
 |------|--------|----------|-------------|-------------|------------|----------|
 | 01 | Foundation | 6 | 6 | 0 | 0 | [██████████] 100% |
 | 02 | Core Data | 10 | 10 | 0 | 0 | [██████████] 100% |
-| 03 | Stock Management | 10 | 2 | 0 | 8 | [██░░░░░░░░] 20% |
+| 03 | Stock Management | 10 | 3 | 0 | 7 | [███░░░░░░░] 30% |
 | 04 | Sales | 26 | 0 | 0 | 26 | [░░░░░░░░░░] 0% |
 | 05 | Supply Chain | 15 | 0 | 0 | 15 | [░░░░░░░░░░] 0% |
 | 06 | Analytics | 15 | 0 | 0 | 15 | [░░░░░░░░░░] 0% |
@@ -356,14 +356,14 @@
 **Objetivo:** Implementar funcionalidades principales de negocio
 **Épicas:** 03 Stock Management, 04 Sales
 **Total US:** 36
-**Progreso:** [░░░░░░░░░░] 6% (2/36 completadas) 🔄 EN PROGRESO
+**Progreso:** [█░░░░░░░░░] 8% (3/36 completadas) 🔄 EN PROGRESO
 
 ---
 
 ## Epic 03: Stock Management - Gestión de Inventario
 
 **Prioridad:** ⭐⭐⭐ ALTA
-**Progreso:** [██░░░░░░░░] 20% (2/10 completadas)
+**Progreso:** [███░░░░░░░] 30% (3/10 completadas)
 **Carpeta:** `context/user_stories/epic_03_stock_management/`
 
 ### ✅ Historias de Usuario
@@ -420,12 +420,36 @@
   - Frontend: `pages/Inventory/ManualAdjustments.jsx`, `components/inventory/ManualAdjustmentForm.jsx`, `components/inventory/AdjustmentConfirmDialog.jsx`, `services/inventoryService.js`
 - **Fecha de completación:** 2025-11-09
 
-#### [ ] US-INV-003: Historial de Movimientos de Stock
+#### [x] US-INV-003: Historial de Movimientos de Stock
 - **Archivo:** `context/user_stories/epic_03_stock_management/US-INV-003_stock_movement_history.md`
 - **Prioridad:** MEDIA
 - **Estimación:** 5 pts
-- **Estado:** ⏸️ Pendiente
-- **Criterios de Aceptación:** 6
+- **Estado:** ✅ COMPLETADA
+- **Criterios de Aceptación:** 7 (todos completados)
+- **Progreso Backend:** ✅ 100% - API completa
+  - CA-1: Vista general con paginación (50 registros/página) ✅
+  - CA-2: Indicadores visuales de tipos de movimiento con chips e iconos ✅
+  - CA-3: Filtros avanzados (fechas, tipos, producto, usuario, categoría) ✅
+  - CA-4: Gráfico de evolución de stock con Recharts (fallback a tabla) ✅
+  - CA-5: Modal de detalles completo con toda la información ✅
+  - CA-6: Exportación a CSV y Excel con límite de 10,000 registros ✅
+  - CA-7: Performance optimizada con índices en BD ✅
+  - InventoryMovementService completo con 6 métodos ✅
+  - ExportHelper para generación de archivos ✅
+  - 7 nuevos endpoints API implementados ✅
+- **Progreso Frontend:** ✅ 100% - Completado
+  - MovementHistoryTable con paginación y visualización completa ✅
+  - MovementFilters con date presets y multiselect ✅
+  - MovementHistory página principal con estadísticas ✅
+  - MovementDetailsModal con información completa ✅
+  - StockEvolutionChart con gráfico/tabla adaptativo ✅
+  - MovementTypeChip con 9 tipos configurados ✅
+  - Ruta /inventory/history protegida y navegación ✅
+  - inventoryService.js extendido con 6 nuevos métodos ✅
+- **Archivos Creados:**
+  - Backend: `services/inventory_movement_service.py` (320 líneas), `utils/export_helper.py` (210 líneas), migración de índices
+  - Frontend: `pages/Inventory/MovementHistory.jsx` (290 líneas), `components/inventory/MovementHistoryTable.jsx` (313 líneas), `components/inventory/MovementFilters.jsx` (263 líneas), `components/inventory/MovementDetailsModal.jsx` (218 líneas), `components/inventory/StockEvolutionChart.jsx` (178 líneas), `components/inventory/MovementTypeChip.jsx` (82 líneas)
+- **Fecha de completación:** 2025-11-09
 
 #### [ ] US-INV-004: Configuración de Puntos de Reorden
 - **Archivo:** `context/user_stories/epic_03_stock_management/US-INV-004_reorder_point_configuration.md`

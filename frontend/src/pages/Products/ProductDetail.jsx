@@ -96,7 +96,6 @@ const ProductDetail = () => {
         setError(response.error?.message || 'Error al cargar el producto');
       }
     } catch (err) {
-      console.error('Error loading product:', err);
       setError(err.error?.message || 'Error al cargar el producto');
     } finally {
       setLoading(false);
@@ -113,17 +112,14 @@ const ProductDetail = () => {
 
   const handleDelete = () => {
     // TODO: Implementar en US-PROD-006
-    console.log('Delete product:', id);
   };
 
   const handleCreateOrder = () => {
     // TODO: Implementar en US-ORD-001
-    console.log('Create order with product:', id);
   };
 
   const handleViewMovements = () => {
     // TODO: Implementar en US-INV-003
-    console.log('View inventory movements for product:', id);
   };
 
   const handleCategoryClick = () => {

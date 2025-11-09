@@ -291,7 +291,6 @@ class AuthService:
             except Exception as e:
                 db.session.rollback()
                 # Log error pero no exponerlo al usuario
-                print(f"Error en password reset: {str(e)}")
                 raise Exception('Error al procesar la solicitud')
 
         # Siempre retornar True por seguridad (CA-3: evitar enumeration attacks)
@@ -359,7 +358,7 @@ class AuthService:
                 )
             except Exception as e:
                 # Log error pero no fallar el proceso
-                print(f"Error al enviar email de confirmación: {str(e)}")
+                pass
 
             return user
 

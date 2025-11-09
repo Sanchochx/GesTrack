@@ -35,6 +35,7 @@ import EditProduct from './pages/Products/EditProduct';
 import LowStockProducts from './pages/Products/LowStockProducts';  // US-PROD-008 CA-4
 import Categories from './pages/Categories/Categories';
 import ManualAdjustments from './pages/Inventory/ManualAdjustments';  // US-INV-002
+import MovementHistory from './pages/Inventory/MovementHistory';  // US-INV-003
 import ProtectedRoute from './components/common/ProtectedRoute';
 import authService from './services/authService';
 
@@ -147,10 +148,26 @@ function Navigation() {
         {!isAuthenticated ? (
           // Mostrar botones de login/registro cuando NO está autenticado
           <>
-            <Button color="inherit" href="/login">
+            <Button
+              color="inherit"
+              href="/login"
+              sx={{
+                '&:hover': {
+                  color: '#a5d6a7', // Verde claro en hover
+                }
+              }}
+            >
               Iniciar Sesión
             </Button>
-            <Button color="inherit" href="/register">
+            <Button
+              color="inherit"
+              href="/register"
+              sx={{
+                '&:hover': {
+                  color: '#a5d6a7', // Verde claro en hover
+                }
+              }}
+            >
               Nuevo Usuario
             </Button>
           </>
@@ -160,7 +177,15 @@ function Navigation() {
           <>
             {/* US-AUTH-005: CA-2, CA-5 - Ocultar opciones según rol */}
             {currentUser?.role === 'Admin' && (
-              <Button color="inherit" href="/users">
+              <Button
+                color="inherit"
+                href="/users"
+                sx={{
+                  '&:hover': {
+                    color: '#a5d6a7', // Verde claro en hover
+                  }
+                }}
+              >
                 Usuarios
               </Button>
             )}
@@ -168,16 +193,60 @@ function Navigation() {
             {/* US-PROD: Product and Category Management Navigation */}
             {(currentUser?.role === 'Admin' || currentUser?.role === 'Gerente de Almacén') && (
               <>
-                <Button color="inherit" href="/products">
+                <Button
+                  color="inherit"
+                  href="/products"
+                  sx={{
+                    '&:hover': {
+                      color: '#a5d6a7', // Verde claro en hover
+                    }
+                  }}
+                >
                   Productos
                 </Button>
-                <Button color="inherit" href="/products/low-stock" sx={{ color: 'warning.light' }}>
+                <Button
+                  color="inherit"
+                  href="/products/low-stock"
+                  sx={{
+                    color: 'warning.light',
+                    '&:hover': {
+                      color: '#ffcc80', // Naranja claro para stock bajo
+                    }
+                  }}
+                >
                   Stock Bajo
                 </Button>
-                <Button color="inherit" href="/inventory/adjustments">
+                <Button
+                  color="inherit"
+                  href="/inventory/adjustments"
+                  sx={{
+                    '&:hover': {
+                      color: '#a5d6a7', // Verde claro en hover
+                    }
+                  }}
+                >
                   Ajustes
                 </Button>
-                <Button color="inherit" href="/categories">
+                <Button
+                  color="inherit"
+                  href="/inventory/history"
+                  sx={{
+                    '&:hover': {
+                      color: '#a5d6a7', // Verde claro en hover
+                    }
+                  }}
+                >
+                  Historial
+                </Button>
+                <Button
+                  color="inherit"
+                  href="/categories"
+                  sx={{
+                    '&:hover': {
+                      color: '#a5d6a7', // Verde claro en hover
+                    }
+                  }}
+                >
                   Categorías
                 </Button>
               </>
@@ -364,6 +433,16 @@ function App() {
                 element={
                   <ProtectedRoute allowedRoles={['Admin', 'Gerente de Almacén']}>
                     <ManualAdjustments />
+                  </ProtectedRoute>
+                }
+              />
+
+              {/* US-INV-003: Movement History Route */}
+              <Route
+                path="/inventory/history"
+                element={
+                  <ProtectedRoute allowedRoles={['Admin', 'Gerente de Almacén']}>
+                    <MovementHistory />
                   </ProtectedRoute>
                 }
               />

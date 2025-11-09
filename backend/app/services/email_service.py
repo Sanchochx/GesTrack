@@ -78,11 +78,9 @@ class EmailService:
             server.send_message(msg)
             server.quit()
 
-            print(f"Email enviado exitosamente a {to_email}")
             return True
 
         except Exception as e:
-            print(f"Error al enviar email a {to_email}: {str(e)}")
             # En desarrollo, no fallar silenciosamente
             raise Exception(f"Error al enviar email: {str(e)}")
 

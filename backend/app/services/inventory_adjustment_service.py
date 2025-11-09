@@ -247,8 +247,8 @@ class InventoryAdjustmentService:
 
             # Log para notificación (CA-7)
             if is_significant:
-                print(f"⚠️ AJUSTE SIGNIFICATIVO: {product.name} - {quantity_change} unidades por usuario {user_id}")
                 # Aquí se podría enviar una notificación real al administrador
+                pass
 
             return {
                 'product': updated_product.to_dict(),

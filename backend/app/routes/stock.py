@@ -346,7 +346,6 @@ def handle_connect():
     """
     Maneja la conexión de un cliente WebSocket
     """
-    print('Cliente conectado al WebSocket de stock')
     emit('connected', {'message': 'Conectado al sistema de actualizaciones de stock en tiempo real'})
 
 
@@ -355,7 +354,7 @@ def handle_disconnect():
     """
     Maneja la desconexión de un cliente WebSocket
     """
-    print('Cliente desconectado del WebSocket de stock')
+    pass
 
 
 @socketio.on('subscribe_product')
