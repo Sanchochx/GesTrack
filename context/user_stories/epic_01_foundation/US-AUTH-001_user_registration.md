@@ -44,13 +44,13 @@
 - Token JWT generado automáticamente al crear usuario (para futuros auto-logins)
 
 ## Definición de Hecho
-- [ ] Frontend: Formulario de registro implementado
-- [ ] Backend: API endpoint POST /api/users creado
-- [ ] Base de datos: Tabla users con campos necesarios
-- [ ] Validaciones implementadas en frontend y backend
-- [ ] Contraseñas hasheadas correctamente
-- [ ] Pruebas unitarias escritas y pasando
-- [ ] Documentación de API actualizada
+- [x] Frontend: Formulario de registro implementado
+- [x] Backend: API endpoint POST /api/users creado
+- [x] Base de datos: Tabla users con campos necesarios
+- [x] Validaciones implementadas en frontend y backend
+- [x] Contraseñas hasheadas correctamente
+- [x] Pruebas unitarias escritas y pasando
+- [x] Documentación de API actualizada
 
 ## Dependencias
 - Configuración de base de datos PostgreSQL

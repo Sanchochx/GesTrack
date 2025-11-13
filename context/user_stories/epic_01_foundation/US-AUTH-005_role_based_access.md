@@ -108,7 +108,7 @@ El menú de navegación se adapta según el rol:
 - [x] Token JWT incluye información de rol
 - [x] Validación de permisos en todas las operaciones CRUD
 - [x] Logs de seguridad para accesos denegados
-- [ ] Pruebas de todos los escenarios de roles (testing opcional en v1.0)
+- [x] Pruebas de todos los escenarios de roles (testing opcional en v1.0)
 - [x] Documentación de permisos por rol
 
 ## Dependencias

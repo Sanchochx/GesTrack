@@ -46,12 +46,12 @@
 
 ## Definición de Hecho
 - [x] Frontend: Botón de logout en navbar
-- [ ] Backend: API endpoint POST /api/auth/logout (opcional si JWT)
+- [x] Backend: API endpoint POST /api/auth/logout (opcional si JWT)
 - [x] Token eliminado de almacenamiento local
 - [x] Redirección a login implementada
 - [x] Protección de rutas funcionando
 - [x] Limpieza completa de estado de sesión
-- [ ] Pruebas de flujo completo
+- [x] Pruebas de flujo completo
 - [x] Documentación actualizada
 
 ## Dependencias

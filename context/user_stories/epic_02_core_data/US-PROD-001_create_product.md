@@ -85,8 +85,8 @@ El formulario incluye los siguientes campos:
 - [x] Optimización y almacenamiento de imágenes
 - [x] Registro automático en historial de inventario
 - [x] Cálculo de margen de ganancia
-- [ ] Pruebas unitarias y de integración
-- [ ] Documentación de API
+- [x] Pruebas unitarias y de integración
+- [x] Documentación de API
 
 ## Dependencias
 - US-PROD-007 (Categorías) debe estar completo

@@ -74,7 +74,7 @@
 - [x] Validaciones de backend implementadas
 - [x] Verificación de contraseña actual funcional
 - [x] UI responsive y amigable
-- [ ] Pruebas unitarias y de integración (opcional para v1.0)
+- [x] Pruebas unitarias y de integración (opcional para v1.0)
 - [x] Documentación de API actualizada
 
 ## Dependencias
