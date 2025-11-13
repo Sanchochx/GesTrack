@@ -156,6 +156,7 @@ const ProductTable = ({
    * Table column configuration
    * CA-1: Table structure
    * US-PROD-010 CA-5: Added profit margin column
+   * US-INV-004 CA-3: Added reorder point column
    */
   const columns = [
     { id: 'image', label: 'Imagen', sortable: false, width: '100px' },
@@ -165,6 +166,7 @@ const ProductTable = ({
     { id: 'sale_price', label: 'Precio de Venta', sortable: true },
     { id: 'profit_margin', label: 'Margen', sortable: true }, // US-PROD-010 CA-5
     { id: 'stock_quantity', label: 'Stock Actual', sortable: true },
+    { id: 'reorder_point', label: 'Punto de Reorden', sortable: true }, // US-INV-004 CA-3
     { id: 'actions', label: 'Acciones', sortable: false, align: 'right' },
   ];
 
@@ -336,6 +338,36 @@ const ProductTable = ({
                         minStockLevel={product.min_stock_level}
                         showQuantity={true}
                       />
+                    </TableCell>
+
+                    {/* US-INV-004 CA-3: Reorder Point with Badge */}
+                    <TableCell>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Typography variant="body2">
+                          {product.reorder_point || 10}
+                        </Typography>
+                        {product.stock_quantity <= (product.reorder_point || 10) && (
+                          <Tooltip title="Stock en o debajo del punto de reorden">
+                            <Box
+                              sx={{
+                                px: 1,
+                                py: 0.5,
+                                borderRadius: 1,
+                                bgcolor: 'warning.main',
+                                color: 'warning.contrastText',
+                                fontSize: '0.75rem',
+                                fontWeight: 600,
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 0.5,
+                              }}
+                            >
+                              <WarningIcon sx={{ fontSize: '0.875rem' }} />
+                              REORDEN
+                            </Box>
+                          </Tooltip>
+                        )}
+                      </Box>
                     </TableCell>
 
                     {/* Actions */}

@@ -9,13 +9,15 @@ import {
   Snackbar,
   CircularProgress,
 } from '@mui/material';
-import { Add as AddIcon } from '@mui/icons-material';
+import { Add as AddIcon, Settings as SettingsIcon } from '@mui/icons-material';
 import productService from '../../services/productService';
 import ProductStats from '../../components/products/ProductStats';
 import ProductFilters from '../../components/products/ProductFilters';
 import ProductTable from '../../components/products/ProductTable';
 import EmptyState from '../../components/products/EmptyState';
+import BulkReorderPointDialog from '../../components/inventory/BulkReorderPointDialog'; // US-INV-004 CA-4
 import { useStockUpdates } from '../../hooks/useStockUpdates'; // US-INV-001 CA-3
+import authService from '../../services/authService'; // US-INV-004 CA-4: Check role
 
 /**
  * ProductList Page
@@ -65,6 +67,13 @@ const ProductList = () => {
 
   // UI state
   const [successMessage, setSuccessMessage] = useState(null);
+
+  // US-INV-004 CA-4: Bulk reorder point dialog
+  const [showBulkDialog, setShowBulkDialog] = useState(false);
+
+  // US-INV-004 CA-4: Check if user is Admin or Warehouse Manager
+  const user = authService.getCurrentUser();
+  const canBulkUpdate = user?.role === 'Admin' || user?.role === 'Gerente de Almacén';
 
   // US-INV-001 CA-3: Real-time stock updates
   const handleStockUpdate = useCallback((updateData) => {
@@ -169,6 +178,17 @@ const ProductList = () => {
   };
 
   /**
+   * US-INV-004 CA-4: Handle bulk reorder point update success
+   */
+  const handleBulkUpdateSuccess = (result) => {
+    setSuccessMessage(
+      `Se actualizaron ${result.products_updated} productos correctamente`
+    );
+    // Reload products to show updated values
+    loadProducts();
+  };
+
+  /**
    * Handle page change
    * CA-2: Pagination
    */
@@ -265,14 +285,27 @@ const ProductList = () => {
             Gestión del catálogo de productos
           </Typography>
         </Box>
-        <Button
-          variant="contained"
-          color="primary"
-          startIcon={<AddIcon />}
-          onClick={handleCreateProduct}
-        >
-          Nuevo Producto
-        </Button>
+        <Box sx={{ display: 'flex', gap: 2 }}>
+          {/* US-INV-004 CA-4: Bulk reorder point configuration (Admin & Warehouse Manager only) */}
+          {canBulkUpdate && (
+            <Button
+              variant="outlined"
+              color="primary"
+              startIcon={<SettingsIcon />}
+              onClick={() => setShowBulkDialog(true)}
+            >
+              Configuración Masiva
+            </Button>
+          )}
+          <Button
+            variant="contained"
+            color="primary"
+            startIcon={<AddIcon />}
+            onClick={handleCreateProduct}
+          >
+            Nuevo Producto
+          </Button>
+        </Box>
       </Box>
 
       {/* Error Alert */}
@@ -349,6 +382,13 @@ const ProductList = () => {
           {successMessage}
         </Alert>
       </Snackbar>
+
+      {/* US-INV-004 CA-4: Bulk Reorder Point Configuration Dialog */}
+      <BulkReorderPointDialog
+        open={showBulkDialog}
+        onClose={() => setShowBulkDialog(false)}
+        onSuccess={handleBulkUpdateSuccess}
+      />
     </Container>
   );
 };

@@ -12,6 +12,7 @@ from app.services.inventory_adjustment_service import (
     AdjustmentValidationError
 )
 from app.services.inventory_movement_service import InventoryMovementService
+from app.services.reorder_point_service import ReorderPointService
 from app.utils.export_helper import ExportHelper
 from app.utils.constants import ADJUSTMENT_REASONS, ADJUSTMENT_TYPES
 from app.utils.decorators import warehouse_manager_or_admin
@@ -562,5 +563,286 @@ def get_recent_movements():
             'error': {
                 'code': 'INTERNAL_ERROR',
                 'message': f'Error al obtener movimientos recientes: {str(e)}'
+            }
+        }), 500
+
+
+# ===================================================================
+# US-INV-004: Configuración de Puntos de Reorden
+# ===================================================================
+
+@inventory_bp.route('/reorder-point/suggest/<product_id>', methods=['GET'])
+@jwt_required()
+def suggest_reorder_point(product_id):
+    """
+    US-INV-004 CA-5: Calcular sugerencia inteligente de punto de reorden
+
+    Query params:
+        lead_time_days: Días de reabastecimiento (default: 7)
+        safety_stock_days: Días de stock de seguridad (default: 3)
+
+    Returns:
+        {
+            "success": true,
+            "data": {
+                "suggested_reorder_point": 25,
+                "average_daily_sales": 2.5,
+                "lead_time_days": 7,
+                "safety_stock": 8,
+                "calculation_details": "...",
+                "current_reorder_point": 10
+            }
+        }
+    """
+    try:
+        lead_time_days = request.args.get('lead_time_days', 7, type=int)
+        safety_stock_days = request.args.get('safety_stock_days', 3, type=int)
+
+        suggestion = ReorderPointService.calculate_suggested_reorder_point(
+            product_id=product_id,
+            lead_time_days=lead_time_days,
+            safety_stock_days=safety_stock_days
+        )
+
+        if not suggestion:
+            return jsonify({
+                'success': False,
+                'error': {
+                    'code': 'PRODUCT_NOT_FOUND',
+                    'message': 'Producto no encontrado'
+                }
+            }), 404
+
+        return jsonify({
+            'success': True,
+            'data': suggestion
+        }), 200
+
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': {
+                'code': 'INTERNAL_ERROR',
+                'message': f'Error al calcular sugerencia: {str(e)}'
+            }
+        }), 500
+
+
+@inventory_bp.route('/reorder-point/bulk-update', methods=['POST'])
+@jwt_required()
+@warehouse_manager_or_admin
+def bulk_update_reorder_points():
+    """
+    US-INV-004 CA-4: Actualizar puntos de reorden masivamente por categoría
+
+    Body:
+        {
+            "category_id": "uuid",
+            "reorder_point": 20,
+            "overwrite_existing": true
+        }
+
+    Returns:
+        {
+            "success": true,
+            "data": {
+                "products_updated": 15,
+                "products_skipped": 2,
+                "updated_products": [...],
+                "skipped_products": [...]
+            },
+            "message": "Puntos de reorden actualizados correctamente"
+        }
+    """
+    try:
+        current_user_id = get_jwt_identity()
+        data = request.get_json()
+
+        # Validar campos requeridos
+        if 'category_id' not in data or 'reorder_point' not in data:
+            return jsonify({
+                'success': False,
+                'error': {
+                    'code': 'MISSING_FIELD',
+                    'message': 'Los campos category_id y reorder_point son requeridos'
+                }
+            }), 400
+
+        # Validar punto de reorden
+        validation = ReorderPointService.validate_reorder_point(data['reorder_point'])
+        if not validation['valid']:
+            return jsonify({
+                'success': False,
+                'error': {
+                    'code': 'INVALID_REORDER_POINT',
+                    'message': validation['error']
+                }
+            }), 400
+
+        # Actualizar
+        result = ReorderPointService.bulk_update_reorder_points_by_category(
+            category_id=data['category_id'],
+            reorder_point=data['reorder_point'],
+            overwrite_existing=data.get('overwrite_existing', True),
+            user_id=current_user_id
+        )
+
+        if not result['success']:
+            return jsonify({
+                'success': False,
+                'error': {
+                    'code': 'UPDATE_ERROR',
+                    'message': result['error']
+                }
+            }), 400
+
+        return jsonify({
+            'success': True,
+            'data': result,
+            'message': f'Se actualizaron {result["products_updated"]} productos correctamente'
+        }), 200
+
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': {
+                'code': 'INTERNAL_ERROR',
+                'message': f'Error al actualizar puntos de reorden: {str(e)}'
+            }
+        }), 500
+
+
+@inventory_bp.route('/reorder-point/preview/<category_id>', methods=['GET'])
+@jwt_required()
+def preview_category_products(category_id):
+    """
+    US-INV-004 CA-4: Obtener preview de productos de una categoría
+
+    Returns:
+        {
+            "success": true,
+            "data": [
+                {
+                    "id": "uuid",
+                    "name": "Producto 1",
+                    "sku": "PROD-001",
+                    "current_reorder_point": 10,
+                    "stock_quantity": 50,
+                    "stock_status": "normal"
+                },
+                ...
+            ]
+        }
+    """
+    try:
+        products = ReorderPointService.get_products_by_category_for_preview(category_id)
+
+        return jsonify({
+            'success': True,
+            'data': products
+        }), 200
+
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': {
+                'code': 'INTERNAL_ERROR',
+                'message': f'Error al obtener preview: {str(e)}'
+            }
+        }), 500
+
+
+@inventory_bp.route('/reorder-point/validate', methods=['POST'])
+@jwt_required()
+def validate_reorder_point():
+    """
+    US-INV-004 CA-6: Validar punto de reorden
+
+    Body:
+        {
+            "reorder_point": 25,
+            "stock_quantity": 15  (opcional)
+        }
+
+    Returns:
+        {
+            "success": true,
+            "data": {
+                "valid": true,
+                "error": null,
+                "warning": "El stock actual ya está por debajo del punto de reorden"
+            }
+        }
+    """
+    try:
+        data = request.get_json()
+
+        if 'reorder_point' not in data:
+            return jsonify({
+                'success': False,
+                'error': {
+                    'code': 'MISSING_FIELD',
+                    'message': 'El campo reorder_point es requerido'
+                }
+            }), 400
+
+        validation = ReorderPointService.validate_reorder_point(
+            reorder_point=data['reorder_point'],
+            stock_quantity=data.get('stock_quantity')
+        )
+
+        return jsonify({
+            'success': True,
+            'data': validation
+        }), 200
+
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': {
+                'code': 'INTERNAL_ERROR',
+                'message': f'Error al validar: {str(e)}'
+            }
+        }), 500
+
+
+@inventory_bp.route('/reorder-point/products-below', methods=['GET'])
+@jwt_required()
+def get_products_below_reorder_point():
+    """
+    US-INV-004 CA-3, CA-7: Obtener productos en o debajo del punto de reorden
+
+    Returns:
+        {
+            "success": true,
+            "data": [
+                {
+                    "id": "uuid",
+                    "name": "Producto 1",
+                    "sku": "PROD-001",
+                    "stock_quantity": 5,
+                    "reorder_point": 10,
+                    "difference": 5,
+                    "stock_status": "low_stock",
+                    "category": "Electrónica"
+                },
+                ...
+            ]
+        }
+    """
+    try:
+        products = ReorderPointService.get_products_at_or_below_reorder_point()
+
+        return jsonify({
+            'success': True,
+            'data': products
+        }), 200
+
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': {
+                'code': 'INTERNAL_ERROR',
+                'message': f'Error al obtener productos: {str(e)}'
             }
         }), 500

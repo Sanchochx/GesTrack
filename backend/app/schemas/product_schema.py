@@ -89,9 +89,19 @@ class ProductCreateSchema(Schema):
 
     @validates('reorder_point')
     def validate_reorder_point(self, value):
-        """CA-1: Validar punto de reorden (opcional, >=0)"""
-        if value is not None and value < 0:
-            raise ValidationError('El punto de reorden no puede ser negativo')
+        """
+        US-INV-004 CA-6: Validar punto de reorden
+        - Debe ser entero positivo o cero
+        - No puede ser mayor a 10,000 unidades
+        """
+        if value is not None:
+            # Validar que sea entero positivo o cero
+            if value < 0:
+                raise ValidationError('El punto de reorden no puede ser negativo')
+
+            # Validar máximo 10,000 unidades (validación de sensatez)
+            if value > 10000:
+                raise ValidationError('El punto de reorden no puede ser mayor a 10,000 unidades')
 
     @validates_schema
     def validate_prices(self, data, **kwargs):
@@ -172,9 +182,16 @@ class ProductUpdateSchema(Schema):
 
     @validates('reorder_point')
     def validate_reorder_point(self, value):
-        """US-PROD-008 CA-1: Validar punto de reorden si se proporciona"""
-        if value is not None and value < 0:
-            raise ValidationError('El punto de reorden no puede ser negativo')
+        """
+        US-INV-004 CA-6: Validar punto de reorden si se proporciona
+        - Debe ser entero positivo o cero
+        - No puede ser mayor a 10,000 unidades
+        """
+        if value is not None:
+            if value < 0:
+                raise ValidationError('El punto de reorden no puede ser negativo')
+            if value > 10000:
+                raise ValidationError('El punto de reorden no puede ser mayor a 10,000 unidades')
 
 
 class ProductResponseSchema(Schema):

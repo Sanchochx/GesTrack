@@ -5,5 +5,6 @@ from app.models.category import Category
 from app.models.product import Product
 from app.models.inventory_movement import InventoryMovement
 from app.models.product_deletion_audit import ProductDeletionAudit
+from app.models.inventory_alert import InventoryAlert
 
-__all__ = ['User', 'LoginAttempt', 'PasswordResetToken', 'Category', 'Product', 'InventoryMovement', 'ProductDeletionAudit']
+__all__ = ['User', 'LoginAttempt', 'PasswordResetToken', 'Category', 'Product', 'InventoryMovement', 'ProductDeletionAudit', 'InventoryAlert']

@@ -219,6 +219,97 @@ const inventoryService = {
       console.error('Error fetching recent movements:', error);
       throw error.response?.data || { error: { message: 'Error al obtener movimientos recientes' } };
     }
+  },
+
+  // ===================================================================
+  // US-INV-004: Configuración de Puntos de Reorden
+  // ===================================================================
+
+  /**
+   * US-INV-004 CA-5: Obtiene sugerencia inteligente de punto de reorden
+   *
+   * @param {string} productId - ID del producto
+   * @param {number} leadTimeDays - Días de reabastecimiento (default: 7)
+   * @param {number} safetyStockDays - Días de stock de seguridad (default: 3)
+   */
+  getReorderPointSuggestion: async (productId, leadTimeDays = 7, safetyStockDays = 3) => {
+    try {
+      const response = await api.get(`/inventory/reorder-point/suggest/${productId}`, {
+        params: { lead_time_days: leadTimeDays, safety_stock_days: safetyStockDays }
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching reorder point suggestion:', error);
+      throw error.response?.data || { error: { message: 'Error al obtener sugerencia' } };
+    }
+  },
+
+  /**
+   * US-INV-004 CA-4: Actualiza puntos de reorden masivamente por categoría
+   *
+   * @param {string} categoryId - ID de la categoría
+   * @param {number} reorderPoint - Nuevo punto de reorden
+   * @param {boolean} overwriteExisting - Sobrescribir existentes (default: true)
+   */
+  bulkUpdateReorderPoints: async (categoryId, reorderPoint, overwriteExisting = true) => {
+    try {
+      const response = await api.post('/inventory/reorder-point/bulk-update', {
+        category_id: categoryId,
+        reorder_point: reorderPoint,
+        overwrite_existing: overwriteExisting
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error bulk updating reorder points:', error);
+      throw error.response?.data || { error: { message: 'Error al actualizar puntos de reorden' } };
+    }
+  },
+
+  /**
+   * US-INV-004 CA-4: Obtiene preview de productos de una categoría
+   *
+   * @param {string} categoryId - ID de la categoría
+   */
+  getReorderPointPreview: async (categoryId) => {
+    try {
+      const response = await api.get(`/inventory/reorder-point/preview/${categoryId}`);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching reorder point preview:', error);
+      throw error.response?.data || { error: { message: 'Error al obtener preview' } };
+    }
+  },
+
+  /**
+   * US-INV-004 CA-6: Valida un punto de reorden
+   *
+   * @param {number} reorderPoint - Punto de reorden a validar
+   * @param {number} stockQuantity - Stock actual (opcional)
+   */
+  validateReorderPoint: async (reorderPoint, stockQuantity = null) => {
+    try {
+      const response = await api.post('/inventory/reorder-point/validate', {
+        reorder_point: reorderPoint,
+        stock_quantity: stockQuantity
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error validating reorder point:', error);
+      throw error.response?.data || { error: { message: 'Error al validar' } };
+    }
+  },
+
+  /**
+   * US-INV-004 CA-3, CA-7: Obtiene productos en o debajo del punto de reorden
+   */
+  getProductsBelowReorderPoint: async () => {
+    try {
+      const response = await api.get('/inventory/reorder-point/products-below');
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching products below reorder point:', error);
+      throw error.response?.data || { error: { message: 'Error al obtener productos' } };
+    }
   }
 };
 

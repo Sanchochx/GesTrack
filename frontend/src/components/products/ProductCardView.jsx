@@ -19,6 +19,7 @@ import {
   Visibility as VisibilityIcon,
   Edit as EditIcon,
   Delete as DeleteIcon,
+  Warning as WarningIcon,
 } from '@mui/icons-material';
 import StockBadge from './StockBadge';
 import ProfitMarginBadge from './ProfitMarginBadge';
@@ -264,6 +265,34 @@ const ProductCardView = ({
                       minStockLevel={product.min_stock_level}
                       showQuantity={true}
                     />
+                  </Box>
+
+                  {/* US-INV-004 CA-3: Punto de reorden con badge REORDEN */}
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      mt: 1,
+                    }}
+                  >
+                    <Typography variant="body2" color="text.secondary">
+                      Punto de Reorden:
+                    </Typography>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <Typography variant="body2" fontWeight="medium">
+                        {product.reorder_point || 10}
+                      </Typography>
+                      {product.stock_quantity <= (product.reorder_point || 10) && (
+                        <Chip
+                          label="REORDEN"
+                          icon={<WarningIcon />}
+                          size="small"
+                          color="warning"
+                          sx={{ fontWeight: 600, fontSize: '0.7rem' }}
+                        />
+                      )}
+                    </Box>
                   </Box>
                 </CardContent>
               </Card>

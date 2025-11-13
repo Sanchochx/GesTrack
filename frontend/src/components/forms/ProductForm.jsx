@@ -27,6 +27,7 @@ import {
 import productService from '../../services/productService';
 import ImageUpload from './ImageUpload';
 import ProfitMarginBadge from '../products/ProfitMarginBadge';
+import ReorderSuggestionDialog from '../inventory/ReorderSuggestionDialog';
 
 /**
  * ProductForm Component
@@ -83,6 +84,9 @@ const ProductForm = ({ initialData = null, onSuccess, onCancel }) => {
   // US-PROD-010 CA-7: Low/negative margin alerts
   const [showNegativeMarginDialog, setShowNegativeMarginDialog] = useState(false);
   const [showLowMarginWarning, setShowLowMarginWarning] = useState(false);
+
+  // US-INV-004 CA-5: Reorder point suggestions
+  const [showSuggestionDialog, setShowSuggestionDialog] = useState(false);
 
   // US-PROD-005 CA-1: Load initial data if editing
   useEffect(() => {
@@ -368,10 +372,14 @@ const ProductForm = ({ initialData = null, onSuccess, onCancel }) => {
       errors.min_stock_level = 'El nivel mínimo de stock no puede ser negativo';
     }
 
-    // US-PROD-008 CA-1: Validar punto de reorden
+    // US-INV-004 CA-6: Validar punto de reorden
     const reorderPoint = parseInt(formData.reorder_point);
-    if (formData.reorder_point !== '' && reorderPoint < 0) {
-      errors.reorder_point = 'El punto de reorden no puede ser negativo';
+    if (formData.reorder_point !== '') {
+      if (reorderPoint < 0) {
+        errors.reorder_point = 'El punto de reorden no puede ser negativo';
+      } else if (reorderPoint > 10000) {
+        errors.reorder_point = 'El punto de reorden no puede ser mayor a 10,000 unidades';
+      }
     }
 
     if (!formData.category_id) {
@@ -584,6 +592,17 @@ const ProductForm = ({ initialData = null, onSuccess, onCancel }) => {
     }
   };
 
+  /**
+   * US-INV-004 CA-5: Aplicar sugerencia de punto de reorden
+   */
+  const handleApplySuggestion = (suggestedValue) => {
+    setFormData({
+      ...formData,
+      reorder_point: suggestedValue.toString(),
+    });
+    setShowSuggestionDialog(false);
+  };
+
   return (
     <Paper elevation={3} sx={{ p: 4, maxWidth: 800, mx: 'auto' }}>
       {/* US-PROD-005 CA-1: Title with product name */}
@@ -768,23 +787,59 @@ const ProductForm = ({ initialData = null, onSuccess, onCancel }) => {
             </Grid>
           )}
 
-          {/* US-PROD-008 CA-1: Punto de Reorden */}
+          {/* US-INV-004 CA-1: Punto de Reorden */}
           <Grid item xs={12} md={isEditMode ? 12 : 6}>
-            <Tooltip title="Cantidad mínima antes de alertar para reabastecer" arrow placement="top">
-              <TextField
-                fullWidth
-                type="number"
-                label="Punto de Reorden"
-                name="reorder_point"
-                value={formData.reorder_point}
-                onChange={handleChange}
-                error={!!fieldErrors.reorder_point}
-                helperText={fieldErrors.reorder_point || 'Cantidad mínima antes de alertar para reabastecer'}
-                disabled={loading}
-                inputProps={{ min: 0, step: 1 }}
-              />
-            </Tooltip>
+            <Box sx={{ display: 'flex', gap: 1, alignItems: 'flex-start' }}>
+              <Tooltip title="Recibirás una alerta cuando el stock llegue a este nivel" arrow placement="top">
+                <TextField
+                  fullWidth
+                  type="number"
+                  label="Punto de Reorden"
+                  name="reorder_point"
+                  value={formData.reorder_point}
+                  onChange={handleChange}
+                  error={!!fieldErrors.reorder_point}
+                  helperText={fieldErrors.reorder_point || 'Recibirás una alerta cuando el stock llegue a este nivel'}
+                  disabled={loading}
+                  inputProps={{ min: 0, max: 10000, step: 1 }}
+                />
+              </Tooltip>
+              {/* US-INV-004 CA-5: Botón de sugerencia inteligente (solo en modo edición) */}
+              {isEditMode && initialData?.id && (
+                <Tooltip title="Obtener sugerencia inteligente basada en ventas históricas" arrow>
+                  <Button
+                    variant="outlined"
+                    color="primary"
+                    onClick={() => setShowSuggestionDialog(true)}
+                    sx={{ minWidth: 'auto', px: 2, height: 56 }}
+                    startIcon={<InfoIcon />}
+                  >
+                    Sugerencia
+                  </Button>
+                </Tooltip>
+              )}
+            </Box>
           </Grid>
+
+          {/* US-INV-004 CA-2: Advertencia si stock actual está debajo del punto de reorden */}
+          {isEditMode && formData.initial_stock && formData.reorder_point &&
+           parseInt(formData.initial_stock) <= parseInt(formData.reorder_point) && (
+            <Grid item xs={12}>
+              <Alert severity="warning" icon={<WarningIcon />}>
+                El stock actual ({formData.initial_stock} unidades) ya está por debajo del punto de reorden.
+                Se creará una alerta automáticamente.
+              </Alert>
+            </Grid>
+          )}
+
+          {/* US-INV-004 CA-6: Advertencia si punto de reorden es 0 */}
+          {formData.reorder_point === '0' && (
+            <Grid item xs={12}>
+              <Alert severity="info" icon={<InfoIcon />}>
+                No recibirás alertas de reorden para este producto.
+              </Alert>
+            </Grid>
+          )}
 
           {/* Category - CA-1 */}
           <Grid item xs={12}>
@@ -986,6 +1041,16 @@ const ProductForm = ({ initialData = null, onSuccess, onCancel }) => {
           </Button>
         </DialogActions>
       </Dialog>
+
+      {/* US-INV-004 CA-5: Dialog de sugerencia de punto de reorden */}
+      <ReorderSuggestionDialog
+        open={showSuggestionDialog}
+        onClose={() => setShowSuggestionDialog(false)}
+        productId={initialData?.id}
+        productName={initialData?.name}
+        currentValue={parseInt(formData.reorder_point) || 10}
+        onApply={handleApplySuggestion}
+      />
     </Paper>
   );
 };

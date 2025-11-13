@@ -1,6 +1,6 @@
 # 🚀 GesTrack - Plan de Implementación
 
-**Última actualización:** 2025-11-08
+**Última actualización:** 2025-11-13
 **Versión:** 1.0
 
 ---
@@ -12,12 +12,12 @@
 │  PROGRESO GLOBAL DEL PROYECTO                               │
 ├─────────────────────────────────────────────────────────────┤
 │  Total Historias de Usuario:     82                         │
-│  ✅ Completadas:                   20                        │
+│  ✅ Completadas:                   21                        │
 │  🔄 Parcialmente Completadas:     0                         │
 │  ⏳ En Progreso:                   0                         │
-│  ⏸️  Pendientes:                   62                        │
+│  ⏸️  Pendientes:                   61                        │
 │                                                             │
-│  Progreso: [████░░░░░░░░░░░░░░░░] 24% (20/82)              │
+│  Progreso: [█████░░░░░░░░░░░░░░░] 26% (21/82)              │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -29,7 +29,7 @@
 |------|--------|----------|-------------|-------------|------------|----------|
 | 01 | Foundation | 6 | 6 | 0 | 0 | [██████████] 100% |
 | 02 | Core Data | 10 | 10 | 0 | 0 | [██████████] 100% |
-| 03 | Stock Management | 10 | 3 | 0 | 7 | [███░░░░░░░] 30% |
+| 03 | Stock Management | 10 | 4 | 0 | 6 | [████░░░░░░] 40% |
 | 04 | Sales | 26 | 0 | 0 | 26 | [░░░░░░░░░░] 0% |
 | 05 | Supply Chain | 15 | 0 | 0 | 15 | [░░░░░░░░░░] 0% |
 | 06 | Analytics | 15 | 0 | 0 | 15 | [░░░░░░░░░░] 0% |
@@ -356,14 +356,14 @@
 **Objetivo:** Implementar funcionalidades principales de negocio
 **Épicas:** 03 Stock Management, 04 Sales
 **Total US:** 36
-**Progreso:** [█░░░░░░░░░] 8% (3/36 completadas) 🔄 EN PROGRESO
+**Progreso:** [█░░░░░░░░░] 11% (4/36 completadas) 🔄 EN PROGRESO
 
 ---
 
 ## Epic 03: Stock Management - Gestión de Inventario
 
 **Prioridad:** ⭐⭐⭐ ALTA
-**Progreso:** [███░░░░░░░] 30% (3/10 completadas)
+**Progreso:** [████░░░░░░] 40% (4/10 completadas)
 **Carpeta:** `context/user_stories/epic_03_stock_management/`
 
 ### ✅ Historias de Usuario
@@ -451,12 +451,39 @@
   - Frontend: `pages/Inventory/MovementHistory.jsx` (290 líneas), `components/inventory/MovementHistoryTable.jsx` (313 líneas), `components/inventory/MovementFilters.jsx` (263 líneas), `components/inventory/MovementDetailsModal.jsx` (218 líneas), `components/inventory/StockEvolutionChart.jsx` (178 líneas), `components/inventory/MovementTypeChip.jsx` (82 líneas)
 - **Fecha de completación:** 2025-11-09
 
-#### [ ] US-INV-004: Configuración de Puntos de Reorden
+#### [x] US-INV-004: Configuración de Puntos de Reorden
 - **Archivo:** `context/user_stories/epic_03_stock_management/US-INV-004_reorder_point_configuration.md`
 - **Prioridad:** MEDIA
 - **Estimación:** 5 pts
-- **Estado:** ⏸️ Pendiente
-- **Criterios de Aceptación:** 6
+- **Estado:** ✅ COMPLETADA
+- **Criterios de Aceptación:** 7 (todos completados)
+- **Progreso Backend:** ✅ 100% - Todos los CA implementados
+  - CA-1: Campo reorder_point en modelo Product y schemas con validación 0-10,000 ✅
+  - CA-4: Configuración masiva por categoría (BulkReorderPointDialog, API endpoints) ✅
+  - CA-5: Sugerencias inteligentes basadas en ventas (cálculo con fórmula, API) ✅
+  - CA-6: Validaciones de rango 0-10,000 en frontend y backend ✅
+  - CA-7: Triggers automáticos para alertas (SQLite y PostgreSQL) ✅
+  - InventoryAlert model con estados activo/resuelto ✅
+  - ReorderPointService con 5 métodos de negocio ✅
+  - 5 nuevos endpoints API implementados ✅
+- **Progreso Frontend:** ✅ 100% - Completado
+  - CA-1: Campo reorder_point en ProductForm con validación ✅
+  - CA-2: Alertas visuales en ProductForm cuando stock ≤ reorder_point ✅
+  - CA-3: Columna "Punto de Reorden" con badges REORDEN en ProductTable y ProductCardView ✅
+  - CA-4: BulkReorderPointDialog con 3 pasos (Form → Preview → Result) ✅
+  - CA-4: Botón "Configuración Masiva" en ProductList (solo Admin y Gerente) ✅
+  - CA-5: ReorderSuggestionDialog con cálculos inteligentes y parámetros ajustables ✅
+  - CA-5: Botón de sugerencia integrado en ProductForm ✅
+  - CA-6: Validaciones visuales en formularios ✅
+  - inventoryService.js extendido con 5 nuevos métodos ✅
+- **Archivos Creados:**
+  - Backend: `models/inventory_alert.py`, `services/reorder_point_service.py`, migración con triggers (SQLite/PostgreSQL)
+  - Frontend: `components/inventory/BulkReorderPointDialog.jsx` (450 líneas), `components/inventory/ReorderSuggestionDialog.jsx` (350 líneas)
+- **Archivos Modificados:**
+  - Backend: `models/__init__.py`, `routes/inventory.py`, `schemas/product_schema.py`
+  - Frontend: `components/forms/ProductForm.jsx`, `components/products/ProductTable.jsx`, `components/products/ProductCardView.jsx`, `pages/Products/ProductList.jsx`, `services/inventoryService.js`
+- **Líneas de Código:** ~1,600 líneas totales (backend + frontend)
+- **Fecha de completación:** 2025-11-13
 
 #### [ ] US-INV-005: Valor Total del Inventario
 - **Archivo:** `context/user_stories/epic_03_stock_management/US-INV-005_total_inventory_value.md`
