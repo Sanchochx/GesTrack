@@ -12,12 +12,12 @@
 │  PROGRESO GLOBAL DEL PROYECTO                               │
 ├─────────────────────────────────────────────────────────────┤
 │  Total Historias de Usuario:     82                         │
-│  ✅ Completadas:                   21                        │
+│  ✅ Completadas:                   22                        │
 │  🔄 Parcialmente Completadas:     0                         │
 │  ⏳ En Progreso:                   0                         │
-│  ⏸️  Pendientes:                   61                        │
+│  ⏸️  Pendientes:                   60                        │
 │                                                             │
-│  Progreso: [█████░░░░░░░░░░░░░░░] 26% (21/82)              │
+│  Progreso: [█████░░░░░░░░░░░░░░░] 27% (22/82)              │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -29,7 +29,7 @@
 |------|--------|----------|-------------|-------------|------------|----------|
 | 01 | Foundation | 6 | 6 | 0 | 0 | [██████████] 100% |
 | 02 | Core Data | 10 | 10 | 0 | 0 | [██████████] 100% |
-| 03 | Stock Management | 10 | 4 | 0 | 6 | [████░░░░░░] 40% |
+| 03 | Stock Management | 10 | 5 | 0 | 5 | [█████░░░░░] 50% |
 | 04 | Sales | 26 | 0 | 0 | 26 | [░░░░░░░░░░] 0% |
 | 05 | Supply Chain | 15 | 0 | 0 | 15 | [░░░░░░░░░░] 0% |
 | 06 | Analytics | 15 | 0 | 0 | 15 | [░░░░░░░░░░] 0% |
@@ -356,14 +356,14 @@
 **Objetivo:** Implementar funcionalidades principales de negocio
 **Épicas:** 03 Stock Management, 04 Sales
 **Total US:** 36
-**Progreso:** [█░░░░░░░░░] 11% (4/36 completadas) 🔄 EN PROGRESO
+**Progreso:** [█░░░░░░░░░] 14% (5/36 completadas) 🔄 EN PROGRESO
 
 ---
 
 ## Epic 03: Stock Management - Gestión de Inventario
 
 **Prioridad:** ⭐⭐⭐ ALTA
-**Progreso:** [████░░░░░░] 40% (4/10 completadas)
+**Progreso:** [█████░░░░░] 50% (5/10 completadas)
 **Carpeta:** `context/user_stories/epic_03_stock_management/`
 
 ### ✅ Historias de Usuario
@@ -485,12 +485,39 @@
 - **Líneas de Código:** ~1,600 líneas totales (backend + frontend)
 - **Fecha de completación:** 2025-11-13
 
-#### [ ] US-INV-005: Valor Total del Inventario
+#### [x] US-INV-005: Valor Total del Inventario
 - **Archivo:** `context/user_stories/epic_03_stock_management/US-INV-005_total_inventory_value.md`
 - **Prioridad:** MEDIA
 - **Estimación:** 3 pts
-- **Estado:** ⏸️ Pendiente
-- **Criterios de Aceptación:** 5
+- **Estado:** ✅ COMPLETADA
+- **Criterios de Aceptación:** 7 (todos completados)
+- **Progreso Backend:** ✅ 100% - Completado antes del sprint
+  - CA-1: InventoryValueService con cálculos optimizados ✅
+  - CA-1: API GET /api/inventory/value/total, by-category, evolution ✅
+  - CA-4: Tabla InventoryValueHistory con migrations ✅
+  - CA-7: Exportación a Excel con export_helper.py ✅
+  - 8 endpoints API implementados y funcionales ✅
+- **Progreso Frontend:** ✅ 100% - Completado
+  - CA-2: InventoryValueWidget con valor total y cambio vs período ✅
+  - CA-3: CategoryValueBreakdown con gráfico de pastel y tabla ✅
+  - CA-4: ValueEvolutionChart con selector de período ✅
+  - CA-5: ValueMetricsPanel con top productos y métricas ✅
+  - CA-6: Polling automático cada 5 minutos en todos los widgets ✅
+  - CA-6: Page Visibility API para pausar polling en tabs ocultos ✅
+  - CA-7: InventoryValueExportCard para exportación de reportes ✅
+  - CA-7: Integrado en AdminDashboard y WarehouseDashboard ✅
+  - inventoryService.js con método exportValueReport() ✅
+- **Archivos Creados:**
+  - Frontend: `components/inventory/InventoryValueExportCard.jsx` (195 líneas)
+- **Archivos Modificados:**
+  - Frontend: `pages/Dashboard/AdminDashboard.jsx`, `pages/Dashboard/WarehouseDashboard.jsx`
+  - Frontend: `components/inventory/InventoryValueWidget.jsx`, `components/inventory/ValueEvolutionChart.jsx`, `components/inventory/CategoryValueBreakdown.jsx`, `components/inventory/ValueMetricsPanel.jsx`
+- **Notas Implementación:**
+  - PDF export no implementado (backend retorna 501) - diferido para v2.0
+  - Backend scheduler para snapshots diarios no implementado - polling frontend suficiente para v1.0
+  - Formato de exportación: Solo Excel (.xlsx)
+  - Intervalo de polling: 5 minutos (300000ms)
+- **Fecha de completación:** 2025-01-29
 
 #### [ ] US-INV-006: Vista de Inventario por Categoría
 - **Archivo:** `context/user_stories/epic_03_stock_management/US-INV-006_inventory_by_category_view.md`
