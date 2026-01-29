@@ -1,11 +1,17 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Container, Typography, Paper, Box, Alert } from '@mui/material';
+import { Container, Typography, Box, Alert, Grid } from '@mui/material';
 import authService from '../../services/authService';
+import InventoryValueWidget from '../../components/inventory/InventoryValueWidget';
+import CategoryValueBreakdown from '../../components/inventory/CategoryValueBreakdown';
+import ValueEvolutionChart from '../../components/inventory/ValueEvolutionChart';
+import ValueMetricsPanel from '../../components/inventory/ValueMetricsPanel';
+import InventoryValueExportCard from '../../components/inventory/InventoryValueExportCard';
 
 /**
  * Dashboard para usuarios con rol Admin
  * US-AUTH-002 - CA-6: Redirección por rol
+ * US-INV-005 - CA-2: Visualización de valor del inventario
  */
 const AdminDashboard = () => {
   const navigate = useNavigate();
@@ -38,35 +44,50 @@ const AdminDashboard = () => {
           ¡Bienvenido/a, {user.full_name}!
         </Alert>
 
-        <Paper elevation={3} sx={{ p: 4 }}>
-          <Typography variant="h4" gutterBottom>
-            Dashboard de Administrador
-          </Typography>
-          <Typography variant="body1" color="text.secondary" paragraph>
-            Acceso completo a todas las funcionalidades del sistema
-          </Typography>
+        <Typography variant="h4" gutterBottom>
+          Dashboard de Administrador
+        </Typography>
+        <Typography variant="body1" color="text.secondary" paragraph sx={{ mb: 4 }}>
+          Acceso completo a todas las funcionalidades del sistema
+        </Typography>
 
-          <Box sx={{ mt: 3 }}>
-            <Typography variant="h6" gutterBottom>
-              Información del usuario:
-            </Typography>
-            <Typography variant="body2">
-              <strong>Nombre:</strong> {user.full_name}
-            </Typography>
-            <Typography variant="body2">
-              <strong>Email:</strong> {user.email}
-            </Typography>
-            <Typography variant="body2">
-              <strong>Rol:</strong> {user.role}
-            </Typography>
-          </Box>
+        {/* US-INV-005: Widgets de Valor del Inventario */}
+        <Grid container spacing={3}>
+          {/* Valor Total del Inventario */}
+          <Grid item xs={12} md={4}>
+            <InventoryValueWidget period="30d" />
+          </Grid>
 
-          <Box sx={{ mt: 4, p: 2, bgcolor: 'grey.100', borderRadius: 1 }}>
-            <Typography variant="body2" color="text.secondary">
-              Este dashboard será implementado en futuras historias de usuario.
-            </Typography>
-          </Box>
-        </Paper>
+          {/* Exportar Reporte de Valor */}
+          <Grid item xs={12} md={4}>
+            <InventoryValueExportCard />
+          </Grid>
+
+          <Grid item xs={12} md={4}>
+            <Box sx={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', bgcolor: 'grey.100', borderRadius: 2, p: 3 }}>
+              <Typography color="text.secondary" align="center">
+                Widget de órdenes
+                <br />
+                (Epic 4)
+              </Typography>
+            </Box>
+          </Grid>
+
+          {/* Gráfico de Evolución del Valor */}
+          <Grid item xs={12}>
+            <ValueEvolutionChart />
+          </Grid>
+
+          {/* Desglose por Categoría */}
+          <Grid item xs={12} lg={6}>
+            <CategoryValueBreakdown />
+          </Grid>
+
+          {/* Métricas Adicionales */}
+          <Grid item xs={12} lg={6}>
+            <ValueMetricsPanel />
+          </Grid>
+        </Grid>
       </Box>
     </Container>
   );

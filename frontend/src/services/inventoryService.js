@@ -310,6 +310,157 @@ const inventoryService = {
       console.error('Error fetching products below reorder point:', error);
       throw error.response?.data || { error: { message: 'Error al obtener productos' } };
     }
+  },
+
+  // ===================================================================
+  // US-INV-005: Valor Total del Inventario
+  // ===================================================================
+
+  /**
+   * US-INV-005 CA-1: Obtiene el valor total del inventario
+   */
+  getTotalInventoryValue: async () => {
+    try {
+      const response = await api.get('/inventory/value/total');
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching total inventory value:', error);
+      throw error.response?.data || { error: { message: 'Error al obtener valor del inventario' } };
+    }
+  },
+
+  /**
+   * US-INV-005 CA-3: Obtiene desglose del valor por categoría
+   */
+  getValueByCategory: async () => {
+    try {
+      const response = await api.get('/inventory/value/by-category');
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching value by category:', error);
+      throw error.response?.data || { error: { message: 'Error al obtener desglose por categoría' } };
+    }
+  },
+
+  /**
+   * US-INV-005 CA-4: Obtiene evolución temporal del valor
+   *
+   * @param {string} period - '7d', '30d', '3m', '1y', 'custom'
+   * @param {string} dateFrom - Fecha inicial (para period='custom')
+   * @param {string} dateTo - Fecha final (para period='custom')
+   */
+  getValueEvolution: async (period = '7d', dateFrom = null, dateTo = null) => {
+    try {
+      const params = { period };
+      if (period === 'custom' && dateFrom && dateTo) {
+        params.date_from = dateFrom;
+        params.date_to = dateTo;
+      }
+      const response = await api.get('/inventory/value/evolution', { params });
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching value evolution:', error);
+      throw error.response?.data || { error: { message: 'Error al obtener evolución de valor' } };
+    }
+  },
+
+  /**
+   * US-INV-005 CA-5: Obtiene métricas adicionales del inventario
+   */
+  getInventoryMetrics: async () => {
+    try {
+      const response = await api.get('/inventory/value/metrics');
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching inventory metrics:', error);
+      throw error.response?.data || { error: { message: 'Error al obtener métricas' } };
+    }
+  },
+
+  /**
+   * US-INV-005 CA-5: Obtiene top productos por valor
+   *
+   * @param {number} limit - Número de productos (default: 10, max: 50)
+   */
+  getTopProductsByValue: async (limit = 10) => {
+    try {
+      const response = await api.get('/inventory/value/top-products', { params: { limit } });
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching top products by value:', error);
+      throw error.response?.data || { error: { message: 'Error al obtener top productos' } };
+    }
+  },
+
+  /**
+   * US-INV-005 CA-2: Obtiene cambio de valor vs período anterior
+   *
+   * @param {string} period - '7d', '30d', '3m', '1y'
+   */
+  getValueChange: async (period = '7d') => {
+    try {
+      const response = await api.get('/inventory/value/change', { params: { period } });
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching value change:', error);
+      throw error.response?.data || { error: { message: 'Error al calcular cambio de valor' } };
+    }
+  },
+
+  /**
+   * US-INV-005 CA-4: Crea snapshot manual del valor del inventario
+   *
+   * @param {string} triggerReason - Razón del snapshot (default: 'manual')
+   */
+  createValueSnapshot: async (triggerReason = 'manual') => {
+    try {
+      const response = await api.post('/inventory/value/snapshot', { trigger_reason: triggerReason });
+      return response.data;
+    } catch (error) {
+      console.error('Error creating value snapshot:', error);
+      throw error.response?.data || { error: { message: 'Error al crear snapshot' } };
+    }
+  },
+
+  /**
+   * US-INV-005 CA-7: Exporta reporte de valor del inventario
+   *
+   * @param {string} format - 'excel' o 'pdf' (default: 'excel')
+   * @param {string} period - '7d', '30d', '3m', '1y' (default: '30d')
+   */
+  exportValueReport: async (format = 'excel', period = '30d') => {
+    try {
+      const response = await api.get('/inventory/value/export', {
+        params: { format, period },
+        responseType: 'blob' // Importante para descargar archivos
+      });
+
+      // Crear URL y descargar el archivo
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+
+      // Obtener nombre de archivo del header Content-Disposition
+      const contentDisposition = response.headers['content-disposition'];
+      let filename = `reporte_valor_inventario_${new Date().toISOString().split('T')[0]}.${format === 'pdf' ? 'pdf' : 'xlsx'}`;
+      if (contentDisposition) {
+        const filenameMatch = contentDisposition.match(/filename="?(.+)"?/);
+        if (filenameMatch) {
+          filename = filenameMatch[1];
+        }
+      }
+
+      link.setAttribute('download', filename);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+
+      return { success: true, message: 'Reporte descargado exitosamente' };
+    } catch (error) {
+      console.error('Error exporting value report:', error);
+      throw error.response?.data || { error: { message: 'Error al exportar reporte' } };
+    }
   }
 };
 
