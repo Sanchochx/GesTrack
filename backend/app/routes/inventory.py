@@ -14,6 +14,7 @@ from app.services.inventory_adjustment_service import (
 from app.services.inventory_movement_service import InventoryMovementService
 from app.services.reorder_point_service import ReorderPointService
 from app.services.inventory_value_service import InventoryValueService
+from app.services.inventory_category_service import InventoryCategoryService
 from app.utils.export_helper import ExportHelper
 from app.utils.constants import ADJUSTMENT_REASONS, ADJUSTMENT_TYPES
 from app.utils.decorators import warehouse_manager_or_admin
@@ -1206,5 +1207,173 @@ def export_value_report():
             'error': {
                 'code': 'EXPORT_ERROR',
                 'message': f'Error al exportar reporte: {str(e)}'
+            }
+        }), 500
+
+
+# ============================================================================
+# US-INV-006: Vista de Inventario por Categoría
+# ============================================================================
+
+@inventory_bp.route('/by-category', methods=['GET'])
+@jwt_required()
+@warehouse_manager_or_admin
+def get_categories_inventory():
+    """
+    US-INV-006 CA-1, CA-4: Obtiene lista de categorías con estadísticas de inventario
+
+    Query params:
+        search: Búsqueda por nombre de categoría
+        sort_by: Campo de ordenamiento (name, value, products, low_stock)
+        sort_order: Orden (asc, desc)
+        has_low_stock: true/false - Solo categorías con productos en stock bajo
+        has_out_of_stock: true/false - Solo categorías con productos sin stock
+
+    Returns:
+        {
+            "success": true,
+            "data": [
+                {
+                    "category_id": "uuid",
+                    "category_name": "Electrónica",
+                    "category_color": "#1976d2",
+                    "category_icon": "💻",
+                    "total_products": 45,
+                    "products_in_stock": 30,
+                    "products_low_stock": 10,
+                    "products_out_of_stock": 5,
+                    "total_value": 125000.50,
+                    "formatted_value": "$125,000.50",
+                    "total_units": 250
+                }
+            ]
+        }
+    """
+    try:
+        # Obtener parámetros de filtrado
+        filters = {}
+        if request.args.get('search'):
+            filters['search_term'] = request.args.get('search')
+        if request.args.get('has_low_stock') == 'true':
+            filters['has_low_stock'] = True
+        if request.args.get('has_out_of_stock') == 'true':
+            filters['has_out_of_stock'] = True
+
+        # Parámetros de ordenamiento
+        sort_by = request.args.get('sort_by', 'name')
+        sort_order = request.args.get('sort_order', 'asc')
+
+        # Obtener categorías con estadísticas
+        categories = InventoryCategoryService.get_categories_with_stats(
+            filters=filters,
+            sort_by=sort_by,
+            sort_order=sort_order
+        )
+
+        return jsonify({
+            'success': True,
+            'data': categories
+        }), 200
+
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': {
+                'code': 'CATEGORY_INVENTORY_ERROR',
+                'message': f'Error al obtener inventario por categoría: {str(e)}'
+            }
+        }), 500
+
+
+@inventory_bp.route('/by-category/<category_id>/products', methods=['GET'])
+@jwt_required()
+@warehouse_manager_or_admin
+def get_category_products(category_id):
+    """
+    US-INV-006 CA-3: Obtiene productos de una categoría con detalles de inventario
+
+    Path params:
+        category_id: ID de la categoría
+
+    Returns:
+        {
+            "success": true,
+            "data": [
+                {
+                    "id": "uuid",
+                    "sku": "PROD-001",
+                    "name": "Producto X",
+                    "stock_quantity": 50,
+                    "reorder_point": 20,
+                    "cost_price": 100.00,
+                    "item_value": 5000.00,
+                    "formatted_value": "$5,000.00",
+                    "image_url": "/uploads/...",
+                    "stock_status": "in_stock"
+                }
+            ]
+        }
+    """
+    try:
+        products = InventoryCategoryService.get_category_products(category_id)
+
+        return jsonify({
+            'success': True,
+            'data': products
+        }), 200
+
+    except ValueError as e:
+        return jsonify({
+            'success': False,
+            'error': {
+                'code': 'CATEGORY_NOT_FOUND',
+                'message': str(e)
+            }
+        }), 404
+
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': {
+                'code': 'CATEGORY_PRODUCTS_ERROR',
+                'message': f'Error al obtener productos de categoría: {str(e)}'
+            }
+        }), 500
+
+
+@inventory_bp.route('/by-category/metrics', methods=['GET'])
+@jwt_required()
+@warehouse_manager_or_admin
+def get_category_inventory_metrics():
+    """
+    US-INV-006 CA-6: Obtiene métricas generales del inventario por categorías
+
+    Returns:
+        {
+            "success": true,
+            "data": {
+                "total_categories": 10,
+                "total_products": 150,
+                "categories_with_low_stock": 3,
+                "categories_out_of_stock": 1,
+                "total_value": 500000.00,
+                "formatted_value": "$500,000.00"
+            }
+        }
+    """
+    try:
+        metrics = InventoryCategoryService.get_overall_metrics()
+
+        return jsonify({
+            'success': True,
+            'data': metrics
+        }), 200
+
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': {
+                'code': 'METRICS_ERROR',
+                'message': f'Error al obtener métricas: {str(e)}'
             }
         }), 500
