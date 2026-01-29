@@ -13,6 +13,7 @@ from app.services.inventory_adjustment_service import (
 )
 from app.services.inventory_movement_service import InventoryMovementService
 from app.services.reorder_point_service import ReorderPointService
+from app.services.inventory_value_service import InventoryValueService
 from app.utils.export_helper import ExportHelper
 from app.utils.constants import ADJUSTMENT_REASONS, ADJUSTMENT_TYPES
 from app.utils.decorators import warehouse_manager_or_admin
@@ -844,5 +845,366 @@ def get_products_below_reorder_point():
             'error': {
                 'code': 'INTERNAL_ERROR',
                 'message': f'Error al obtener productos: {str(e)}'
+            }
+        }), 500
+
+
+# ===================================================================
+# US-INV-005: Valor Total del Inventario
+# ===================================================================
+
+@inventory_bp.route('/value/total', methods=['GET'])
+@jwt_required()
+def get_total_inventory_value():
+    """
+    US-INV-005 CA-1: Obtener el valor total del inventario
+
+    Returns:
+        {
+            "success": true,
+            "data": {
+                "total_value": 125000.50,
+                "total_products": 150,
+                "total_quantity": 5000,
+                "calculated_at": "2025-11-14T10:30:00",
+                "formatted_value": "$125,000.50"
+            }
+        }
+    """
+    try:
+        value_data = InventoryValueService.calculate_total_value()
+
+        return jsonify({
+            'success': True,
+            'data': value_data
+        }), 200
+
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': {
+                'code': 'INTERNAL_ERROR',
+                'message': f'Error al calcular valor del inventario: {str(e)}'
+            }
+        }), 500
+
+
+@inventory_bp.route('/value/by-category', methods=['GET'])
+@jwt_required()
+def get_value_by_category():
+    """
+    US-INV-005 CA-3: Obtener desglose del valor por categoría
+
+    Returns:
+        {
+            "success": true,
+            "data": [
+                {
+                    "category_id": "uuid",
+                    "category_name": "Electrónica",
+                    "category_color": "#2196F3",
+                    "category_icon": "devices",
+                    "total_value": 45000.00,
+                    "product_count": 50,
+                    "total_quantity": 1200,
+                    "percentage": 36.00,
+                    "formatted_value": "$45,000.00"
+                },
+                ...
+            ]
+        }
+    """
+    try:
+        breakdown = InventoryValueService.get_value_by_category()
+
+        return jsonify({
+            'success': True,
+            'data': breakdown
+        }), 200
+
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': {
+                'code': 'INTERNAL_ERROR',
+                'message': f'Error al obtener desglose por categoría: {str(e)}'
+            }
+        }), 500
+
+
+@inventory_bp.route('/value/evolution', methods=['GET'])
+@jwt_required()
+def get_value_evolution():
+    """
+    US-INV-005 CA-4: Obtener evolución temporal del valor del inventario
+
+    Query params:
+        period: '7d', '30d', '3m', '1y', 'custom' (default: '7d')
+        date_from: Fecha inicial (para period='custom')
+        date_to: Fecha final (para period='custom')
+
+    Returns:
+        {
+            "success": true,
+            "data": [
+                {
+                    "snapshot_date": "2025-11-07T00:00:00",
+                    "total_value": 120000.00,
+                    "total_products": 145,
+                    "total_quantity": 4800,
+                    "formatted_value": "$120,000.00"
+                },
+                ...
+            ]
+        }
+    """
+    try:
+        period = request.args.get('period', '7d')
+        date_from = request.args.get('date_from')
+        date_to = request.args.get('date_to')
+
+        evolution = InventoryValueService.get_value_evolution(
+            period=period,
+            date_from=date_from,
+            date_to=date_to
+        )
+
+        return jsonify({
+            'success': True,
+            'data': evolution
+        }), 200
+
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': {
+                'code': 'INTERNAL_ERROR',
+                'message': f'Error al obtener evolución: {str(e)}'
+            }
+        }), 500
+
+
+@inventory_bp.route('/value/metrics', methods=['GET'])
+@jwt_required()
+def get_inventory_metrics():
+    """
+    US-INV-005 CA-5: Obtener métricas adicionales del inventario
+
+    Returns:
+        {
+            "success": true,
+            "data": {
+                "inventory_turnover": null,
+                "days_of_inventory": null,
+                "top_categories": [...],
+                "stock_distribution": {
+                    "out_of_stock": 10,
+                    "low_stock": 25,
+                    "normal_stock": 115,
+                    "total": 150
+                }
+            }
+        }
+    """
+    try:
+        metrics = InventoryValueService.calculate_inventory_metrics()
+
+        return jsonify({
+            'success': True,
+            'data': metrics
+        }), 200
+
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': {
+                'code': 'INTERNAL_ERROR',
+                'message': f'Error al calcular métricas: {str(e)}'
+            }
+        }), 500
+
+
+@inventory_bp.route('/value/top-products', methods=['GET'])
+@jwt_required()
+def get_top_products_by_value():
+    """
+    US-INV-005 CA-5: Obtener top productos por valor
+
+    Query params:
+        limit: Número de productos (default: 10, max: 50)
+
+    Returns:
+        {
+            "success": true,
+            "data": [
+                {
+                    "product_id": "uuid",
+                    "sku": "PROD-001",
+                    "name": "Laptop HP",
+                    "cost_price": 500.00,
+                    "stock_quantity": 20,
+                    "total_value": 10000.00,
+                    "formatted_value": "$10,000.00",
+                    "category_name": "Electrónica"
+                },
+                ...
+            ]
+        }
+    """
+    try:
+        limit = request.args.get('limit', 10, type=int)
+        limit = min(limit, 50)  # Máximo 50
+
+        top_products = InventoryValueService.get_top_products_by_value(limit=limit)
+
+        return jsonify({
+            'success': True,
+            'data': top_products
+        }), 200
+
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': {
+                'code': 'INTERNAL_ERROR',
+                'message': f'Error al obtener top productos: {str(e)}'
+            }
+        }), 500
+
+
+@inventory_bp.route('/value/change', methods=['GET'])
+@jwt_required()
+def get_value_change():
+    """
+    US-INV-005 CA-2: Obtener cambio de valor vs período anterior
+
+    Query params:
+        period: '7d', '30d', '3m', '1y' (default: '7d')
+
+    Returns:
+        {
+            "success": true,
+            "data": {
+                "current_value": 125000.50,
+                "previous_value": 120000.00,
+                "change_amount": 5000.50,
+                "change_percentage": 4.17,
+                "direction": "increase",
+                "formatted_current": "$125,000.50",
+                "formatted_previous": "$120,000.00",
+                "formatted_change": "$5,000.50"
+            }
+        }
+    """
+    try:
+        period = request.args.get('period', '7d')
+
+        change = InventoryValueService.get_value_change_from_previous_period(period=period)
+
+        return jsonify({
+            'success': True,
+            'data': change
+        }), 200
+
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': {
+                'code': 'INTERNAL_ERROR',
+                'message': f'Error al calcular cambio de valor: {str(e)}'
+            }
+        }), 500
+
+
+@inventory_bp.route('/value/snapshot', methods=['POST'])
+@jwt_required()
+@warehouse_manager_or_admin
+def create_value_snapshot():
+    """
+    US-INV-005 CA-4: Crear snapshot manual del valor del inventario
+
+    Body:
+        {
+            "trigger_reason": "manual"  (opcional)
+        }
+
+    Returns:
+        {
+            "success": true,
+            "data": {
+                "id": "uuid",
+                "snapshot_date": "2025-11-14T10:30:00",
+                "total_value": 125000.50,
+                ...
+            },
+            "message": "Snapshot creado correctamente"
+        }
+    """
+    try:
+        data = request.get_json() or {}
+        trigger_reason = data.get('trigger_reason', 'manual')
+
+        snapshot = InventoryValueService.save_snapshot(trigger_reason=trigger_reason)
+
+        return jsonify({
+            'success': True,
+            'data': snapshot.to_dict(),
+            'message': 'Snapshot del valor del inventario creado correctamente'
+        }), 201
+
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': {
+                'code': 'INTERNAL_ERROR',
+                'message': f'Error al crear snapshot: {str(e)}'
+            }
+        }), 500
+
+
+@inventory_bp.route('/value/export', methods=['GET'])
+@jwt_required()
+def export_value_report():
+    """
+    US-INV-005 CA-7: Exporta reporte de valor del inventario a Excel
+
+    Query params:
+        format: 'excel' o 'pdf' (default: 'excel')
+        period: '7d', '30d', '3m', '1y' (para evolución histórica, default: '30d')
+
+    Returns:
+        Archivo Excel o PDF para descargar
+    """
+    try:
+        export_format = request.args.get('format', 'excel').lower()
+        period = request.args.get('period', '30d')
+
+        # Obtener todos los datos necesarios para el reporte
+        value_data = InventoryValueService.calculate_total_value()
+        categories = InventoryValueService.get_value_by_category()
+        top_products = InventoryValueService.get_top_products_by_value(limit=10)
+        evolution = InventoryValueService.get_value_evolution(period=period)
+
+        # Exportar según formato
+        if export_format == 'pdf':
+            return ExportHelper.export_inventory_value_report_to_pdf(
+                value_data=value_data,
+                categories=categories,
+                top_products=top_products
+            )
+        else:  # excel (default)
+            return ExportHelper.export_inventory_value_report_to_excel(
+                value_data=value_data,
+                categories=categories,
+                top_products=top_products,
+                evolution=evolution
+            )
+
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': {
+                'code': 'EXPORT_ERROR',
+                'message': f'Error al exportar reporte: {str(e)}'
             }
         }), 500
