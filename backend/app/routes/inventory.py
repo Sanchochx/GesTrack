@@ -7,6 +7,7 @@ US-INV-003: Historial de Movimientos de Stock
 from flask import Blueprint, jsonify, request
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from app.models.user import User
+from app.models.category import Category
 from app.services.inventory_adjustment_service import (
     InventoryAdjustmentService,
     AdjustmentValidationError
@@ -1375,5 +1376,83 @@ def get_category_inventory_metrics():
             'error': {
                 'code': 'METRICS_ERROR',
                 'message': f'Error al obtener métricas: {str(e)}'
+            }
+        }), 500
+
+
+@inventory_bp.route('/by-category/<category_id>/export', methods=['GET'])
+@jwt_required()
+@warehouse_manager_or_admin
+def export_category_products(category_id):
+    """
+    US-INV-006 CA-7: Exporta productos de una categoría a Excel/CSV
+
+    Path params:
+        category_id: ID de la categoría
+
+    Query params:
+        format: 'excel' o 'csv' (default: 'excel')
+
+    Returns:
+        Archivo Excel o CSV para descargar
+    """
+    try:
+        export_format = request.args.get('format', 'excel').lower()
+
+        # Verificar que la categoría existe
+        category = Category.query.get(category_id)
+        if not category:
+            return jsonify({
+                'success': False,
+                'error': {
+                    'code': 'CATEGORY_NOT_FOUND',
+                    'message': 'Categoría no encontrada'
+                }
+            }), 404
+
+        # Obtener productos usando el servicio existente
+        products = InventoryCategoryService.get_category_products(category_id)
+
+        # Definir columnas para exportación
+        columns = [
+            ('sku', 'SKU'),
+            ('name', 'Nombre'),
+            ('stock_quantity', 'Stock Actual'),
+            ('reorder_point', 'Punto de Reorden'),
+            ('stock_status', 'Estado'),
+            ('cost_price', 'Precio Costo'),
+            ('item_value', 'Valor Total')
+        ]
+
+        # Limpiar nombre de categoría para el archivo
+        safe_name = category.name.replace(' ', '_').lower()[:20]
+        filename_prefix = f'categoria_{safe_name}'
+
+        # Exportar según formato
+        if export_format == 'csv':
+            return ExportHelper.export_to_csv(products, columns, filename_prefix)
+        else:
+            return ExportHelper.export_to_excel(
+                products,
+                columns,
+                filename_prefix,
+                sheet_name=f'Productos - {category.name}'
+            )
+
+    except ValueError as e:
+        return jsonify({
+            'success': False,
+            'error': {
+                'code': 'CATEGORY_NOT_FOUND',
+                'message': str(e)
+            }
+        }), 404
+
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': {
+                'code': 'EXPORT_ERROR',
+                'message': f'Error al exportar productos de categoría: {str(e)}'
             }
         }), 500
