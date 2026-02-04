@@ -18,6 +18,7 @@ import {
 import LogoutIcon from '@mui/icons-material/Logout';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import PersonIcon from '@mui/icons-material/Person';
+import HomeIcon from '@mui/icons-material/Home';
 import Login from './pages/Auth/Login';
 import Register from './pages/Auth/Register';
 import UserList from './pages/Auth/UserList';
@@ -176,6 +177,20 @@ function Navigation() {
           // Mostrar navegación y menú de usuario cuando está autenticado
           // US-AUTH-005: CA-5 - Menú dinámico según rol
           <>
+            {/* Home button - visible to all authenticated users */}
+            <Button
+              color="inherit"
+              href="/dashboard"
+              startIcon={<HomeIcon />}
+              sx={{
+                '&:hover': {
+                  color: '#a5d6a7', // Verde claro en hover
+                }
+              }}
+            >
+              Inicio
+            </Button>
+
             {/* US-AUTH-005: CA-2, CA-5 - Ocultar opciones según rol */}
             {currentUser?.role === 'Admin' && (
               <Button
