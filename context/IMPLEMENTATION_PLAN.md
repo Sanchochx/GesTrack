@@ -1,6 +1,6 @@
 # 🚀 GesTrack - Plan de Implementación
 
-**Última actualización:** 2025-11-13
+**Última actualización:** 2026-02-04
 **Versión:** 1.0
 
 ---
@@ -12,12 +12,12 @@
 │  PROGRESO GLOBAL DEL PROYECTO                               │
 ├─────────────────────────────────────────────────────────────┤
 │  Total Historias de Usuario:     82                         │
-│  ✅ Completadas:                   22                        │
+│  ✅ Completadas:                   23                        │
 │  🔄 Parcialmente Completadas:     0                         │
 │  ⏳ En Progreso:                   0                         │
-│  ⏸️  Pendientes:                   60                        │
+│  ⏸️  Pendientes:                   59                        │
 │                                                             │
-│  Progreso: [█████░░░░░░░░░░░░░░░] 27% (22/82)              │
+│  Progreso: [█████░░░░░░░░░░░░░░░] 28% (23/82)              │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -29,7 +29,7 @@
 |------|--------|----------|-------------|-------------|------------|----------|
 | 01 | Foundation | 6 | 6 | 0 | 0 | [██████████] 100% |
 | 02 | Core Data | 10 | 10 | 0 | 0 | [██████████] 100% |
-| 03 | Stock Management | 10 | 5 | 0 | 5 | [█████░░░░░] 50% |
+| 03 | Stock Management | 10 | 6 | 0 | 4 | [██████░░░░] 60% |
 | 04 | Sales | 26 | 0 | 0 | 26 | [░░░░░░░░░░] 0% |
 | 05 | Supply Chain | 15 | 0 | 0 | 15 | [░░░░░░░░░░] 0% |
 | 06 | Analytics | 15 | 0 | 0 | 15 | [░░░░░░░░░░] 0% |
@@ -356,14 +356,14 @@
 **Objetivo:** Implementar funcionalidades principales de negocio
 **Épicas:** 03 Stock Management, 04 Sales
 **Total US:** 36
-**Progreso:** [█░░░░░░░░░] 14% (5/36 completadas) 🔄 EN PROGRESO
+**Progreso:** [█░░░░░░░░░] 17% (6/36 completadas) 🔄 EN PROGRESO
 
 ---
 
 ## Epic 03: Stock Management - Gestión de Inventario
 
 **Prioridad:** ⭐⭐⭐ ALTA
-**Progreso:** [█████░░░░░] 50% (5/10 completadas)
+**Progreso:** [██████░░░░] 60% (6/10 completadas)
 **Carpeta:** `context/user_stories/epic_03_stock_management/`
 
 ### ✅ Historias de Usuario
@@ -519,12 +519,32 @@
   - Intervalo de polling: 5 minutos (300000ms)
 - **Fecha de completación:** 2025-01-29
 
-#### [ ] US-INV-006: Vista de Inventario por Categoría
+#### [x] US-INV-006: Vista de Inventario por Categoría
 - **Archivo:** `context/user_stories/epic_03_stock_management/US-INV-006_inventory_by_category_view.md`
 - **Prioridad:** MEDIA
 - **Estimación:** 5 pts
-- **Estado:** ⏸️ Pendiente
-- **Criterios de Aceptación:** 5
+- **Estado:** ✅ COMPLETADA
+- **Criterios de Aceptación:** 7 ✅
+- **Progreso Backend:** ✅ 100% - Todos los CA implementados
+  - CA-1, CA-4: GET /api/inventory/by-category con filtros y ordenamiento ✅
+  - CA-3: GET /api/inventory/by-category/:id/products ✅
+  - CA-6: GET /api/inventory/by-category/metrics ✅
+  - CA-7: GET /api/inventory/by-category/:id/export (Excel/CSV) ✅
+  - InventoryCategoryService con 3 métodos de negocio ✅
+- **Progreso Frontend:** ✅ 100% - Completado
+  - CA-1: CategoryInventoryView con listado de categorías ✅
+  - CA-2: Expand/collapse con localStorage persistence ✅
+  - CA-3: CategoryRow con tabla de productos expandible ✅
+  - CA-4: CategoryInventoryFilters con búsqueda, filtros y ordenamiento ✅
+  - CA-5: Badges de stock status en cada categoría ✅
+  - CA-6: CategoryInventorySummary con métricas totales ✅
+  - CA-7: Botones de acciones rápidas (exportar, historial, ajustar) ✅
+  - Ruta /inventory/by-category protegida ✅
+  - Navegación "Por Categoría" en AppBar ✅
+- **Archivos Creados/Modificados:**
+  - Backend: `services/inventory_category_service.py`, `routes/inventory.py`
+  - Frontend: `pages/Inventory/CategoryInventoryView.jsx`, `components/inventory/CategoryRow.jsx`, `components/inventory/CategoryInventorySummary.jsx`, `components/inventory/CategoryInventoryFilters.jsx`, `services/inventoryService.js`
+- **Fecha de completación:** 2026-02-04
 
 #### [ ] US-INV-007: Alerta de Stock Crítico
 - **Archivo:** `context/user_stories/epic_03_stock_management/US-INV-007_critical_stock_alerts.md`

@@ -121,20 +121,21 @@ ORDER BY stock_status DESC, stock ASC;
 ```
 
 ## Definición de Hecho
-- [ ] Backend: API GET /api/inventory/by-category
-- [ ] Backend: API GET /api/inventory/category/:id/products
-- [ ] Backend: Queries optimizadas con agregaciones
-- [ ] Frontend: Vista de listado de categorías
-- [ ] Frontend: Accordion o tarjetas expandibles/colapsables
-- [ ] Frontend: Tabla de productos dentro de categoría
-- [ ] Frontend: Indicadores visuales de estado de stock
-- [ ] Frontend: Panel de resumen general
-- [ ] Frontend: Filtros y ordenamiento
-- [ ] Frontend: Botones de acciones rápidas
-- [ ] Frontend: Persistencia de estado expandido (localStorage)
+- [x] Backend: API GET /api/inventory/by-category
+- [x] Backend: API GET /api/inventory/category/:id/products
+- [x] Backend: API GET /api/inventory/by-category/:id/export (CA-7)
+- [x] Backend: Queries optimizadas con agregaciones
+- [x] Frontend: Vista de listado de categorías
+- [x] Frontend: Accordion o tarjetas expandibles/colapsables
+- [x] Frontend: Tabla de productos dentro de categoría
+- [x] Frontend: Indicadores visuales de estado de stock
+- [x] Frontend: Panel de resumen general
+- [x] Frontend: Filtros y ordenamiento
+- [x] Frontend: Botones de acciones rápidas
+- [x] Frontend: Persistencia de estado expandido (localStorage)
 - [ ] Pruebas de queries con múltiples categorías
 - [ ] Pruebas de performance
-- [ ] Documentación de API
+- [x] Documentación de API
 
 ## Dependencias
 - US-PROD-007 (tabla categories)
