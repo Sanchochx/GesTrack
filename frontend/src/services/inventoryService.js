@@ -461,6 +461,113 @@ const inventoryService = {
       console.error('Error exporting value report:', error);
       throw error.response?.data || { error: { message: 'Error al exportar reporte' } };
     }
+  },
+
+  // ============================================================================
+  // US-INV-006: Vista de Inventario por Categoría
+  // ============================================================================
+
+  /**
+   * US-INV-006 CA-1, CA-4: Obtiene lista de categorías con estadísticas de inventario
+   *
+   * @param {Object} filters - Filtros opcionales
+   * @param {string} filters.search - Búsqueda por nombre de categoría
+   * @param {string} filters.sortBy - Campo de ordenamiento (name, value, products, low_stock)
+   * @param {string} filters.sortOrder - Orden (asc, desc)
+   * @param {boolean} filters.hasLowStock - Solo categorías con stock bajo
+   * @param {boolean} filters.hasOutOfStock - Solo categorías sin stock
+   * @returns {Promise} Categorías con estadísticas
+   */
+  getCategoriesInventory: async (filters = {}) => {
+    try {
+      const params = {};
+
+      if (filters.search) params.search = filters.search;
+      if (filters.sortBy) params.sort_by = filters.sortBy;
+      if (filters.sortOrder) params.sort_order = filters.sortOrder;
+      if (filters.hasLowStock) params.has_low_stock = 'true';
+      if (filters.hasOutOfStock) params.has_out_of_stock = 'true';
+
+      const response = await api.get('/inventory/by-category', { params });
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching categories inventory:', error);
+      throw error.response?.data || { error: { message: 'Error al obtener inventario por categoría' } };
+    }
+  },
+
+  /**
+   * US-INV-006 CA-3: Obtiene productos de una categoría específica
+   *
+   * @param {string} categoryId - ID de la categoría
+   * @returns {Promise} Lista de productos con detalles de inventario
+   */
+  getCategoryProducts: async (categoryId) => {
+    try {
+      const response = await api.get(`/inventory/by-category/${categoryId}/products`);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching category products:', error);
+      throw error.response?.data || { error: { message: 'Error al obtener productos de la categoría' } };
+    }
+  },
+
+  /**
+   * US-INV-006 CA-6: Obtiene métricas generales del inventario por categorías
+   *
+   * @returns {Promise} Métricas generales
+   */
+  getCategoryInventoryMetrics: async () => {
+    try {
+      const response = await api.get('/inventory/by-category/metrics');
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching category inventory metrics:', error);
+      throw error.response?.data || { error: { message: 'Error al obtener métricas' } };
+    }
+  },
+
+  /**
+   * US-INV-006 CA-7: Exporta productos de una categoría a Excel
+   *
+   * @param {string} categoryId - ID de la categoría
+   * @param {string} format - Formato de exportación (excel, csv) - default: excel
+   * @returns {Promise} Archivo descargado
+   */
+  exportCategoryProducts: async (categoryId, format = 'excel') => {
+    try {
+      const response = await api.get(`/inventory/by-category/${categoryId}/export`, {
+        params: { format },
+        responseType: 'blob'
+      });
+
+      // Crear URL y descargar archivo
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+
+      // Obtener nombre de archivo del header Content-Disposition o generar uno
+      const contentDisposition = response.headers['content-disposition'];
+      let filename = `categoria_${categoryId}_${new Date().toISOString().split('T')[0]}.${format === 'pdf' ? 'pdf' : 'xlsx'}`;
+
+      if (contentDisposition) {
+        const filenameMatch = contentDisposition.match(/filename="?(.+)"?/);
+        if (filenameMatch) {
+          filename = filenameMatch[1];
+        }
+      }
+
+      link.setAttribute('download', filename);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+
+      return { success: true, message: 'Categoría exportada exitosamente' };
+    } catch (error) {
+      console.error('Error exporting category products:', error);
+      throw error.response?.data || { error: { message: 'Error al exportar categoría' } };
+    }
   }
 };
 

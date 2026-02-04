@@ -36,6 +36,7 @@ import LowStockProducts from './pages/Products/LowStockProducts';  // US-PROD-00
 import Categories from './pages/Categories/Categories';
 import ManualAdjustments from './pages/Inventory/ManualAdjustments';  // US-INV-002
 import MovementHistory from './pages/Inventory/MovementHistory';  // US-INV-003
+import CategoryInventoryView from './pages/Inventory/CategoryInventoryView';  // US-INV-006
 import ProtectedRoute from './components/common/ProtectedRoute';
 import authService from './services/authService';
 
@@ -237,6 +238,17 @@ function Navigation() {
                   }}
                 >
                   Historial
+                </Button>
+                <Button
+                  color="inherit"
+                  href="/inventory/by-category"
+                  sx={{
+                    '&:hover': {
+                      color: '#a5d6a7', // Verde claro en hover
+                    }
+                  }}
+                >
+                  Por Categoría
                 </Button>
                 <Button
                   color="inherit"
@@ -443,6 +455,16 @@ function App() {
                 element={
                   <ProtectedRoute allowedRoles={['Admin', 'Gerente de Almacén']}>
                     <MovementHistory />
+                  </ProtectedRoute>
+                }
+              />
+
+              {/* US-INV-006: Category Inventory View Route */}
+              <Route
+                path="/inventory/by-category"
+                element={
+                  <ProtectedRoute allowedRoles={['Admin', 'Gerente de Almacén']}>
+                    <CategoryInventoryView />
                   </ProtectedRoute>
                 }
               />
