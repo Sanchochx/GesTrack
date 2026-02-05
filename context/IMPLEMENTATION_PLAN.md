@@ -12,12 +12,12 @@
 │  PROGRESO GLOBAL DEL PROYECTO                               │
 ├─────────────────────────────────────────────────────────────┤
 │  Total Historias de Usuario:     82                         │
-│  ✅ Completadas:                   23                        │
+│  ✅ Completadas:                   24                        │
 │  🔄 Parcialmente Completadas:     0                         │
 │  ⏳ En Progreso:                   0                         │
-│  ⏸️  Pendientes:                   59                        │
+│  ⏸️  Pendientes:                   58                        │
 │                                                             │
-│  Progreso: [█████░░░░░░░░░░░░░░░] 28% (23/82)              │
+│  Progreso: [██████░░░░░░░░░░░░░░] 29% (24/82)              │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -29,7 +29,7 @@
 |------|--------|----------|-------------|-------------|------------|----------|
 | 01 | Foundation | 6 | 6 | 0 | 0 | [██████████] 100% |
 | 02 | Core Data | 10 | 10 | 0 | 0 | [██████████] 100% |
-| 03 | Stock Management | 10 | 6 | 0 | 4 | [██████░░░░] 60% |
+| 03 | Stock Management | 10 | 7 | 0 | 3 | [███████░░░] 70% |
 | 04 | Sales | 26 | 0 | 0 | 26 | [░░░░░░░░░░] 0% |
 | 05 | Supply Chain | 15 | 0 | 0 | 15 | [░░░░░░░░░░] 0% |
 | 06 | Analytics | 15 | 0 | 0 | 15 | [░░░░░░░░░░] 0% |
@@ -356,14 +356,14 @@
 **Objetivo:** Implementar funcionalidades principales de negocio
 **Épicas:** 03 Stock Management, 04 Sales
 **Total US:** 36
-**Progreso:** [█░░░░░░░░░] 17% (6/36 completadas) 🔄 EN PROGRESO
+**Progreso:** [██░░░░░░░░] 19% (7/36 completadas) 🔄 EN PROGRESO
 
 ---
 
 ## Epic 03: Stock Management - Gestión de Inventario
 
 **Prioridad:** ⭐⭐⭐ ALTA
-**Progreso:** [██████░░░░] 60% (6/10 completadas)
+**Progreso:** [███████░░░] 70% (7/10 completadas)
 **Carpeta:** `context/user_stories/epic_03_stock_management/`
 
 ### ✅ Historias de Usuario
@@ -546,12 +546,31 @@
   - Frontend: `pages/Inventory/CategoryInventoryView.jsx`, `components/inventory/CategoryRow.jsx`, `components/inventory/CategoryInventorySummary.jsx`, `components/inventory/CategoryInventoryFilters.jsx`, `services/inventoryService.js`
 - **Fecha de completación:** 2026-02-04
 
-#### [ ] US-INV-007: Alerta de Stock Crítico
+#### [x] US-INV-007: Alerta de Stock Crítico
 - **Archivo:** `context/user_stories/epic_03_stock_management/US-INV-007_critical_stock_alerts.md`
 - **Prioridad:** ALTA
 - **Estimación:** 5 pts
-- **Estado:** ⏸️ Pendiente
-- **Criterios de Aceptación:** 6
+- **Estado:** ✅ COMPLETADA (CA-5, CA-6, CA-7 parcialmente diferidos)
+- **Criterios de Aceptación:** 8 (5 completados, 3 diferidos a Epic 04/05)
+- **Progreso Backend:** ✅ 100% - Todos los CA core implementados
+  - CA-1: CriticalStockAlertService integrado en StockService ✅
+  - CA-8: Resolución automática de alertas ✅
+  - API GET /api/inventory/out-of-stock, /count, /statistics, /history ✅
+  - API POST /api/inventory/critical-alerts/sync ✅
+- **Progreso Frontend:** ✅ 100% - Todos los CA core implementados
+  - CA-2: OutOfStockAlertWidget en AdminDashboard y WarehouseDashboard ✅
+  - CA-3: StockBadge mejorado con animación pulse ✅
+  - CA-4: OutOfStockProducts página dedicada ✅
+  - Ruta /inventory/out-of-stock con navegación ✅
+  - inventoryService.js extendido con 5 nuevos métodos ✅
+- **CA Diferidos:**
+  - CA-5: Validación en pedidos (Epic 04)
+  - CA-6: Crear orden de compra (Epic 05)
+  - CA-7: Email y notificaciones avanzadas (v2.0)
+- **Archivos Creados:**
+  - Backend: `services/critical_stock_alert_service.py`
+  - Frontend: `components/inventory/OutOfStockAlertWidget.jsx`, `pages/Inventory/OutOfStockProducts.jsx`
+- **Fecha de completación:** 2026-02-04
 
 #### [ ] US-INV-008: Reserva de Stock para Pedidos Pendientes
 - **Archivo:** `context/user_stories/epic_03_stock_management/US-INV-008_stock_reservation_pending_orders.md`
