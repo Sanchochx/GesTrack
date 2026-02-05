@@ -1456,3 +1456,231 @@ def export_category_products(category_id):
                 'message': f'Error al exportar productos de categoría: {str(e)}'
             }
         }), 500
+
+
+# ============================================================================
+# US-INV-007: Alerta de Stock Crítico
+# ============================================================================
+
+@inventory_bp.route('/out-of-stock', methods=['GET'])
+@jwt_required()
+def get_out_of_stock_products():
+    """
+    US-INV-007 CA-4: Obtiene lista de productos sin stock
+
+    Query params:
+        page: Número de página (default: 1)
+        per_page: Productos por página (default: 20)
+        sort_by: Campo de ordenamiento (created_at, product_name, category, sku)
+        sort_order: Orden (asc, desc)
+
+    Returns:
+        {
+            "success": true,
+            "data": {
+                "products": [...],
+                "pagination": {
+                    "page": 1,
+                    "per_page": 20,
+                    "total": 15,
+                    "pages": 1
+                }
+            }
+        }
+    """
+    try:
+        from app.services.critical_stock_alert_service import CriticalStockAlertService
+
+        page = request.args.get('page', 1, type=int)
+        per_page = request.args.get('per_page', 20, type=int)
+        sort_by = request.args.get('sort_by', 'created_at')
+        sort_order = request.args.get('sort_order', 'asc')
+
+        result = CriticalStockAlertService.get_out_of_stock_products(
+            page=page,
+            per_page=per_page,
+            sort_by=sort_by,
+            sort_order=sort_order
+        )
+
+        return jsonify({
+            'success': True,
+            'data': result
+        }), 200
+
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': {
+                'code': 'OUT_OF_STOCK_ERROR',
+                'message': f'Error al obtener productos sin stock: {str(e)}'
+            }
+        }), 500
+
+
+@inventory_bp.route('/out-of-stock/count', methods=['GET'])
+@jwt_required()
+def get_out_of_stock_count():
+    """
+    US-INV-007 CA-2: Obtiene el conteo de productos sin stock
+
+    Returns:
+        {
+            "success": true,
+            "data": {
+                "count": 15
+            }
+        }
+    """
+    try:
+        from app.services.critical_stock_alert_service import CriticalStockAlertService
+
+        count = CriticalStockAlertService.get_out_of_stock_count()
+
+        return jsonify({
+            'success': True,
+            'data': {
+                'count': count
+            }
+        }), 200
+
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': {
+                'code': 'COUNT_ERROR',
+                'message': f'Error al obtener conteo: {str(e)}'
+            }
+        }), 500
+
+
+@inventory_bp.route('/critical-alerts/statistics', methods=['GET'])
+@jwt_required()
+def get_critical_alert_statistics():
+    """
+    US-INV-007 CA-8: Obtiene estadísticas de alertas de stock crítico
+
+    Returns:
+        {
+            "success": true,
+            "data": {
+                "active_alerts": 15,
+                "resolved_last_30_days": 10,
+                "avg_resolution_time_hours": 24.5,
+                "out_of_stock_products": 15
+            }
+        }
+    """
+    try:
+        from app.services.critical_stock_alert_service import CriticalStockAlertService
+
+        statistics = CriticalStockAlertService.get_alert_statistics()
+
+        return jsonify({
+            'success': True,
+            'data': statistics
+        }), 200
+
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': {
+                'code': 'STATISTICS_ERROR',
+                'message': f'Error al obtener estadísticas: {str(e)}'
+            }
+        }), 500
+
+
+@inventory_bp.route('/critical-alerts/history', methods=['GET'])
+@jwt_required()
+def get_critical_alerts_history():
+    """
+    US-INV-007 CA-8: Obtiene historial de alertas de stock crítico
+
+    Query params:
+        page: Número de página (default: 1)
+        per_page: Alertas por página (default: 20)
+        include_resolved: Si incluir alertas resueltas (default: true)
+
+    Returns:
+        {
+            "success": true,
+            "data": {
+                "alerts": [...],
+                "pagination": {
+                    "page": 1,
+                    "per_page": 20,
+                    "total": 25,
+                    "pages": 2
+                }
+            }
+        }
+    """
+    try:
+        from app.services.critical_stock_alert_service import CriticalStockAlertService
+
+        page = request.args.get('page', 1, type=int)
+        per_page = request.args.get('per_page', 20, type=int)
+        include_resolved = request.args.get('include_resolved', 'true').lower() == 'true'
+
+        result = CriticalStockAlertService.get_alerts_history(
+            page=page,
+            per_page=per_page,
+            include_resolved=include_resolved
+        )
+
+        return jsonify({
+            'success': True,
+            'data': result
+        }), 200
+
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': {
+                'code': 'HISTORY_ERROR',
+                'message': f'Error al obtener historial de alertas: {str(e)}'
+            }
+        }), 500
+
+
+@inventory_bp.route('/critical-alerts/sync', methods=['POST'])
+@jwt_required()
+@warehouse_manager_or_admin
+def sync_out_of_stock_alerts():
+    """
+    US-INV-007: Sincroniza alertas para productos existentes sin stock
+
+    Útil para crear alertas para productos que ya estaban sin stock
+    antes de implementar esta funcionalidad.
+
+    Returns:
+        {
+            "success": true,
+            "data": {
+                "alerts_created": 5
+            },
+            "message": "Se crearon 5 alertas para productos sin stock existentes"
+        }
+    """
+    try:
+        from app.services.critical_stock_alert_service import CriticalStockAlertService
+
+        alerts_created = CriticalStockAlertService.sync_existing_out_of_stock_products()
+
+        return jsonify({
+            'success': True,
+            'data': {
+                'alerts_created': alerts_created
+            },
+            'message': f'Se crearon {alerts_created} alertas para productos sin stock existentes'
+        }), 200
+
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': {
+                'code': 'SYNC_ERROR',
+                'message': f'Error al sincronizar alertas: {str(e)}'
+            }
+        }), 500

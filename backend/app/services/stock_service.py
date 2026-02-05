@@ -4,6 +4,10 @@ Servicio de gestión de stock con soporte para tiempo real y concurrencia
 US-INV-001: Seguimiento de Stock en Tiempo Real
 - CA-5: Manejo de Concurrencia con Optimistic Locking
 - CA-4: Timestamp de Última Actualización
+
+US-INV-007: Alerta de Stock Crítico
+- CA-1: Detección automática de stock cero
+- CA-8: Resolución automática de alertas
 """
 from app import db
 from app.models.product import Product
@@ -111,6 +115,30 @@ class StockService:
             # Guardar cambios
             db.session.add(movement)
             db.session.commit()
+
+            # US-INV-007: Gestionar alertas de stock crítico
+            try:
+                from app.services.critical_stock_alert_service import CriticalStockAlertService
+
+                # CA-1: Crear alerta si stock llega a 0
+                if new_stock == 0 and previous_stock > 0:
+                    CriticalStockAlertService.check_and_create_alert(
+                        product_id=product_id,
+                        previous_stock=previous_stock,
+                        new_stock=new_stock,
+                        user_id=user_id
+                    )
+
+                # CA-8: Resolver alerta si stock se recupera
+                elif new_stock > 0 and previous_stock == 0:
+                    CriticalStockAlertService.check_and_resolve_alert(
+                        product_id=product_id,
+                        previous_stock=previous_stock,
+                        new_stock=new_stock
+                    )
+            except Exception as e:
+                # No fallar la operación principal si hay error en alertas
+                print(f"Warning: Error managing critical stock alerts: {str(e)}")
 
             return product, movement
 
