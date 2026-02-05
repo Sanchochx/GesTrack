@@ -568,6 +568,94 @@ const inventoryService = {
       console.error('Error exporting category products:', error);
       throw error.response?.data || { error: { message: 'Error al exportar categoría' } };
     }
+  },
+
+  // ============================================================================
+  // US-INV-007: Alerta de Stock Crítico
+  // ============================================================================
+
+  /**
+   * US-INV-007 CA-4: Obtiene lista de productos sin stock
+   *
+   * @param {Object} params - Parámetros de paginación y ordenamiento
+   * @param {number} params.page - Número de página (default: 1)
+   * @param {number} params.per_page - Productos por página (default: 20)
+   * @param {string} params.sort_by - Campo de ordenamiento (created_at, product_name, category, sku)
+   * @param {string} params.sort_order - Orden (asc, desc)
+   * @returns {Promise} Lista paginada de productos sin stock
+   */
+  getOutOfStockProducts: async (params = {}) => {
+    try {
+      const response = await api.get('/inventory/out-of-stock', { params });
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching out of stock products:', error);
+      throw error.response?.data || { error: { message: 'Error al obtener productos sin stock' } };
+    }
+  },
+
+  /**
+   * US-INV-007 CA-2: Obtiene el conteo de productos sin stock
+   *
+   * @returns {Promise} Objeto con count de productos sin stock
+   */
+  getOutOfStockCount: async () => {
+    try {
+      const response = await api.get('/inventory/out-of-stock/count');
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching out of stock count:', error);
+      throw error.response?.data || { error: { message: 'Error al obtener conteo de productos sin stock' } };
+    }
+  },
+
+  /**
+   * US-INV-007 CA-8: Obtiene estadísticas de alertas de stock crítico
+   *
+   * @returns {Promise} Estadísticas de alertas (activas, resueltas, tiempo promedio)
+   */
+  getCriticalAlertStatistics: async () => {
+    try {
+      const response = await api.get('/inventory/critical-alerts/statistics');
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching critical alert statistics:', error);
+      throw error.response?.data || { error: { message: 'Error al obtener estadísticas de alertas' } };
+    }
+  },
+
+  /**
+   * US-INV-007 CA-8: Obtiene historial de alertas de stock crítico
+   *
+   * @param {Object} params - Parámetros de paginación
+   * @param {number} params.page - Número de página (default: 1)
+   * @param {number} params.per_page - Alertas por página (default: 20)
+   * @param {boolean} params.include_resolved - Incluir alertas resueltas (default: true)
+   * @returns {Promise} Historial paginado de alertas
+   */
+  getCriticalAlertsHistory: async (params = {}) => {
+    try {
+      const response = await api.get('/inventory/critical-alerts/history', { params });
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching critical alerts history:', error);
+      throw error.response?.data || { error: { message: 'Error al obtener historial de alertas' } };
+    }
+  },
+
+  /**
+   * US-INV-007: Sincroniza alertas para productos existentes sin stock
+   *
+   * @returns {Promise} Número de alertas creadas
+   */
+  syncOutOfStockAlerts: async () => {
+    try {
+      const response = await api.post('/inventory/critical-alerts/sync');
+      return response.data;
+    } catch (error) {
+      console.error('Error syncing out of stock alerts:', error);
+      throw error.response?.data || { error: { message: 'Error al sincronizar alertas' } };
+    }
   }
 };
 

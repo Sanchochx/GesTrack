@@ -7,6 +7,7 @@ import CategoryValueBreakdown from '../../components/inventory/CategoryValueBrea
 import ValueEvolutionChart from '../../components/inventory/ValueEvolutionChart';
 import ValueMetricsPanel from '../../components/inventory/ValueMetricsPanel';
 import InventoryValueExportCard from '../../components/inventory/InventoryValueExportCard';
+import OutOfStockAlertWidget from '../../components/inventory/OutOfStockAlertWidget';
 
 /**
  * Dashboard para usuarios con rol Admin
@@ -51,8 +52,13 @@ const AdminDashboard = () => {
           Acceso completo a todas las funcionalidades del sistema
         </Typography>
 
-        {/* US-INV-005: Widgets de Valor del Inventario */}
+        {/* US-INV-005, US-INV-007: Widgets de Valor del Inventario y Alertas */}
         <Grid container spacing={3}>
+          {/* US-INV-007: Alertas de Stock Crítico */}
+          <Grid item xs={12} md={4}>
+            <OutOfStockAlertWidget maxItems={5} />
+          </Grid>
+
           {/* Valor Total del Inventario */}
           <Grid item xs={12} md={4}>
             <InventoryValueWidget period="30d" />
@@ -61,16 +67,6 @@ const AdminDashboard = () => {
           {/* Exportar Reporte de Valor */}
           <Grid item xs={12} md={4}>
             <InventoryValueExportCard />
-          </Grid>
-
-          <Grid item xs={12} md={4}>
-            <Box sx={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', bgcolor: 'grey.100', borderRadius: 2, p: 3 }}>
-              <Typography color="text.secondary" align="center">
-                Widget de órdenes
-                <br />
-                (Epic 4)
-              </Typography>
-            </Box>
           </Grid>
 
           {/* Gráfico de Evolución del Valor */}

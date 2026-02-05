@@ -7,6 +7,7 @@ import CategoryValueBreakdown from '../../components/inventory/CategoryValueBrea
 import ValueEvolutionChart from '../../components/inventory/ValueEvolutionChart';
 import ValueMetricsPanel from '../../components/inventory/ValueMetricsPanel';
 import InventoryValueExportCard from '../../components/inventory/InventoryValueExportCard';
+import OutOfStockAlertWidget from '../../components/inventory/OutOfStockAlertWidget';
 
 /**
  * Dashboard para usuarios con rol Gerente de Almacén
@@ -51,15 +52,20 @@ const WarehouseDashboard = () => {
           Gestión de productos, categorías, proveedores y órdenes de compra
         </Typography>
 
-        {/* US-INV-005: Widgets de Valor del Inventario */}
+        {/* US-INV-005, US-INV-007: Widgets de Valor del Inventario y Alertas */}
         <Grid container spacing={3}>
+          {/* US-INV-007: Alertas de Stock Crítico */}
+          <Grid item xs={12} md={6} lg={4}>
+            <OutOfStockAlertWidget maxItems={5} />
+          </Grid>
+
           {/* Valor Total del Inventario */}
-          <Grid item xs={12} md={6}>
+          <Grid item xs={12} md={6} lg={4}>
             <InventoryValueWidget period="7d" />
           </Grid>
 
           {/* Exportar Reporte de Valor */}
-          <Grid item xs={12} md={6}>
+          <Grid item xs={12} md={6} lg={4}>
             <InventoryValueExportCard />
           </Grid>
 

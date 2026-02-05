@@ -38,6 +38,7 @@ import Categories from './pages/Categories/Categories';
 import ManualAdjustments from './pages/Inventory/ManualAdjustments';  // US-INV-002
 import MovementHistory from './pages/Inventory/MovementHistory';  // US-INV-003
 import CategoryInventoryView from './pages/Inventory/CategoryInventoryView';  // US-INV-006
+import OutOfStockProducts from './pages/Inventory/OutOfStockProducts';  // US-INV-007
 import ProtectedRoute from './components/common/ProtectedRoute';
 import authService from './services/authService';
 
@@ -231,6 +232,18 @@ function Navigation() {
                   }}
                 >
                   Stock Bajo
+                </Button>
+                <Button
+                  color="inherit"
+                  href="/inventory/out-of-stock"
+                  sx={{
+                    color: 'error.light',
+                    '&:hover': {
+                      color: '#ef9a9a', // Rojo claro para sin stock
+                    }
+                  }}
+                >
+                  Sin Stock
                 </Button>
                 <Button
                   color="inherit"
@@ -480,6 +493,16 @@ function App() {
                 element={
                   <ProtectedRoute allowedRoles={['Admin', 'Gerente de Almacén']}>
                     <CategoryInventoryView />
+                  </ProtectedRoute>
+                }
+              />
+
+              {/* US-INV-007: Out of Stock Products Route */}
+              <Route
+                path="/inventory/out-of-stock"
+                element={
+                  <ProtectedRoute allowedRoles={['Admin', 'Gerente de Almacén']}>
+                    <OutOfStockProducts />
                   </ProtectedRoute>
                 }
               />
