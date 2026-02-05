@@ -39,6 +39,8 @@ import ManualAdjustments from './pages/Inventory/ManualAdjustments';  // US-INV-
 import MovementHistory from './pages/Inventory/MovementHistory';  // US-INV-003
 import CategoryInventoryView from './pages/Inventory/CategoryInventoryView';  // US-INV-006
 import OutOfStockProducts from './pages/Inventory/OutOfStockProducts';  // US-INV-007
+import CustomerList from './pages/Customers/CustomerList';  // US-CUST-001
+import CreateCustomer from './pages/Customers/CreateCustomer';  // US-CUST-001
 import ProtectedRoute from './components/common/ProtectedRoute';
 import authService from './services/authService';
 
@@ -292,6 +294,21 @@ function Navigation() {
               </>
             )}
 
+            {/* US-CUST-001: Customer Management Navigation */}
+            {(currentUser?.role === 'Admin' || currentUser?.role === 'Personal de Ventas' || currentUser?.role === 'Gerente de Almacén') && (
+              <Button
+                color="inherit"
+                href="/customers"
+                sx={{
+                  '&:hover': {
+                    color: '#a5d6a7',
+                  }
+                }}
+              >
+                Clientes
+              </Button>
+            )}
+
             {/* US-AUTH-004: CA-1 - Menú de usuario con dropdown */}
             <IconButton
               color="inherit"
@@ -503,6 +520,24 @@ function App() {
                 element={
                   <ProtectedRoute allowedRoles={['Admin', 'Gerente de Almacén']}>
                     <OutOfStockProducts />
+                  </ProtectedRoute>
+                }
+              />
+
+              {/* US-CUST-001: Customer Management Routes */}
+              <Route
+                path="/customers"
+                element={
+                  <ProtectedRoute allowedRoles={['Admin', 'Personal de Ventas', 'Gerente de Almacén']}>
+                    <CustomerList />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/customers/new"
+                element={
+                  <ProtectedRoute allowedRoles={['Admin', 'Personal de Ventas', 'Gerente de Almacén']}>
+                    <CreateCustomer />
                   </ProtectedRoute>
                 }
               />
