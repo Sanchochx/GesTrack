@@ -114,20 +114,20 @@
 - Normalizar formato de teléfonos para consistencia
 
 ## Definición de Hecho
-- [ ] Frontend: Formulario de registro de cliente
-- [ ] Frontend: Validaciones en tiempo real
-- [ ] Frontend: Validación de email único con API
-- [ ] Frontend: Indicadores visuales de validación
-- [ ] Frontend: Manejo de estados (loading, error, success)
-- [ ] Frontend: Confirmación y redirección
-- [ ] Frontend: Modal o vista de confirmación de cancelación
-- [ ] Backend: API POST /api/customers
-- [ ] Backend: Validación de unicidad de email
-- [ ] Backend: Validación de campos requeridos y formatos
-- [ ] Backend: Sanitización de inputs
-- [ ] Base de datos: Tabla customers creada
-- [ ] Base de datos: Índice único en email
-- [ ] Base de datos: Campos con tipos y constraints apropiados
+- [x] Frontend: Formulario de registro de cliente
+- [x] Frontend: Validaciones en tiempo real
+- [x] Frontend: Validación de email único con API
+- [x] Frontend: Indicadores visuales de validación
+- [x] Frontend: Manejo de estados (loading, error, success)
+- [x] Frontend: Confirmación y redirección
+- [x] Frontend: Modal o vista de confirmación de cancelación
+- [x] Backend: API POST /api/customers
+- [x] Backend: Validación de unicidad de email
+- [x] Backend: Validación de campos requeridos y formatos
+- [x] Backend: Sanitización de inputs
+- [x] Base de datos: Tabla customers creada
+- [x] Base de datos: Índice único en email
+- [x] Base de datos: Campos con tipos y constraints apropiados
 - [ ] Pruebas unitarias de validaciones
 - [ ] Pruebas de creación exitosa
 - [ ] Pruebas de email duplicado

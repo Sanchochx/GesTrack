@@ -12,12 +12,12 @@
 │  PROGRESO GLOBAL DEL PROYECTO                               │
 ├─────────────────────────────────────────────────────────────┤
 │  Total Historias de Usuario:     82                         │
-│  ✅ Completadas:                   24                        │
+│  ✅ Completadas:                   25                        │
 │  🔄 Parcialmente Completadas:     0                         │
 │  ⏳ En Progreso:                   0                         │
-│  ⏸️  Pendientes:                   58                        │
+│  ⏸️  Pendientes:                   57                        │
 │                                                             │
-│  Progreso: [██████░░░░░░░░░░░░░░] 29% (24/82)              │
+│  Progreso: [██████░░░░░░░░░░░░░░] 30% (25/82)              │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -30,7 +30,7 @@
 | 01 | Foundation | 6 | 6 | 0 | 0 | [██████████] 100% |
 | 02 | Core Data | 10 | 10 | 0 | 0 | [██████████] 100% |
 | 03 | Stock Management | 10 | 7 | 0 | 3 | [███████░░░] 70% |
-| 04 | Sales | 26 | 0 | 0 | 26 | [░░░░░░░░░░] 0% |
+| 04 | Sales | 26 | 1 | 0 | 25 | [░░░░░░░░░░] 4% |
 | 05 | Supply Chain | 15 | 0 | 0 | 15 | [░░░░░░░░░░] 0% |
 | 06 | Analytics | 15 | 0 | 0 | 15 | [░░░░░░░░░░] 0% |
 
@@ -356,7 +356,7 @@
 **Objetivo:** Implementar funcionalidades principales de negocio
 **Épicas:** 03 Stock Management, 04 Sales
 **Total US:** 36
-**Progreso:** [██░░░░░░░░] 19% (7/36 completadas) 🔄 EN PROGRESO
+**Progreso:** [██░░░░░░░░] 22% (8/36 completadas) 🔄 EN PROGRESO
 
 ---
 
@@ -598,17 +598,39 @@
 ## Epic 04: Sales - Gestión de Clientes y Pedidos
 
 **Prioridad:** ⭐⭐⭐ ALTA
-**Progreso:** [░░░░░░░░░░] 0% (0/26)
+**Progreso:** [░░░░░░░░░░] 4% (1/26)
 **Carpeta:** `context/user_stories/epic_04_sales/`
 
 ### 📋 Módulo: Clientes
 
-#### [ ] US-CUST-001: Registrar Nuevo Cliente
+#### [x] US-CUST-001: Registrar Nuevo Cliente
 - **Archivo:** `context/user_stories/epic_04_sales/US-CUST-001_registrar_cliente.md`
 - **Prioridad:** ALTA
 - **Estimación:** 5 pts
-- **Estado:** ⏸️ Pendiente
-- **Criterios de Aceptación:** 7
+- **Estado:** ✅ COMPLETADA
+- **Criterios de Aceptación:** 10 ✅
+- **Progreso Backend:** ✅ 100% - Todos los CA implementados
+  - Customer model con todos los campos (UUID, validaciones, timestamps) ✅
+  - CustomerCreateSchema y CustomerUpdateSchema con Marshmallow ✅
+  - POST /api/customers con validación completa ✅
+  - GET /api/customers/check-email para unicidad de email ✅
+  - GET /api/customers con paginación, búsqueda y filtros ✅
+  - GET /api/customers/:id ✅
+  - Migración de base de datos con índice único en email ✅
+- **Progreso Frontend:** ✅ 100% - Todos los CA implementados
+  - CA-1: Formulario organizado en secciones (Personal, Dirección, Notas) ✅
+  - CA-2: Campos de información personal con validación ✅
+  - CA-3: Campos de dirección completa ✅
+  - CA-4: Campo de notas con contador de caracteres ✅
+  - CA-5: Validación de email único con API (onBlur, indicador visual) ✅
+  - CA-6: Timestamp automático en backend ✅
+  - CA-7: Estado activo por defecto ✅
+  - CA-8: Validaciones en tiempo real ✅
+  - CA-9: Diálogo de éxito con opciones (ver perfil, registrar otro, ir a lista) ✅
+  - CA-10: Confirmación de cancelación si hay datos sin guardar ✅
+  - Ruta /customers y /customers/new protegidas ✅
+  - Navegación "Clientes" en AppBar ✅
+- **Fecha de completación:** 2026-02-05
 
 #### [ ] US-CUST-002: Listar Clientes
 - **Archivo:** `context/user_stories/epic_04_sales/US-CUST-002_listar_clientes.md`
