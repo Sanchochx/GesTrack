@@ -12,12 +12,12 @@
 │  PROGRESO GLOBAL DEL PROYECTO                               │
 ├─────────────────────────────────────────────────────────────┤
 │  Total Historias de Usuario:     82                         │
-│  ✅ Completadas:                   27                        │
+│  ✅ Completadas:                   28                        │
 │  🔄 Parcialmente Completadas:     0                         │
 │  ⏳ En Progreso:                   0                         │
-│  ⏸️  Pendientes:                   55                        │
+│  ⏸️  Pendientes:                   54                        │
 │                                                             │
-│  Progreso: [███████░░░░░░░░░░░░░] 33% (27/82)              │
+│  Progreso: [███████░░░░░░░░░░░░░] 34% (28/82)              │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -30,7 +30,7 @@
 | 01 | Foundation | 6 | 6 | 0 | 0 | [██████████] 100% |
 | 02 | Core Data | 10 | 10 | 0 | 0 | [██████████] 100% |
 | 03 | Stock Management | 10 | 7 | 0 | 3 | [███████░░░] 70% |
-| 04 | Sales | 26 | 3 | 0 | 23 | [█░░░░░░░░░] 12% |
+| 04 | Sales | 26 | 4 | 0 | 22 | [██░░░░░░░░] 15% |
 | 05 | Supply Chain | 15 | 0 | 0 | 15 | [░░░░░░░░░░] 0% |
 | 06 | Analytics | 15 | 0 | 0 | 15 | [░░░░░░░░░░] 0% |
 
@@ -356,7 +356,7 @@
 **Objetivo:** Implementar funcionalidades principales de negocio
 **Épicas:** 03 Stock Management, 04 Sales
 **Total US:** 36
-**Progreso:** [███░░░░░░░] 28% (10/36 completadas) 🔄 EN PROGRESO
+**Progreso:** [███░░░░░░░] 31% (11/36 completadas) 🔄 EN PROGRESO
 
 ---
 
@@ -598,7 +598,7 @@
 ## Epic 04: Sales - Gestión de Clientes y Pedidos
 
 **Prioridad:** ⭐⭐⭐ ALTA
-**Progreso:** [█░░░░░░░░░] 12% (3/26)
+**Progreso:** [██░░░░░░░░] 15% (4/26)
 **Carpeta:** `context/user_stories/epic_04_sales/`
 
 ### 📋 Módulo: Clientes
@@ -681,12 +681,30 @@
   - CA-10: Performance con paginación ✅
 - **Fecha de completación:** 2026-02-09
 
-#### [ ] US-CUST-004: Ver Perfil del Cliente
+#### [x] US-CUST-004: Ver Perfil del Cliente
 - **Archivo:** `context/user_stories/epic_04_sales/US-CUST-004_ver_perfil_cliente.md`
 - **Prioridad:** MEDIA
-- **Estimación:** 3 pts
-- **Estado:** ⏸️ Pendiente
-- **Criterios de Aceptación:** 5
+- **Estimación:** 5 pts
+- **Estado:** ✅ COMPLETADA
+- **Criterios de Aceptación:** 10 ✅ (features dependientes de Orders module diferidas)
+- **Progreso Frontend:** ✅ 100% - Todos los CA core implementados
+  - CA-1: Cabecera con nombre prominente, badges de categoría y estado ✅
+  - CA-2: Información de contacto con iconos clickeables (mailto, tel) ✅
+  - CA-3: Dirección completa con botón copiar y link a Google Maps ✅
+  - CA-4: Panel de métricas con cards (valores placeholder hasta Orders) ✅
+  - CA-5: Sección de últimos pedidos (empty state, depende de Orders) ✅
+  - CA-6: Sección de notas (usa campo notes existente) ✅
+  - CA-7: Productos favoritos (empty state, depende de Orders) ✅
+  - CA-8: Historial de actividad colapsable (Admin only) ✅
+  - CA-9: Botones de acción con permisos (Inactivar/Activar funcional) ✅
+  - CA-10: Navegación con breadcrumbs y botón volver ✅
+  - Responsive design con useMediaQuery ✅
+- **Progreso Backend:** ✅ API existente GET /api/customers/:id
+- **Archivos Creados:**
+  - Frontend: `pages/Customers/CustomerDetail.jsx` (520+ líneas)
+- **Archivos Modificados:**
+  - Frontend: `App.jsx` (ruta /customers/:id agregada)
+- **Fecha de completación:** 2026-02-09
 
 #### [ ] US-CUST-005: Editar Información del Cliente
 - **Archivo:** `context/user_stories/epic_04_sales/US-CUST-005_editar_cliente.md`
