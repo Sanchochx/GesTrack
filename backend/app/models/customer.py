@@ -56,6 +56,11 @@ class Customer(db.Model):
             'is_active': self.is_active,
             'created_at': self.created_at.isoformat() if self.created_at else None,
             'updated_at': self.updated_at.isoformat() if self.updated_at else None,
+            # Placeholder purchase fields (will be computed from Orders in Epic 04)
+            'total_purchases': 0.0,
+            'last_purchase_date': None,
+            'order_count': 0,
+            'customer_category': 'Regular',
         }
 
     @staticmethod

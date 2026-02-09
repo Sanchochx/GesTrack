@@ -1,6 +1,7 @@
 """
 Rutas API para gestión de Clientes
 US-CUST-001: Registrar Nuevo Cliente
+US-CUST-002: Listar Clientes
 """
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
@@ -14,6 +15,10 @@ from app.schemas.customer_schema import (
 from app.utils.decorators import require_role
 from marshmallow import ValidationError
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy import func, case
+from datetime import datetime
+
+ALLOWED_SORT_FIELDS = ['full_name', 'email', 'phone', 'address_city', 'created_at']
 
 customers_bp = Blueprint('customers', __name__, url_prefix='/api/customers')
 
@@ -186,13 +191,13 @@ def get_customers():
         sort_by = request.args.get('sort_by', 'full_name')
         order = request.args.get('order', 'asc')
 
+        # Validate sort field against whitelist
+        if sort_by not in ALLOWED_SORT_FIELDS:
+            sort_by = 'full_name'
+
         query = Customer.query
 
-        # Filtro por estado activo
-        if is_active is not None:
-            query = query.filter(Customer.is_active == (is_active.lower() == 'true'))
-
-        # Búsqueda
+        # Búsqueda (applied before is_active filter for statistics)
         if search:
             search_filter = f'%{search}%'
             query = query.filter(
@@ -202,6 +207,24 @@ def get_customers():
                     Customer.phone.ilike(search_filter),
                 )
             )
+
+        # US-CUST-002: Statistics (computed on search-filtered, NOT is_active-filtered)
+        stats_query = query.with_entities(
+            func.count(Customer.id).label('total'),
+            func.count(case((Customer.is_active == True, 1))).label('active'),
+            func.count(case((Customer.is_active == False, 1))).label('inactive'),
+        ).first()
+
+        statistics = {
+            'total': stats_query.total if stats_query else 0,
+            'active': stats_query.active if stats_query else 0,
+            'inactive': stats_query.inactive if stats_query else 0,
+            'vip': 0,  # Placeholder until Orders module is built
+        }
+
+        # Filtro por estado activo (applied after statistics)
+        if is_active is not None:
+            query = query.filter(Customer.is_active == (is_active.lower() == 'true'))
 
         # Ordenamiento
         sort_column = getattr(Customer, sort_by, Customer.full_name)
@@ -217,6 +240,7 @@ def get_customers():
         return jsonify({
             'success': True,
             'data': [c.to_dict() for c in customers],
+            'statistics': statistics,
             'pagination': {
                 'page': pagination.page,
                 'per_page': pagination.per_page,
@@ -267,6 +291,49 @@ def get_customer(customer_id):
             'error': {
                 'code': 'SERVER_ERROR',
                 'message': 'Error al obtener cliente',
+                'details': str(e)
+            }
+        }), 500
+
+
+@customers_bp.route('/<customer_id>/toggle-active', methods=['PATCH'])
+@jwt_required()
+@require_role(['Admin', 'Personal de Ventas'])
+def toggle_active(customer_id):
+    """
+    PATCH /api/customers/:id/toggle-active
+    US-CUST-002 CA-8: Activar/Inactivar cliente
+    """
+    try:
+        customer = Customer.query.get(customer_id)
+
+        if not customer:
+            return jsonify({
+                'success': False,
+                'error': {
+                    'code': 'NOT_FOUND',
+                    'message': 'Cliente no encontrado'
+                }
+            }), 404
+
+        customer.is_active = not customer.is_active
+        customer.updated_at = datetime.utcnow()
+        db.session.commit()
+
+        status_text = 'activado' if customer.is_active else 'inactivado'
+        return jsonify({
+            'success': True,
+            'data': customer.to_dict(),
+            'message': f'Cliente {customer.full_name} {status_text} correctamente'
+        }), 200
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({
+            'success': False,
+            'error': {
+                'code': 'SERVER_ERROR',
+                'message': 'Error al cambiar estado del cliente',
                 'details': str(e)
             }
         }), 500
