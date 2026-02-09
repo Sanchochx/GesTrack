@@ -41,6 +41,7 @@ import CategoryInventoryView from './pages/Inventory/CategoryInventoryView';  //
 import OutOfStockProducts from './pages/Inventory/OutOfStockProducts';  // US-INV-007
 import CustomerList from './pages/Customers/CustomerList';  // US-CUST-001
 import CreateCustomer from './pages/Customers/CreateCustomer';  // US-CUST-001
+import CustomerDetail from './pages/Customers/CustomerDetail';  // US-CUST-004
 import ProtectedRoute from './components/common/ProtectedRoute';
 import authService from './services/authService';
 
@@ -538,6 +539,15 @@ function App() {
                 element={
                   <ProtectedRoute allowedRoles={['Admin', 'Personal de Ventas', 'Gerente de Almacén']}>
                     <CreateCustomer />
+                  </ProtectedRoute>
+                }
+              />
+              {/* US-CUST-004: Customer Detail/Profile Route */}
+              <Route
+                path="/customers/:id"
+                element={
+                  <ProtectedRoute allowedRoles={['Admin', 'Personal de Ventas', 'Gerente de Almacén']}>
+                    <CustomerDetail />
                   </ProtectedRoute>
                 }
               />
