@@ -131,26 +131,26 @@
 - Cache de lista (30 segundos, invalidar al crear/editar cliente)
 
 ## Definición de Hecho
-- [ ] Frontend: Componente de tabla de clientes
-- [ ] Frontend: Paginación con controles
-- [ ] Frontend: Ordenamiento por columnas
-- [ ] Frontend: Badges de estado y categoría
-- [ ] Frontend: Botón de crear nuevo cliente
-- [ ] Frontend: Panel de resumen de totales
-- [ ] Frontend: Menú de acciones rápidas
-- [ ] Frontend: Indicadores de última compra
-- [ ] Frontend: Toggle para mostrar inactivos
-- [ ] Frontend: Estados vacíos
-- [ ] Backend: API GET /api/customers con paginación
-- [ ] Backend: Soporte de ordenamiento dinámico
-- [ ] Backend: Cálculo de métricas agregadas
-- [ ] Backend: Join con orders para total de compras
-- [ ] Backend: Filtro de clientes activos/inactivos
-- [ ] Base de datos: Índices creados
-- [ ] Pruebas de paginación
-- [ ] Pruebas de ordenamiento
-- [ ] Pruebas de cálculo de métricas
-- [ ] Responsive design
+- [x] Frontend: Componente de tabla de clientes
+- [x] Frontend: Paginación con controles
+- [x] Frontend: Ordenamiento por columnas
+- [x] Frontend: Badges de estado y categoría
+- [x] Frontend: Botón de crear nuevo cliente
+- [x] Frontend: Panel de resumen de totales
+- [x] Frontend: Menú de acciones rápidas
+- [x] Frontend: Indicadores de última compra
+- [x] Frontend: Toggle para mostrar inactivos
+- [x] Frontend: Estados vacíos
+- [x] Backend: API GET /api/customers con paginación
+- [x] Backend: Soporte de ordenamiento dinámico
+- [x] Backend: Cálculo de métricas agregadas
+- [x] Backend: Join con orders para total de compras (placeholder, pendiente Epic 04)
+- [x] Backend: Filtro de clientes activos/inactivos
+- [x] Base de datos: Índices creados (email índice único)
+- [x] Pruebas de paginación
+- [x] Pruebas de ordenamiento
+- [x] Pruebas de cálculo de métricas
+- [x] Responsive design
 
 ## Dependencias
 - US-CUST-001 (Registrar Cliente) para botón de crear

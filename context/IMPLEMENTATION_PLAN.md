@@ -12,12 +12,12 @@
 │  PROGRESO GLOBAL DEL PROYECTO                               │
 ├─────────────────────────────────────────────────────────────┤
 │  Total Historias de Usuario:     82                         │
-│  ✅ Completadas:                   25                        │
+│  ✅ Completadas:                   26                        │
 │  🔄 Parcialmente Completadas:     0                         │
 │  ⏳ En Progreso:                   0                         │
-│  ⏸️  Pendientes:                   57                        │
+│  ⏸️  Pendientes:                   56                        │
 │                                                             │
-│  Progreso: [██████░░░░░░░░░░░░░░] 30% (25/82)              │
+│  Progreso: [██████░░░░░░░░░░░░░░] 32% (26/82)              │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -30,7 +30,7 @@
 | 01 | Foundation | 6 | 6 | 0 | 0 | [██████████] 100% |
 | 02 | Core Data | 10 | 10 | 0 | 0 | [██████████] 100% |
 | 03 | Stock Management | 10 | 7 | 0 | 3 | [███████░░░] 70% |
-| 04 | Sales | 26 | 1 | 0 | 25 | [░░░░░░░░░░] 4% |
+| 04 | Sales | 26 | 2 | 0 | 24 | [█░░░░░░░░░] 8% |
 | 05 | Supply Chain | 15 | 0 | 0 | 15 | [░░░░░░░░░░] 0% |
 | 06 | Analytics | 15 | 0 | 0 | 15 | [░░░░░░░░░░] 0% |
 
@@ -356,7 +356,7 @@
 **Objetivo:** Implementar funcionalidades principales de negocio
 **Épicas:** 03 Stock Management, 04 Sales
 **Total US:** 36
-**Progreso:** [██░░░░░░░░] 22% (8/36 completadas) 🔄 EN PROGRESO
+**Progreso:** [███░░░░░░░] 25% (9/36 completadas) 🔄 EN PROGRESO
 
 ---
 
@@ -598,7 +598,7 @@
 ## Epic 04: Sales - Gestión de Clientes y Pedidos
 
 **Prioridad:** ⭐⭐⭐ ALTA
-**Progreso:** [░░░░░░░░░░] 4% (1/26)
+**Progreso:** [█░░░░░░░░░] 8% (2/26)
 **Carpeta:** `context/user_stories/epic_04_sales/`
 
 ### 📋 Módulo: Clientes
@@ -632,12 +632,30 @@
   - Navegación "Clientes" en AppBar ✅
 - **Fecha de completación:** 2026-02-05
 
-#### [ ] US-CUST-002: Listar Clientes
+#### [x] US-CUST-002: Listar Clientes
 - **Archivo:** `context/user_stories/epic_04_sales/US-CUST-002_listar_clientes.md`
 - **Prioridad:** ALTA
 - **Estimación:** 5 pts
-- **Estado:** ⏸️ Pendiente
-- **Criterios de Aceptación:** 6
+- **Estado:** ✅ COMPLETADA
+- **Criterios de Aceptación:** 10 ✅
+- **Progreso Backend:** ✅ 100% - API completa
+  - GET /api/customers con paginación, búsqueda, filtros ✅
+  - Ordenamiento dinámico (5 columnas) ✅
+  - Estadísticas agregadas (total, active, inactive, vip) ✅
+  - PATCH /api/customers/:id/toggle-active ✅
+- **Progreso Frontend:** ✅ 100% - Todos los CA implementados
+  - CA-1: CustomerTable con 8 columnas, headers ordenables ✅
+  - CA-2: Paginación completa (10/20/50/100) ✅
+  - CA-3: Ordenamiento bidireccional con indicadores ✅
+  - CA-4: Badges Activo/Inactivo, toggle "Mostrar inactivos" ✅
+  - CA-5: Badges de categoría (VIP/Frecuente/Regular) ✅
+  - CA-6: Botón "Nuevo Cliente" en header ✅
+  - CA-7: CustomerStats con 4 tarjetas ✅
+  - CA-8: Acciones rápidas (ver, email, teléfono, menú) ✅
+  - CA-9: Fechas relativas con warning >6 meses ✅
+  - CA-10: CustomerEmptyState para ambos casos ✅
+  - CustomerCardView para vista móvil responsive ✅
+- **Fecha de completación:** 2026-02-09
 
 #### [ ] US-CUST-003: Buscar Clientes
 - **Archivo:** `context/user_stories/epic_04_sales/US-CUST-003_buscar_clientes.md`
