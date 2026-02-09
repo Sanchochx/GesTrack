@@ -198,6 +198,9 @@ def get_customers():
         query = Customer.query
 
         # Búsqueda (applied before is_active filter for statistics)
+        # US-CUST-003 CA-3: Search in name, email, phone, secondary_phone
+        # CA-4: Case-insensitive with ILIKE
+        # CA-5: Partial matches with %search%
         if search:
             search_filter = f'%{search}%'
             query = query.filter(
@@ -205,6 +208,7 @@ def get_customers():
                     Customer.full_name.ilike(search_filter),
                     Customer.email.ilike(search_filter),
                     Customer.phone.ilike(search_filter),
+                    Customer.secondary_phone.ilike(search_filter),
                 )
             )
 
