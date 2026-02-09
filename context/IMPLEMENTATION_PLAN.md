@@ -12,12 +12,12 @@
 │  PROGRESO GLOBAL DEL PROYECTO                               │
 ├─────────────────────────────────────────────────────────────┤
 │  Total Historias de Usuario:     82                         │
-│  ✅ Completadas:                   28                        │
+│  ✅ Completadas:                   29                        │
 │  🔄 Parcialmente Completadas:     0                         │
 │  ⏳ En Progreso:                   0                         │
-│  ⏸️  Pendientes:                   54                        │
+│  ⏸️  Pendientes:                   53                        │
 │                                                             │
-│  Progreso: [███████░░░░░░░░░░░░░] 34% (28/82)              │
+│  Progreso: [███████░░░░░░░░░░░░░] 35% (29/82)              │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -30,7 +30,7 @@
 | 01 | Foundation | 6 | 6 | 0 | 0 | [██████████] 100% |
 | 02 | Core Data | 10 | 10 | 0 | 0 | [██████████] 100% |
 | 03 | Stock Management | 10 | 7 | 0 | 3 | [███████░░░] 70% |
-| 04 | Sales | 26 | 4 | 0 | 22 | [██░░░░░░░░] 15% |
+| 04 | Sales | 26 | 5 | 0 | 21 | [██░░░░░░░░] 19% |
 | 05 | Supply Chain | 15 | 0 | 0 | 15 | [░░░░░░░░░░] 0% |
 | 06 | Analytics | 15 | 0 | 0 | 15 | [░░░░░░░░░░] 0% |
 
@@ -356,7 +356,7 @@
 **Objetivo:** Implementar funcionalidades principales de negocio
 **Épicas:** 03 Stock Management, 04 Sales
 **Total US:** 36
-**Progreso:** [███░░░░░░░] 31% (11/36 completadas) 🔄 EN PROGRESO
+**Progreso:** [███░░░░░░░] 33% (12/36 completadas) 🔄 EN PROGRESO
 
 ---
 
@@ -598,7 +598,7 @@
 ## Epic 04: Sales - Gestión de Clientes y Pedidos
 
 **Prioridad:** ⭐⭐⭐ ALTA
-**Progreso:** [██░░░░░░░░] 15% (4/26)
+**Progreso:** [██░░░░░░░░] 19% (5/26)
 **Carpeta:** `context/user_stories/epic_04_sales/`
 
 ### 📋 Módulo: Clientes
@@ -706,12 +706,36 @@
   - Frontend: `App.jsx` (ruta /customers/:id agregada)
 - **Fecha de completación:** 2026-02-09
 
-#### [ ] US-CUST-005: Editar Información del Cliente
+#### [x] US-CUST-005: Editar Información del Cliente
 - **Archivo:** `context/user_stories/epic_04_sales/US-CUST-005_editar_cliente.md`
 - **Prioridad:** ALTA
 - **Estimación:** 5 pts
-- **Estado:** ⏸️ Pendiente
-- **Criterios de Aceptación:** 6
+- **Estado:** ✅ COMPLETADA
+- **Criterios de Aceptación:** 10 ✅
+- **Progreso Backend:** ✅ 100%
+  - PUT /api/customers/:id con todas las validaciones ✅
+  - Validación email único excluyendo propio ✅
+  - Actualización automática de updated_at ✅
+- **Progreso Frontend:** ✅ 100%
+  - CA-1: Botón Editar habilitado en CustomerDetail ✅
+  - CA-2: CustomerForm con modo edit y datos pre-llenados ✅
+  - CA-3: Todos los campos editables con validaciones ✅
+  - CA-4: Validación email con exclude_id ✅
+  - CA-5: Validaciones en tiempo real ✅
+  - CA-6: Detección de cambios (hasChanges) ✅
+  - CA-7: updated_at visible en historial ✅
+  - CA-8: Snackbar de confirmación + navegación ✅
+  - CA-9: Cancelación con confirmación ✅
+  - CA-10: Rutas protegidas por rol ✅
+- **Archivos Creados:**
+  - Frontend: `pages/Customers/EditCustomer.jsx`
+- **Archivos Modificados:**
+  - Backend: `routes/customers.py` (PUT endpoint)
+  - Frontend: `services/customerService.js` (updateCustomer)
+  - Frontend: `components/forms/CustomerForm.jsx` (modo edit)
+  - Frontend: `pages/Customers/CustomerDetail.jsx` (Edit button enabled)
+  - Frontend: `App.jsx` (ruta /customers/:id/edit)
+- **Fecha de completación:** 2026-02-09
 
 #### [ ] US-CUST-006: Eliminar Cliente
 - **Archivo:** `context/user_stories/epic_04_sales/US-CUST-006_eliminar_cliente.md`
