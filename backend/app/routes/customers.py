@@ -300,6 +300,117 @@ def get_customer(customer_id):
         }), 500
 
 
+@customers_bp.route('/<customer_id>', methods=['PUT'])
+@jwt_required()
+@require_role(['Admin', 'Personal de Ventas', 'Gerente de Almacén'])
+def update_customer(customer_id):
+    """
+    PUT /api/customers/:id
+    US-CUST-005: Actualizar información del cliente
+
+    Body:
+        - full_name: Nombre completo
+        - email: Email (validar unicidad excluyendo propio)
+        - phone: Teléfono principal
+        - secondary_phone: Teléfono secundario
+        - address_street: Dirección
+        - address_city: Ciudad
+        - address_postal_code: Código postal
+        - address_country: País
+        - notes: Notas
+    """
+    try:
+        customer = Customer.query.get(customer_id)
+
+        if not customer:
+            return jsonify({
+                'success': False,
+                'error': {
+                    'code': 'NOT_FOUND',
+                    'message': 'Cliente no encontrado'
+                }
+            }), 404
+
+        # Validar datos de entrada
+        data = customer_create_schema.load(request.json)
+
+        # CA-4: Validar unicidad del email (excluyendo el propio cliente)
+        new_email = data['email'].strip().lower()
+        if new_email != customer.email.lower():
+            if not Customer.validate_email_unique(new_email, exclude_id=customer_id):
+                return jsonify({
+                    'success': False,
+                    'error': {
+                        'code': 'DUPLICATE_EMAIL',
+                        'message': 'Este email ya está registrado por otro cliente',
+                        'field': 'email'
+                    }
+                }), 400
+
+        # CA-6: Detectar cambios (para logging)
+        changes = []
+        if data['full_name'].strip() != customer.full_name:
+            changes.append('full_name')
+        if new_email != customer.email.lower():
+            changes.append('email')
+        if data['phone'].strip() != customer.phone:
+            changes.append('phone')
+
+        # Actualizar campos
+        customer.full_name = data['full_name'].strip()
+        customer.email = new_email
+        customer.phone = data['phone'].strip()
+        customer.secondary_phone = data.get('secondary_phone', '').strip() if data.get('secondary_phone') else None
+        customer.address_street = data['address_street'].strip()
+        customer.address_city = data['address_city'].strip()
+        customer.address_postal_code = data['address_postal_code'].strip()
+        customer.address_country = data.get('address_country', 'México').strip()
+        customer.notes = data.get('notes', '').strip() if data.get('notes') else None
+
+        # CA-7: Actualizar timestamp
+        customer.updated_at = datetime.utcnow()
+
+        db.session.commit()
+
+        return jsonify({
+            'success': True,
+            'data': customer.to_dict(),
+            'message': f'Cliente {customer.full_name} actualizado correctamente',
+            'changes': changes
+        }), 200
+
+    except ValidationError as e:
+        return jsonify({
+            'success': False,
+            'error': {
+                'code': 'VALIDATION_ERROR',
+                'message': 'Error de validación',
+                'details': e.messages
+            }
+        }), 400
+
+    except IntegrityError:
+        db.session.rollback()
+        return jsonify({
+            'success': False,
+            'error': {
+                'code': 'DUPLICATE_EMAIL',
+                'message': 'Este email ya está registrado por otro cliente'
+            }
+        }), 400
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({
+            'success': False,
+            'error': {
+                'code': 'SERVER_ERROR',
+                'message': 'Error al actualizar cliente',
+                'details': str(e)
+            }
+        }), 500
+
+
 @customers_bp.route('/<customer_id>/toggle-active', methods=['PATCH'])
 @jwt_required()
 @require_role(['Admin', 'Personal de Ventas'])
