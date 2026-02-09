@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   Box,
   TextField,
@@ -14,6 +14,7 @@ import { Search as SearchIcon, Clear as ClearIcon } from '@mui/icons-material';
 /**
  * CustomerFilters Component
  * US-CUST-002 CA-2/CA-4: Search + "Mostrar inactivos" toggle
+ * US-CUST-003: Enhanced search functionality
  */
 const CustomerFilters = ({
   searchTerm,
@@ -22,8 +23,9 @@ const CustomerFilters = ({
   onShowInactiveChange,
 }) => {
   const [localSearchTerm, setLocalSearchTerm] = useState(searchTerm);
+  const searchInputRef = useRef(null);
 
-  // Debounce search term (300ms)
+  // US-CUST-003 CA-2: Debounce search term (300ms)
   useEffect(() => {
     const timer = setTimeout(() => {
       onSearchChange(localSearchTerm);
@@ -38,11 +40,20 @@ const CustomerFilters = ({
 
   const handleClearSearch = () => {
     setLocalSearchTerm('');
+    searchInputRef.current?.focus();
   };
 
   const handleClearFilters = () => {
     setLocalSearchTerm('');
     onShowInactiveChange(false);
+  };
+
+  // US-CUST-003 CA-8: Escape key to clear search
+  const handleKeyDown = (e) => {
+    if (e.key === 'Escape' && localSearchTerm) {
+      e.preventDefault();
+      handleClearSearch();
+    }
   };
 
   const activeFiltersCount =
@@ -61,13 +72,15 @@ const CustomerFilters = ({
           alignItems: 'center',
         }}
       >
-        {/* Search Field */}
+        {/* US-CUST-003 CA-1: Prominent search field with icon */}
         <TextField
+          inputRef={searchInputRef}
           placeholder="Buscar por nombre, email o teléfono..."
           variant="outlined"
           size="small"
           value={localSearchTerm}
           onChange={(e) => setLocalSearchTerm(e.target.value)}
+          onKeyDown={handleKeyDown}
           sx={{ flexGrow: 1, minWidth: 250, maxWidth: 450 }}
           InputProps={{
             startAdornment: (

@@ -264,10 +264,11 @@ const CustomerList = () => {
           <CircularProgress />
         </Box>
       ) : customers.length === 0 ? (
-        /* Empty State */
+        /* Empty State - US-CUST-003 CA-9: Pass searchTerm for display */
         <CustomerEmptyState
           isFilteredEmpty={hasActiveFilters}
           onClearFilters={handleClearAllFilters}
+          searchTerm={searchTerm}
         />
       ) : (
         /* Customer Table / Card View */
