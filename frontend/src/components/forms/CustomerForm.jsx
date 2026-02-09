@@ -261,6 +261,16 @@ const CustomerForm = ({ onSuccess, onCancel, initialData = null, mode = 'create'
     return allRequiredFilled && noErrors && emailOk;
   };
 
+  // CA-6: Check if there are actual changes (for edit mode)
+  const hasChanges = () => {
+    if (!initialData) return true; // In create mode, always allow submit
+    return Object.keys(formData).some(key => {
+      const currentValue = formData[key]?.trim() || '';
+      const initialValue = initialData[key]?.trim() || '';
+      return currentValue !== initialValue;
+    });
+  };
+
   // CA-9: Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -268,6 +278,12 @@ const CustomerForm = ({ onSuccess, onCancel, initialData = null, mode = 'create'
 
     if (!validateAll()) return;
     if (emailStatus === 'taken') return;
+
+    // CA-6: Check for changes in edit mode
+    if (mode === 'edit' && !hasChanges()) {
+      setSubmitError('No hay cambios para guardar');
+      return;
+    }
 
     setIsSubmitting(true);
 
@@ -285,16 +301,22 @@ const CustomerForm = ({ onSuccess, onCancel, initialData = null, mode = 'create'
         notes: formData.notes?.trim() || null,
       };
 
-      const result = await customerService.createCustomer(submitData);
+      // US-CUST-005: Use update in edit mode, create in create mode
+      let result;
+      if (mode === 'edit' && initialData?.id) {
+        result = await customerService.updateCustomer(initialData.id, submitData);
+      } else {
+        result = await customerService.createCustomer(submitData);
+      }
 
       if (result.success) {
         onSuccess(result.data);
       } else {
-        setSubmitError(result.error?.message || 'Error al registrar cliente');
+        setSubmitError(result.error?.message || (mode === 'edit' ? 'Error al actualizar cliente' : 'Error al registrar cliente'));
       }
     } catch (error) {
       if (error.error?.code === 'DUPLICATE_EMAIL') {
-        setErrors(prev => ({ ...prev, email: 'Este email ya está registrado' }));
+        setErrors(prev => ({ ...prev, email: 'Este email ya está registrado por otro cliente' }));
         setEmailStatus('taken');
       } else if (error.error?.details) {
         // Map backend validation errors to form fields
@@ -304,7 +326,7 @@ const CustomerForm = ({ onSuccess, onCancel, initialData = null, mode = 'create'
         });
         setErrors(prev => ({ ...prev, ...backendErrors }));
       } else {
-        setSubmitError(error.error?.message || 'Error al registrar cliente');
+        setSubmitError(error.error?.message || (mode === 'edit' ? 'Error al actualizar cliente' : 'Error al registrar cliente'));
       }
     } finally {
       setIsSubmitting(false);
@@ -591,7 +613,9 @@ const CustomerForm = ({ onSuccess, onCancel, initialData = null, mode = 'create'
           startIcon={isSubmitting ? <CircularProgress size={20} color="inherit" /> : <SaveIcon />}
           disabled={isSubmitting || !isFormValid()}
         >
-          {isSubmitting ? 'Guardando...' : 'Guardar Cliente'}
+          {isSubmitting
+            ? 'Guardando...'
+            : (mode === 'edit' ? 'Guardar Cambios' : 'Guardar Cliente')}
         </Button>
       </Box>
 

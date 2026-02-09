@@ -94,6 +94,24 @@ const customerService = {
       throw { success: false, error: { message: 'Error de conexión con el servidor' } };
     }
   },
+
+  /**
+   * US-CUST-005: Actualizar información del cliente
+   * @param {string} customerId - ID del cliente
+   * @param {Object} customerData - Datos actualizados del cliente
+   * @returns {Promise} - Respuesta del servidor
+   */
+  async updateCustomer(customerId, customerData) {
+    try {
+      const response = await api.put(`/customers/${customerId}`, customerData);
+      return response.data;
+    } catch (error) {
+      if (error.response && error.response.data) {
+        throw error.response.data;
+      }
+      throw { success: false, error: { message: 'Error de conexión con el servidor' } };
+    }
+  },
 };
 
 export default customerService;

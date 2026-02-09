@@ -377,12 +377,11 @@ export default function CustomerDetail() {
                 justifyContent: isMobile ? 'flex-start' : 'flex-end',
               }}
             >
-              {/* Editar */}
+              {/* CA-9: Editar - US-CUST-005 */}
               <Button
                 variant="contained"
                 startIcon={<EditIcon />}
                 onClick={() => navigate(`/customers/${id}/edit`)}
-                disabled // US-CUST-005 pending
               >
                 Editar
               </Button>
