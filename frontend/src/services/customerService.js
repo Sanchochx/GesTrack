@@ -62,6 +62,23 @@ const customerService = {
   },
 
   /**
+   * US-CUST-002 CA-8: Activar/Inactivar cliente
+   * @param {string} customerId - ID del cliente
+   * @returns {Promise} - Respuesta del servidor
+   */
+  async toggleActive(customerId) {
+    try {
+      const response = await api.patch(`/customers/${customerId}/toggle-active`);
+      return response.data;
+    } catch (error) {
+      if (error.response && error.response.data) {
+        throw error.response.data;
+      }
+      throw { success: false, error: { message: 'Error de conexión con el servidor' } };
+    }
+  },
+
+  /**
    * Obtiene un cliente por ID
    * @param {string} customerId - ID del cliente
    * @returns {Promise} - Datos del cliente
