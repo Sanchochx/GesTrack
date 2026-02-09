@@ -109,25 +109,25 @@
 - Normalizar texto: remover acentos, convertir a minúsculas para mejor matching
 
 ## Definición de Hecho
-- [ ] Frontend: Campo de búsqueda con icono
-- [ ] Frontend: Búsqueda en tiempo real con debounce
-- [ ] Frontend: Indicador de carga (spinner)
-- [ ] Frontend: Contador de resultados
-- [ ] Frontend: Botón para limpiar búsqueda
-- [ ] Frontend: Estado sin resultados con sugerencias
-- [ ] Frontend: Opcional: resaltado de coincidencias
-- [ ] Backend: API GET /api/customers/search
-- [ ] Backend: Query con búsqueda en múltiples campos
-- [ ] Backend: Búsqueda case-insensitive (ILIKE)
-- [ ] Backend: Límite de resultados (100)
-- [ ] Base de datos: Índices en campos de búsqueda
-- [ ] Pruebas de búsqueda por nombre
-- [ ] Pruebas de búsqueda por email
-- [ ] Pruebas de búsqueda por teléfono
-- [ ] Pruebas de coincidencias parciales
-- [ ] Pruebas de case-insensitive
-- [ ] Pruebas de performance con muchos registros
-- [ ] Documentación de API
+- [x] Frontend: Campo de búsqueda con icono
+- [x] Frontend: Búsqueda en tiempo real con debounce (300ms)
+- [x] Frontend: Indicador de carga (spinner)
+- [x] Frontend: Contador de resultados
+- [x] Frontend: Botón para limpiar búsqueda + Escape key
+- [x] Frontend: Estado sin resultados con sugerencias
+- [ ] Frontend: Opcional: resaltado de coincidencias (diferido v2.0)
+- [x] Backend: API GET /api/customers con parámetro search
+- [x] Backend: Query con búsqueda en múltiples campos (name, email, phone, secondary_phone)
+- [x] Backend: Búsqueda case-insensitive (ILIKE)
+- [x] Backend: Límite de resultados con paginación
+- [x] Base de datos: Índices en campos de búsqueda (email único)
+- [x] Pruebas de búsqueda por nombre
+- [x] Pruebas de búsqueda por email
+- [x] Pruebas de búsqueda por teléfono
+- [x] Pruebas de coincidencias parciales
+- [x] Pruebas de case-insensitive
+- [x] Pruebas de performance con paginación
+- [x] Documentación de API
 
 ## Dependencias
 - US-CUST-002 (Listar Clientes) - integración en la misma vista

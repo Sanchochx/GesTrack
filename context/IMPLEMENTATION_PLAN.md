@@ -12,12 +12,12 @@
 │  PROGRESO GLOBAL DEL PROYECTO                               │
 ├─────────────────────────────────────────────────────────────┤
 │  Total Historias de Usuario:     82                         │
-│  ✅ Completadas:                   26                        │
+│  ✅ Completadas:                   27                        │
 │  🔄 Parcialmente Completadas:     0                         │
 │  ⏳ En Progreso:                   0                         │
-│  ⏸️  Pendientes:                   56                        │
+│  ⏸️  Pendientes:                   55                        │
 │                                                             │
-│  Progreso: [██████░░░░░░░░░░░░░░] 32% (26/82)              │
+│  Progreso: [███████░░░░░░░░░░░░░] 33% (27/82)              │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -30,7 +30,7 @@
 | 01 | Foundation | 6 | 6 | 0 | 0 | [██████████] 100% |
 | 02 | Core Data | 10 | 10 | 0 | 0 | [██████████] 100% |
 | 03 | Stock Management | 10 | 7 | 0 | 3 | [███████░░░] 70% |
-| 04 | Sales | 26 | 2 | 0 | 24 | [█░░░░░░░░░] 8% |
+| 04 | Sales | 26 | 3 | 0 | 23 | [█░░░░░░░░░] 12% |
 | 05 | Supply Chain | 15 | 0 | 0 | 15 | [░░░░░░░░░░] 0% |
 | 06 | Analytics | 15 | 0 | 0 | 15 | [░░░░░░░░░░] 0% |
 
@@ -356,7 +356,7 @@
 **Objetivo:** Implementar funcionalidades principales de negocio
 **Épicas:** 03 Stock Management, 04 Sales
 **Total US:** 36
-**Progreso:** [███░░░░░░░] 25% (9/36 completadas) 🔄 EN PROGRESO
+**Progreso:** [███░░░░░░░] 28% (10/36 completadas) 🔄 EN PROGRESO
 
 ---
 
@@ -598,7 +598,7 @@
 ## Epic 04: Sales - Gestión de Clientes y Pedidos
 
 **Prioridad:** ⭐⭐⭐ ALTA
-**Progreso:** [█░░░░░░░░░] 8% (2/26)
+**Progreso:** [█░░░░░░░░░] 12% (3/26)
 **Carpeta:** `context/user_stories/epic_04_sales/`
 
 ### 📋 Módulo: Clientes
@@ -657,12 +657,29 @@
   - CustomerCardView para vista móvil responsive ✅
 - **Fecha de completación:** 2026-02-09
 
-#### [ ] US-CUST-003: Buscar Clientes
+#### [x] US-CUST-003: Buscar Clientes
 - **Archivo:** `context/user_stories/epic_04_sales/US-CUST-003_buscar_clientes.md`
 - **Prioridad:** ALTA
-- **Estimación:** 5 pts
-- **Estado:** ⏸️ Pendiente
-- **Criterios de Aceptación:** 6
+- **Estimación:** 3 pts
+- **Estado:** ✅ COMPLETADA
+- **Criterios de Aceptación:** 10 ✅ (CA-6 opcional diferido)
+- **Progreso Backend:** ✅ 100% - Búsqueda integrada en GET /api/customers
+  - Búsqueda en: full_name, email, phone, secondary_phone ✅
+  - Case-insensitive con ILIKE ✅
+  - Coincidencias parciales con %search% ✅
+  - Paginación con límite de resultados ✅
+- **Progreso Frontend:** ✅ 100% - Todos los CA implementados
+  - CA-1: Campo búsqueda prominente con icono ✅
+  - CA-2: Live search con debounce 300ms, spinner ✅
+  - CA-3: Búsqueda en 4 campos ✅
+  - CA-4: Case-insensitive ✅
+  - CA-5: Coincidencias parciales ✅
+  - CA-6: Resaltado de coincidencias (diferido v2.0)
+  - CA-7: Contador de resultados "X de Y clientes" ✅
+  - CA-8: Botón limpiar + tecla Escape ✅
+  - CA-9: Empty state con sugerencias y botón registrar ✅
+  - CA-10: Performance con paginación ✅
+- **Fecha de completación:** 2026-02-09
 
 #### [ ] US-CUST-004: Ver Perfil del Cliente
 - **Archivo:** `context/user_stories/epic_04_sales/US-CUST-004_ver_perfil_cliente.md`
