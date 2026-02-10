@@ -402,6 +402,169 @@ class ExportHelper:
         return response
 
     @staticmethod
+    def export_inventory_data_to_csv(products_data):
+        """
+        US-INV-009 CA-3: Exporta datos completos del inventario a CSV
+
+        Args:
+            products_data: Lista de diccionarios con datos de productos
+
+        Returns:
+            Flask Response con el archivo CSV
+        """
+        columns = [
+            ('sku', 'SKU'),
+            ('nombre', 'Nombre'),
+            ('categoria', 'Categoría'),
+            ('stock_actual', 'Stock Actual'),
+            ('stock_reservado', 'Stock Reservado'),
+            ('stock_disponible', 'Stock Disponible'),
+            ('punto_reorden', 'Punto de Reorden'),
+            ('precio_costo', 'Precio Costo'),
+            ('precio_venta', 'Precio Venta'),
+            ('valor_total', 'Valor Total'),
+            ('estado', 'Estado'),
+            ('ultima_actualizacion', 'Última Actualización'),
+            ('proveedor', 'Proveedor Principal')
+        ]
+
+        return ExportHelper.export_to_csv(
+            data=products_data,
+            columns=columns,
+            filename_prefix='inventario'
+        )
+
+    @staticmethod
+    def export_inventory_data_to_excel(products_data, summary_data):
+        """
+        US-INV-009 CA-6: Exporta datos completos del inventario a Excel con formato enriquecido
+
+        Args:
+            products_data: Lista de diccionarios con datos de productos
+            summary_data: Diccionario con datos de resumen
+
+        Returns:
+            Flask Response con el archivo Excel
+        """
+        try:
+            from openpyxl import Workbook
+            from openpyxl.styles import Font, PatternFill, Alignment, numbers
+            from openpyxl.utils import get_column_letter
+        except ImportError:
+            return ExportHelper.export_inventory_data_to_csv(products_data)
+
+        wb = Workbook()
+
+        # Estilos
+        header_font = Font(bold=True, color='FFFFFF', size=11)
+        header_fill = PatternFill(start_color='1976d2', end_color='1976d2', fill_type='solid')
+        header_alignment = Alignment(horizontal='center', vertical='center')
+        currency_format = '#,##0.00'
+
+        # === HOJA 1: Inventario ===
+        ws = wb.active
+        ws.title = 'Inventario'
+
+        columns = [
+            ('sku', 'SKU', 15),
+            ('nombre', 'Nombre', 30),
+            ('categoria', 'Categoría', 20),
+            ('stock_actual', 'Stock Actual', 14),
+            ('stock_reservado', 'Stock Reservado', 16),
+            ('stock_disponible', 'Stock Disponible', 16),
+            ('punto_reorden', 'Punto de Reorden', 16),
+            ('precio_costo', 'Precio Costo', 14),
+            ('precio_venta', 'Precio Venta', 14),
+            ('valor_total', 'Valor Total', 14),
+            ('estado', 'Estado', 15),
+            ('ultima_actualizacion', 'Última Actualización', 22),
+            ('proveedor', 'Proveedor Principal', 20)
+        ]
+
+        # Encabezados
+        for col_num, (_, header, width) in enumerate(columns, 1):
+            cell = ws.cell(row=1, column=col_num, value=header)
+            cell.font = header_font
+            cell.fill = header_fill
+            cell.alignment = header_alignment
+            ws.column_dimensions[get_column_letter(col_num)].width = width
+
+        # Datos
+        currency_cols = {8, 9, 10}  # precio_costo, precio_venta, valor_total
+        for row_num, product in enumerate(products_data, 2):
+            for col_num, (key, _, _) in enumerate(columns, 1):
+                value = product.get(key, '')
+                if value is None:
+                    value = ''
+                cell = ws.cell(row=row_num, column=col_num, value=value)
+                if col_num in currency_cols and isinstance(value, (int, float)):
+                    cell.number_format = currency_format
+
+        # Auto-filtros y fila congelada
+        if products_data:
+            last_col = get_column_letter(len(columns))
+            ws.auto_filter.ref = f'A1:{last_col}{len(products_data) + 1}'
+        ws.freeze_panes = 'A2'
+
+        # === HOJA 2: Resumen ===
+        ws_summary = wb.create_sheet('Resumen')
+        title_font = Font(bold=True, size=14, color='1976d2')
+
+        ws_summary['A1'] = 'RESUMEN DE EXPORTACIÓN DE INVENTARIO'
+        ws_summary['A1'].font = Font(bold=True, size=16, color='1976d2')
+        ws_summary.merge_cells('A1:C1')
+
+        ws_summary['A3'] = 'Fecha de Exportación'
+        ws_summary['A3'].font = Font(bold=True)
+        ws_summary['B3'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+
+        ws_summary['A5'] = 'Total de Productos'
+        ws_summary['A5'].font = Font(bold=True)
+        ws_summary['B5'] = summary_data.get('total_products', 0)
+
+        ws_summary['A6'] = 'Valor Total del Inventario'
+        ws_summary['A6'].font = Font(bold=True)
+        ws_summary['B6'] = summary_data.get('total_value', 0)
+        ws_summary['B6'].number_format = currency_format
+
+        ws_summary['A8'] = 'Productos por Estado'
+        ws_summary['A8'].font = title_font
+
+        status_counts = summary_data.get('status_counts', {})
+        ws_summary['A9'] = 'En Stock (Normal)'
+        ws_summary['B9'] = status_counts.get('normal', 0)
+        ws_summary['A10'] = 'Stock Bajo'
+        ws_summary['B10'] = status_counts.get('low_stock', 0)
+        ws_summary['A11'] = 'Sin Stock'
+        ws_summary['B11'] = status_counts.get('out_of_stock', 0)
+
+        ws_summary['A13'] = 'Filtro Aplicado'
+        ws_summary['A13'].font = Font(bold=True)
+        ws_summary['B13'] = summary_data.get('filter_applied', 'Todos los productos')
+
+        ws_summary.column_dimensions['A'].width = 30
+        ws_summary.column_dimensions['B'].width = 25
+
+        # Guardar en memoria
+        output = io.BytesIO()
+        wb.save(output)
+        output.seek(0)
+
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        filename = f'inventario_{timestamp}.xlsx'
+
+        response = Response(
+            output.getvalue(),
+            mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            headers={
+                'Content-Disposition': f'attachment; filename={filename}',
+                'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            }
+        )
+
+        return response
+
+    @staticmethod
     def export_inventory_value_report_to_pdf(value_data, categories, top_products):
         """
         US-INV-005 CA-7: Exporta reporte de valor del inventario a PDF

@@ -2,11 +2,13 @@
 Rutas API para gestión de Clientes
 US-CUST-001: Registrar Nuevo Cliente
 US-CUST-002: Listar Clientes
+US-CUST-006: Eliminar Cliente
 """
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from app import db
 from app.models.customer import Customer
+from app.models.customer_deletion_audit import CustomerDeletionAudit
 from app.schemas.customer_schema import (
     customer_create_schema,
     customer_response_schema,
@@ -449,6 +451,164 @@ def toggle_active(customer_id):
             'error': {
                 'code': 'SERVER_ERROR',
                 'message': 'Error al cambiar estado del cliente',
+                'details': str(e)
+            }
+        }), 500
+
+
+@customers_bp.route('/<customer_id>', methods=['DELETE'])
+@jwt_required()
+@require_role(['Admin'])  # CA-1: Solo Admin puede eliminar
+def delete_customer(customer_id):
+    """
+    DELETE /api/customers/:id
+    US-CUST-006: Eliminar cliente permanentemente
+
+    CA-1: Solo Admin puede eliminar
+    CA-2: No se puede eliminar si tiene pedidos asociados
+    CA-5: Eliminación permanente (hard delete) solo si no tiene pedidos
+    CA-6: Limpieza de datos relacionados
+    CA-8: Registro de auditoría
+
+    Body (opcional):
+        - reason: Razón de eliminación
+    """
+    try:
+        current_user_id = get_jwt_identity()
+        customer = Customer.query.get(customer_id)
+
+        if not customer:
+            return jsonify({
+                'success': False,
+                'error': {
+                    'code': 'NOT_FOUND',
+                    'message': 'Cliente no encontrado'
+                }
+            }), 404
+
+        # CA-2: Validar que no tenga pedidos asociados
+        # Nota: La tabla Orders aún no existe, preparamos la validación
+        # Cuando exista, descomentar y ajustar:
+        # from app.models.order import Order
+        # orders_count = Order.query.filter_by(customer_id=customer_id).count()
+        # if orders_count > 0:
+        #     return jsonify({
+        #         'success': False,
+        #         'error': {
+        #             'code': 'HAS_ORDERS',
+        #             'message': 'No se puede eliminar este cliente porque tiene pedidos asociados',
+        #             'orders_count': orders_count,
+        #             'suggestion': 'En su lugar, puedes inactivar el cliente'
+        #         }
+        #     }), 409
+
+        # Por ahora, usamos el order_count del to_dict (placeholder = 0)
+        # Esto se actualizará cuando Orders module esté implementado
+        orders_count = customer.to_dict().get('order_count', 0)
+        if orders_count > 0:
+            return jsonify({
+                'success': False,
+                'error': {
+                    'code': 'HAS_ORDERS',
+                    'message': 'No se puede eliminar este cliente porque tiene pedidos asociados',
+                    'orders_count': orders_count,
+                    'suggestion': 'En su lugar, puedes inactivar el cliente'
+                }
+            }), 409
+
+        # Obtener razón de eliminación del body (opcional)
+        data = request.get_json(silent=True) or {}
+        reason = data.get('reason', '').strip() if data.get('reason') else None
+
+        # CA-8: Crear registro de auditoría antes de eliminar
+        audit_record = CustomerDeletionAudit.create_audit_record(
+            customer=customer,
+            user_id=current_user_id,
+            reason=reason
+        )
+        db.session.add(audit_record)
+
+        # Guardar nombre para el mensaje de respuesta
+        customer_name = customer.full_name
+        customer_email = customer.email
+
+        # CA-5 & CA-6: Eliminación permanente
+        # Nota: Si existiera una tabla customer_notes, se eliminarían primero
+        # por ahora las notas están inline en el modelo Customer
+        db.session.delete(customer)
+        db.session.commit()
+
+        return jsonify({
+            'success': True,
+            'message': f'Cliente {customer_name} eliminado permanentemente',
+            'data': {
+                'customer_id': customer_id,
+                'customer_name': customer_name,
+                'customer_email': customer_email,
+                'audit_id': audit_record.id
+            }
+        }), 200
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({
+            'success': False,
+            'error': {
+                'code': 'SERVER_ERROR',
+                'message': 'Error al eliminar cliente',
+                'details': str(e)
+            }
+        }), 500
+
+
+@customers_bp.route('/<customer_id>/can-delete', methods=['GET'])
+@jwt_required()
+@require_role(['Admin'])
+def can_delete_customer(customer_id):
+    """
+    GET /api/customers/:id/can-delete
+    US-CUST-006 CA-9: Verificar si un cliente puede ser eliminado
+
+    Returns:
+        - can_delete: boolean
+        - reason: mensaje si no se puede eliminar
+        - orders_count: número de pedidos asociados
+    """
+    try:
+        customer = Customer.query.get(customer_id)
+
+        if not customer:
+            return jsonify({
+                'success': False,
+                'error': {
+                    'code': 'NOT_FOUND',
+                    'message': 'Cliente no encontrado'
+                }
+            }), 404
+
+        # Verificar pedidos asociados (placeholder por ahora)
+        orders_count = customer.to_dict().get('order_count', 0)
+
+        can_delete = orders_count == 0
+
+        return jsonify({
+            'success': True,
+            'data': {
+                'customer_id': customer_id,
+                'customer_name': customer.full_name,
+                'can_delete': can_delete,
+                'orders_count': orders_count,
+                'reason': None if can_delete else 'Este cliente tiene pedidos asociados y no puede ser eliminado',
+                'suggestion': None if can_delete else 'Puedes inactivar el cliente en su lugar'
+            }
+        }), 200
+
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': {
+                'code': 'SERVER_ERROR',
+                'message': 'Error al verificar eliminación',
                 'details': str(e)
             }
         }), 500

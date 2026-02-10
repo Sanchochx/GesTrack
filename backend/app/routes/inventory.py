@@ -4,10 +4,13 @@ Rutas API para gestión de inventario
 US-INV-002: Ajustes Manuales de Inventario
 US-INV-003: Historial de Movimientos de Stock
 """
+import logging
 from flask import Blueprint, jsonify, request
 from flask_jwt_extended import jwt_required, get_jwt_identity
+from app import db
 from app.models.user import User
 from app.models.category import Category
+from app.models.product import Product
 from app.services.inventory_adjustment_service import (
     InventoryAdjustmentService,
     AdjustmentValidationError
@@ -1682,5 +1685,133 @@ def sync_out_of_stock_alerts():
             'error': {
                 'code': 'SYNC_ERROR',
                 'message': f'Error al sincronizar alertas: {str(e)}'
+            }
+        }), 500
+
+
+# ============================================================================
+# US-INV-009: Exportar Datos de Inventario
+# ============================================================================
+
+@inventory_bp.route('/export', methods=['GET'])
+@jwt_required()
+@warehouse_manager_or_admin
+def export_inventory_data():
+    """
+    US-INV-009: Exporta datos completos del inventario a CSV o Excel
+
+    Query params:
+        format: 'csv' o 'excel' (default: 'excel')
+        stock_filter: 'all', 'in_stock', 'active' (default: 'all')
+        category_id: Filtrar por categoría (opcional)
+        search: Búsqueda por nombre o SKU (opcional)
+        limit: Máximo de registros (default: 50000, max: 50000)
+
+    Returns:
+        Archivo CSV o Excel para descargar
+    """
+    try:
+        logger = logging.getLogger(__name__)
+
+        export_format = request.args.get('format', 'excel').lower()
+        stock_filter = request.args.get('stock_filter', 'all').lower()
+        category_id = request.args.get('category_id')
+        search = request.args.get('search')
+        limit = request.args.get('limit', 50000, type=int)
+        limit = min(limit, 50000)
+
+        # Construir query base
+        query = Product.query.filter(Product.deleted_at.is_(None))
+
+        # Aplicar filtros
+        if stock_filter == 'in_stock':
+            query = query.filter(Product.stock_quantity > 0)
+        elif stock_filter == 'active':
+            query = query.filter(Product.is_active == True)
+
+        if category_id:
+            query = query.filter(Product.category_id == category_id)
+
+        if search:
+            search_term = f'%{search}%'
+            query = query.filter(
+                db.or_(
+                    Product.name.ilike(search_term),
+                    Product.sku.ilike(search_term)
+                )
+            )
+
+        # Ejecutar query con join a categoría
+        from sqlalchemy.orm import joinedload
+        products = query.options(
+            joinedload(Product.category)
+        ).limit(limit).all()
+
+        # Mapear datos a formato de exportación (CA-3: 13 columnas)
+        status_labels = {
+            'out_of_stock': 'Sin Stock',
+            'low_stock': 'Stock Bajo',
+            'normal': 'Normal'
+        }
+
+        filter_labels = {
+            'all': 'Todos los productos',
+            'in_stock': 'Solo con stock',
+            'active': 'Solo activos'
+        }
+
+        status_counts = {'normal': 0, 'low_stock': 0, 'out_of_stock': 0}
+        total_value = 0
+        products_data = []
+
+        for p in products:
+            stock_status = p.get_stock_status()
+            status_counts[stock_status] = status_counts.get(stock_status, 0) + 1
+            cost = float(p.cost_price) if p.cost_price else 0
+            sale = float(p.sale_price) if p.sale_price else 0
+            item_value = cost * p.stock_quantity
+            total_value += item_value
+
+            products_data.append({
+                'sku': p.sku,
+                'nombre': p.name,
+                'categoria': p.category.name if p.category else '',
+                'stock_actual': p.stock_quantity,
+                'stock_reservado': 0,
+                'stock_disponible': p.stock_quantity,
+                'punto_reorden': p.reorder_point,
+                'precio_costo': cost,
+                'precio_venta': sale,
+                'valor_total': item_value,
+                'estado': status_labels.get(stock_status, stock_status),
+                'ultima_actualizacion': p.updated_at.strftime('%Y-%m-%d %H:%M:%S') if p.updated_at else '',
+                'proveedor': ''
+            })
+
+        # CA-8: Audit log
+        current_user_id = get_jwt_identity()
+        logger.info(
+            'US-INV-009 Export: user=%s, format=%s, count=%d, filter=%s',
+            current_user_id, export_format, len(products_data), stock_filter
+        )
+
+        # Exportar según formato
+        if export_format == 'csv':
+            return ExportHelper.export_inventory_data_to_csv(products_data)
+        else:
+            summary_data = {
+                'total_products': len(products_data),
+                'total_value': total_value,
+                'status_counts': status_counts,
+                'filter_applied': filter_labels.get(stock_filter, stock_filter)
+            }
+            return ExportHelper.export_inventory_data_to_excel(products_data, summary_data)
+
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': {
+                'code': 'EXPORT_ERROR',
+                'message': f'Error al exportar inventario: {str(e)}'
             }
         }), 500

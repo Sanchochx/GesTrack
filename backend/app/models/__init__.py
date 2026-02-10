@@ -8,5 +8,6 @@ from app.models.product_deletion_audit import ProductDeletionAudit
 from app.models.inventory_alert import InventoryAlert
 from app.models.inventory_value_history import InventoryValueHistory
 from app.models.customer import Customer
+from app.models.customer_deletion_audit import CustomerDeletionAudit
 
-__all__ = ['User', 'LoginAttempt', 'PasswordResetToken', 'Category', 'Product', 'InventoryMovement', 'ProductDeletionAudit', 'InventoryAlert', 'InventoryValueHistory', 'Customer']
+__all__ = ['User', 'LoginAttempt', 'PasswordResetToken', 'Category', 'Product', 'InventoryMovement', 'ProductDeletionAudit', 'InventoryAlert', 'InventoryValueHistory', 'Customer', 'CustomerDeletionAudit']
