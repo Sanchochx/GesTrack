@@ -180,18 +180,18 @@ def export_inventory_to_excel(products, filters_applied=None):
 ```
 
 ## Definición de Hecho
-- [ ] Backend: API POST /api/inventory/export
-- [ ] Backend: Generación de archivos CSV
-- [ ] Backend: Generación de archivos Excel con formato
-- [ ] Backend: Aplicación de filtros en exportación
-- [ ] Backend: Log de exportaciones en auditoría
-- [ ] Backend: Límites y validaciones
-- [ ] Frontend: Botón de exportación en vistas
-- [ ] Frontend: Modal de opciones de exportación
-- [ ] Frontend: Selección de formato (CSV/Excel)
-- [ ] Frontend: Opciones de filtrado
-- [ ] Frontend: Indicador de progreso
-- [ ] Frontend: Descarga automática del archivo
+- [x] Backend: API GET /api/inventory/export
+- [x] Backend: Generación de archivos CSV
+- [x] Backend: Generación de archivos Excel con formato
+- [x] Backend: Aplicación de filtros en exportación
+- [x] Backend: Log de exportaciones en auditoría
+- [x] Backend: Límites y validaciones (50k max)
+- [x] Frontend: Botón de exportación en vistas (CategoryInventoryView, MovementHistory)
+- [x] Frontend: Modal de opciones de exportación (ExportInventoryDialog)
+- [x] Frontend: Selección de formato (CSV/Excel) con localStorage
+- [x] Frontend: Opciones de filtrado (all, in_stock, active)
+- [x] Frontend: Indicador de progreso (CircularProgress)
+- [x] Frontend: Descarga automática del archivo
 - [ ] Pruebas con pequeños y grandes volúmenes
 - [ ] Pruebas de formato Excel
 - [ ] Documentación de API
