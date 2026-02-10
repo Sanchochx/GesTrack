@@ -21,6 +21,7 @@ import CustomerStats from '../../components/customers/CustomerStats';
 import CustomerFilters from '../../components/customers/CustomerFilters';
 import CustomerTable from '../../components/customers/CustomerTable';
 import CustomerEmptyState from '../../components/customers/CustomerEmptyState';
+import DeleteCustomerDialog from '../../components/customers/DeleteCustomerDialog';
 
 /**
  * CustomerList Page
@@ -69,6 +70,10 @@ const CustomerList = () => {
 
   // UI state
   const [successMessage, setSuccessMessage] = useState(null);
+
+  // US-CUST-006: Delete dialog state
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [customerToDelete, setCustomerToDelete] = useState(null);
 
   // Update URL when filters change
   useEffect(() => {
@@ -174,6 +179,30 @@ const CustomerList = () => {
 
   const handleCloseSnackbar = () => {
     setSuccessMessage(null);
+  };
+
+  // US-CUST-006: Delete handlers
+  const handleDeleteClick = (customer) => {
+    setCustomerToDelete(customer);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteClose = () => {
+    setDeleteDialogOpen(false);
+    setCustomerToDelete(null);
+  };
+
+  const handleCustomerDeleted = (response) => {
+    setSuccessMessage(response.message || 'Cliente eliminado correctamente');
+    handleDeleteClose();
+    loadCustomers();
+  };
+
+  const handleInactivateFromDialog = async () => {
+    if (customerToDelete) {
+      await handleToggleActive(customerToDelete);
+      handleDeleteClose();
+    }
   };
 
   const hasActiveFilters = searchTerm || showInactive;
@@ -283,8 +312,18 @@ const CustomerList = () => {
           onItemsPerPageChange={handleItemsPerPageChange}
           onSort={handleSort}
           onToggleActive={handleToggleActive}
+          onDelete={handleDeleteClick}
         />
       )}
+
+      {/* US-CUST-006: Delete Customer Dialog */}
+      <DeleteCustomerDialog
+        open={deleteDialogOpen}
+        onClose={handleDeleteClose}
+        customer={customerToDelete}
+        onDeleted={handleCustomerDeleted}
+        onInactivate={handleInactivateFromDialog}
+      />
 
       {/* Success Snackbar */}
       <Snackbar

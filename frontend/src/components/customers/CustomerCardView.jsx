@@ -24,21 +24,27 @@ import {
   AddShoppingCart as NewOrderIcon,
   ToggleOn as ActivateIcon,
   ToggleOff as DeactivateIcon,
+  Delete as DeleteIcon,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
+import authService from '../../services/authService';
 
 /**
  * CustomerCardView - Mobile card grid for customers
  * US-CUST-002 CA-1: Responsive card view
+ * US-CUST-006: Delete customer action for Admin
  */
 const CustomerCardView = ({
   customers = [],
   onView,
   onToggleActive,
+  onDelete,  // US-CUST-006: Delete handler
 }) => {
   const navigate = useNavigate();
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedCustomer, setSelectedCustomer] = useState(null);
+  const currentUser = authService.getCurrentUser();
+  const isAdmin = currentUser?.role === 'Admin';
 
   const handleMenuOpen = (event, customer) => {
     event.stopPropagation();
@@ -64,6 +70,10 @@ const CustomerCardView = ({
         break;
       case 'toggle-active':
         onToggleActive(selectedCustomer);
+        break;
+      case 'delete':
+        // US-CUST-006: Delete customer (Admin only)
+        onDelete?.(selectedCustomer);
         break;
     }
     handleMenuClose();
@@ -260,6 +270,28 @@ const CustomerCardView = ({
             {selectedCustomer?.is_active ? 'Inactivar' : 'Activar'}
           </ListItemText>
         </MenuItem>
+        {/* US-CUST-006 CA-9: Delete option (Admin only) */}
+        {isAdmin && (
+          <>
+            <Divider />
+            <MenuItem
+              onClick={() => handleMenuAction('delete')}
+              sx={{ color: 'error.main' }}
+            >
+              <ListItemIcon>
+                <DeleteIcon fontSize="small" color="error" />
+              </ListItemIcon>
+              <ListItemText
+                primary="Eliminar"
+                secondary={
+                  selectedCustomer?.order_count > 0
+                    ? 'Tiene pedidos asociados'
+                    : null
+                }
+              />
+            </MenuItem>
+          </>
+        )}
       </Menu>
     </>
   );

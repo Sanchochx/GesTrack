@@ -32,14 +32,17 @@ import {
   AddShoppingCart as NewOrderIcon,
   ToggleOn as ActivateIcon,
   ToggleOff as DeactivateIcon,
+  Delete as DeleteIcon,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { getRelativeDate } from '../../utils/dateUtils';
 import CustomerCardView from './CustomerCardView';
+import authService from '../../services/authService';
 
 /**
  * CustomerTable Component
  * US-CUST-002: Customer list table with sorting, pagination, actions
+ * US-CUST-006: Delete customer action for Admin
  */
 const CustomerTable = ({
   customers = [],
@@ -52,10 +55,13 @@ const CustomerTable = ({
   onItemsPerPageChange,
   onSort,
   onToggleActive,
+  onDelete,  // US-CUST-006: Delete handler
 }) => {
   const navigate = useNavigate();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const currentUser = authService.getCurrentUser();
+  const isAdmin = currentUser?.role === 'Admin';
 
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedCustomer, setSelectedCustomer] = useState(null);
@@ -101,6 +107,10 @@ const CustomerTable = ({
         break;
       case 'toggle-active':
         onToggleActive(selectedCustomer);
+        break;
+      case 'delete':
+        // US-CUST-006: Delete customer (Admin only)
+        onDelete?.(selectedCustomer);
         break;
     }
     handleMenuClose();
@@ -162,6 +172,7 @@ const CustomerTable = ({
           customers={customers}
           onView={(id) => navigate(`/customers/${id}`)}
           onToggleActive={onToggleActive}
+          onDelete={onDelete}
         />
         {customers.length > 0 && (
           <Box component={Paper} sx={{ mt: 2 }}>
@@ -420,6 +431,28 @@ const CustomerTable = ({
             {selectedCustomer?.is_active ? 'Inactivar' : 'Activar'}
           </ListItemText>
         </MenuItem>
+        {/* US-CUST-006 CA-9: Delete option (Admin only) */}
+        {isAdmin && (
+          <>
+            <Divider />
+            <MenuItem
+              onClick={() => handleMenuAction('delete')}
+              sx={{ color: 'error.main' }}
+            >
+              <ListItemIcon>
+                <DeleteIcon fontSize="small" color="error" />
+              </ListItemIcon>
+              <ListItemText
+                primary="Eliminar"
+                secondary={
+                  selectedCustomer?.order_count > 0
+                    ? 'Tiene pedidos asociados'
+                    : null
+                }
+              />
+            </MenuItem>
+          </>
+        )}
       </Menu>
     </>
   );

@@ -643,6 +643,64 @@ const inventoryService = {
     }
   },
 
+  // ============================================================================
+  // US-INV-009: Exportar Datos de Inventario
+  // ============================================================================
+
+  /**
+   * US-INV-009: Exporta datos completos del inventario a CSV o Excel
+   *
+   * @param {Object} options - Opciones de exportación
+   * @param {string} options.format - 'csv' o 'excel' (default: 'excel')
+   * @param {string} options.stockFilter - 'all', 'in_stock', 'active' (default: 'all')
+   * @param {string} options.categoryId - ID de categoría (opcional)
+   * @param {string} options.search - Búsqueda por nombre/SKU (opcional)
+   * @returns {Promise} Resultado de la descarga
+   */
+  exportInventoryData: async (options = {}) => {
+    try {
+      const params = {
+        format: options.format || 'excel',
+        stock_filter: options.stockFilter || 'all'
+      };
+
+      if (options.categoryId) params.category_id = options.categoryId;
+      if (options.search) params.search = options.search;
+
+      const response = await api.get('/inventory/export', {
+        params,
+        responseType: 'blob'
+      });
+
+      // Crear URL y descargar el archivo
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+
+      // Obtener nombre de archivo del header Content-Disposition
+      const contentDisposition = response.headers['content-disposition'];
+      const ext = params.format === 'csv' ? 'csv' : 'xlsx';
+      let filename = `inventario_${new Date().toISOString().replace(/[:.]/g, '').slice(0, 15)}.${ext}`;
+      if (contentDisposition) {
+        const filenameMatch = contentDisposition.match(/filename="?(.+)"?/);
+        if (filenameMatch) {
+          filename = filenameMatch[1];
+        }
+      }
+
+      link.setAttribute('download', filename);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+
+      return { success: true, message: 'Inventario exportado exitosamente' };
+    } catch (error) {
+      console.error('Error exporting inventory data:', error);
+      throw error.response?.data || { error: { message: 'Error al exportar inventario' } };
+    }
+  },
+
   /**
    * US-INV-007: Sincroniza alertas para productos existentes sin stock
    *

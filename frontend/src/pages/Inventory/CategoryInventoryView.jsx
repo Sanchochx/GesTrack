@@ -16,13 +16,15 @@ import {
 } from '@mui/material';
 import {
   UnfoldMore as UnfoldMoreIcon,
-  UnfoldLess as UnfoldLessIcon
+  UnfoldLess as UnfoldLessIcon,
+  FileDownload as FileDownloadIcon
 } from '@mui/icons-material';
 import authService from '../../services/authService';
 import inventoryService from '../../services/inventoryService';
 import CategoryInventorySummary from '../../components/inventory/CategoryInventorySummary';
 import CategoryInventoryFilters from '../../components/inventory/CategoryInventoryFilters';
 import CategoryRow from '../../components/inventory/CategoryRow';
+import ExportInventoryDialog from '../../components/inventory/ExportInventoryDialog';
 
 /**
  * Página de vista de inventario por categoría
@@ -46,6 +48,7 @@ const CategoryInventoryView = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
+  const [exportDialogOpen, setExportDialogOpen] = useState(false);
 
   // CA-2: Load expanded state from localStorage on mount
   useEffect(() => {
@@ -197,13 +200,22 @@ const CategoryInventoryView = () => {
     <Container maxWidth="xl">
       <Box sx={{ p: 3, mt: 4 }}>
         {/* Header */}
-        <Box sx={{ mb: 3 }}>
-          <Typography variant="h4" gutterBottom>
-            Inventario por Categoría
-          </Typography>
-          <Typography variant="body1" color="text.secondary">
-            Vista organizada del inventario agrupado por categorías
-          </Typography>
+        <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+          <Box>
+            <Typography variant="h4" gutterBottom>
+              Inventario por Categoría
+            </Typography>
+            <Typography variant="body1" color="text.secondary">
+              Vista organizada del inventario agrupado por categorías
+            </Typography>
+          </Box>
+          <Button
+            variant="outlined"
+            startIcon={<FileDownloadIcon />}
+            onClick={() => setExportDialogOpen(true)}
+          >
+            Exportar Inventario
+          </Button>
         </Box>
 
         {/* Error alert */}
@@ -276,6 +288,13 @@ const CategoryInventoryView = () => {
           </Box>
         )}
       </Box>
+
+      {/* US-INV-009: Export Dialog */}
+      <ExportInventoryDialog
+        open={exportDialogOpen}
+        onClose={() => setExportDialogOpen(false)}
+        currentFilters={{ search: filters.search }}
+      />
 
       {/* Snackbar for notifications */}
       <Snackbar

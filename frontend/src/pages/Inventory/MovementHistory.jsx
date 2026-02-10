@@ -30,6 +30,7 @@ import { Link as RouterLink } from 'react-router-dom';
 import MovementHistoryTable from '../../components/inventory/MovementHistoryTable';
 import MovementFilters from '../../components/inventory/MovementFilters';
 import MovementDetailsModal from '../../components/inventory/MovementDetailsModal';
+import ExportInventoryDialog from '../../components/inventory/ExportInventoryDialog';
 import inventoryService from '../../services/inventoryService';
 import productService from '../../services/productService';
 import authService from '../../services/authService';
@@ -72,6 +73,9 @@ const MovementHistory = () => {
   // Menu de exportación
   const [exportMenuAnchor, setExportMenuAnchor] = useState(null);
   const [exporting, setExporting] = useState(false);
+
+  // US-INV-009: Export inventory dialog
+  const [exportInventoryDialogOpen, setExportInventoryDialogOpen] = useState(false);
 
   // Cargar datos iniciales para filtros
   useEffect(() => {
@@ -227,8 +231,15 @@ const MovementHistory = () => {
           Historial de Movimientos de Inventario
         </Typography>
 
-        {/* Botón de Exportación */}
-        <Box>
+        {/* Botones de Exportación */}
+        <Box sx={{ display: 'flex', gap: 1 }}>
+          <Button
+            variant="outlined"
+            startIcon={<DownloadIcon />}
+            onClick={() => setExportInventoryDialogOpen(true)}
+          >
+            Exportar Inventario
+          </Button>
           <Button
             variant="contained"
             startIcon={exporting ? <CircularProgress size={20} color="inherit" /> : <DownloadIcon />}
@@ -236,7 +247,7 @@ const MovementHistory = () => {
             onClick={handleExportMenuOpen}
             disabled={exporting || movements.length === 0}
           >
-            {exporting ? 'Exportando...' : 'Exportar'}
+            {exporting ? 'Exportando...' : 'Exportar Movimientos'}
           </Button>
           <Menu
             anchorEl={exportMenuAnchor}
@@ -346,6 +357,12 @@ const MovementHistory = () => {
         open={detailsModalOpen}
         onClose={handleCloseDetailsModal}
         movement={selectedMovement}
+      />
+
+      {/* US-INV-009: Export Inventory Dialog */}
+      <ExportInventoryDialog
+        open={exportInventoryDialogOpen}
+        onClose={() => setExportInventoryDialogOpen(false)}
       />
     </Container>
   );

@@ -112,6 +112,43 @@ const customerService = {
       throw { success: false, error: { message: 'Error de conexión con el servidor' } };
     }
   },
+
+  /**
+   * US-CUST-006 CA-9: Verificar si un cliente puede ser eliminado
+   * @param {string} customerId - ID del cliente
+   * @returns {Promise} - { can_delete: boolean, reason: string, orders_count: number }
+   */
+  async canDeleteCustomer(customerId) {
+    try {
+      const response = await api.get(`/customers/${customerId}/can-delete`);
+      return response.data;
+    } catch (error) {
+      if (error.response && error.response.data) {
+        throw error.response.data;
+      }
+      throw { success: false, error: { message: 'Error de conexión con el servidor' } };
+    }
+  },
+
+  /**
+   * US-CUST-006: Eliminar cliente permanentemente
+   * @param {string} customerId - ID del cliente
+   * @param {string} reason - Razón opcional de eliminación
+   * @returns {Promise} - Respuesta del servidor
+   */
+  async deleteCustomer(customerId, reason = null) {
+    try {
+      const response = await api.delete(`/customers/${customerId}`, {
+        data: reason ? { reason } : undefined,
+      });
+      return response.data;
+    } catch (error) {
+      if (error.response && error.response.data) {
+        throw error.response.data;
+      }
+      throw { success: false, error: { message: 'Error de conexión con el servidor' } };
+    }
+  },
 };
 
 export default customerService;

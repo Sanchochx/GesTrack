@@ -55,6 +55,7 @@ import {
 } from '@mui/icons-material';
 import customerService from '../../services/customerService';
 import authService from '../../services/authService';
+import DeleteCustomerDialog from '../../components/customers/DeleteCustomerDialog';
 
 /**
  * Formatea una fecha en formato legible
@@ -140,6 +141,7 @@ export default function CustomerDetail() {
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
   const [activityExpanded, setActivityExpanded] = useState(false);
   const [toggling, setToggling] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
   /**
    * Cargar datos del cliente
@@ -221,6 +223,29 @@ export default function CustomerDetail() {
    */
   const handleCloseSnackbar = () => {
     setSnackbar({ ...snackbar, open: false });
+  };
+
+  /**
+   * US-CUST-006 CA-7: Handle successful deletion
+   */
+  const handleCustomerDeleted = (response) => {
+    setSnackbar({
+      open: true,
+      message: response.message || `Cliente ${customer.full_name} eliminado permanentemente`,
+      severity: 'success',
+    });
+    // Redirect to customer list after short delay
+    setTimeout(() => {
+      navigate('/customers');
+    }, 1500);
+  };
+
+  /**
+   * US-CUST-006 CA-10: Handle inactivate from delete dialog
+   */
+  const handleInactivateFromDialog = async () => {
+    setDeleteDialogOpen(false);
+    await handleToggleActive();
   };
 
   // Loading state
@@ -407,13 +432,19 @@ export default function CustomerDetail() {
                 {customer.is_active ? 'Inactivar' : 'Activar'}
               </Button>
 
-              {/* Eliminar (solo Admin, sin pedidos) */}
-              {isAdmin && customer.order_count === 0 && (
-                <Tooltip title="Eliminar cliente (US-CUST-006 pendiente)">
+              {/* US-CUST-006 CA-1 & CA-9: Eliminar (solo Admin) */}
+              {isAdmin && (
+                <Tooltip
+                  title={
+                    customer.order_count > 0
+                      ? 'No se puede eliminar (tiene pedidos)'
+                      : 'Eliminar cliente'
+                  }
+                >
                   <span>
                     <IconButton
                       color="error"
-                      disabled // US-CUST-006 pending
+                      onClick={() => setDeleteDialogOpen(true)}
                     >
                       <DeleteIcon />
                     </IconButton>
@@ -760,6 +791,15 @@ export default function CustomerDetail() {
           {snackbar.message}
         </Alert>
       </Snackbar>
+
+      {/* US-CUST-006: Delete Customer Dialog */}
+      <DeleteCustomerDialog
+        open={deleteDialogOpen}
+        onClose={() => setDeleteDialogOpen(false)}
+        customer={customer}
+        onDeleted={handleCustomerDeleted}
+        onInactivate={handleInactivateFromDialog}
+      />
     </Container>
   );
 }
