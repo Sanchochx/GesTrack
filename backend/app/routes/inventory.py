@@ -3,6 +3,7 @@ Rutas API para gestión de inventario
 
 US-INV-002: Ajustes Manuales de Inventario
 US-INV-003: Historial de Movimientos de Stock
+US-INV-010: Dashboard de Inventario
 """
 import logging
 from flask import Blueprint, jsonify, request
@@ -19,6 +20,7 @@ from app.services.inventory_movement_service import InventoryMovementService
 from app.services.reorder_point_service import ReorderPointService
 from app.services.inventory_value_service import InventoryValueService
 from app.services.inventory_category_service import InventoryCategoryService
+from app.services.inventory_dashboard_service import InventoryDashboardService
 from app.utils.export_helper import ExportHelper
 from app.utils.constants import ADJUSTMENT_REASONS, ADJUSTMENT_TYPES
 from app.utils.decorators import warehouse_manager_or_admin
@@ -1813,5 +1815,131 @@ def export_inventory_data():
             'error': {
                 'code': 'EXPORT_ERROR',
                 'message': f'Error al exportar inventario: {str(e)}'
+            }
+        }), 500
+
+
+# ==========================================
+# US-INV-010: Dashboard de Inventario
+# ==========================================
+
+
+@inventory_bp.route('/dashboard/kpis', methods=['GET'])
+@jwt_required()
+def get_dashboard_kpis():
+    """
+    US-INV-010 CA-1: Obtiene KPIs principales del dashboard de inventario
+
+    Returns:
+        {
+            "success": true,
+            "data": {
+                "total_products": 150,
+                "new_products_30d": 5,
+                "total_value": 125000.50,
+                "formatted_value": "$125,000.50",
+                "total_units": 5000,
+                "low_stock_count": 12,
+                "out_of_stock_count": 3,
+                "movements_30d": 45,
+                "calculated_at": "2026-02-16T..."
+            }
+        }
+    """
+    try:
+        kpis = InventoryDashboardService.get_kpis()
+        return jsonify({
+            'success': True,
+            'data': kpis
+        }), 200
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': {
+                'code': 'DASHBOARD_KPI_ERROR',
+                'message': f'Error al obtener KPIs: {str(e)}'
+            }
+        }), 500
+
+
+@inventory_bp.route('/dashboard/low-stock-products', methods=['GET'])
+@jwt_required()
+def get_dashboard_low_stock():
+    """
+    US-INV-010 CA-3: Top 10 productos con menor stock
+
+    Query params:
+        limit: Número de productos (default: 10, max: 20)
+
+    Returns:
+        {
+            "success": true,
+            "data": [
+                {
+                    "id": "uuid",
+                    "sku": "PRD-001",
+                    "name": "Producto",
+                    "stock_quantity": 2,
+                    "reorder_point": 10,
+                    "category_name": "Electrónica",
+                    "stock_status": "low_stock",
+                    "stock_deficit": 8
+                }
+            ]
+        }
+    """
+    try:
+        limit = request.args.get('limit', 10, type=int)
+        limit = min(limit, 20)
+        products = InventoryDashboardService.get_low_stock_top(limit=limit)
+        return jsonify({
+            'success': True,
+            'data': products
+        }), 200
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': {
+                'code': 'DASHBOARD_LOW_STOCK_ERROR',
+                'message': f'Error al obtener productos con bajo stock: {str(e)}'
+            }
+        }), 500
+
+
+@inventory_bp.route('/dashboard/additional-stats', methods=['GET'])
+@jwt_required()
+def get_dashboard_additional_stats():
+    """
+    US-INV-010 CA-7: Estadísticas adicionales del dashboard
+
+    Query params:
+        days: Período en días (default: 30)
+
+    Returns:
+        {
+            "success": true,
+            "data": {
+                "movements_total": 150,
+                "movements_by_type": {...},
+                "avg_daily_movements": 5.0,
+                "inactive_products_90d": 8,
+                "total_inventory_value": 125000.50
+            }
+        }
+    """
+    try:
+        days = request.args.get('days', 30, type=int)
+        days = min(days, 365)
+        stats = InventoryDashboardService.get_additional_stats(days=days)
+        return jsonify({
+            'success': True,
+            'data': stats
+        }), 200
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': {
+                'code': 'DASHBOARD_STATS_ERROR',
+                'message': f'Error al obtener estadísticas: {str(e)}'
             }
         }), 500
