@@ -714,6 +714,53 @@ const inventoryService = {
       console.error('Error syncing out of stock alerts:', error);
       throw error.response?.data || { error: { message: 'Error al sincronizar alertas' } };
     }
+  },
+
+  // ==========================================
+  // US-INV-010: Dashboard de Inventario
+  // ==========================================
+
+  /**
+   * US-INV-010 CA-1: Obtiene KPIs principales del dashboard
+   */
+  getDashboardKPIs: async () => {
+    try {
+      const response = await api.get('/inventory/dashboard/kpis');
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching dashboard KPIs:', error);
+      throw error.response?.data || { error: { message: 'Error al obtener KPIs' } };
+    }
+  },
+
+  /**
+   * US-INV-010 CA-3: Obtiene top productos con menor stock
+   */
+  getDashboardLowStockProducts: async (limit = 10) => {
+    try {
+      const response = await api.get('/inventory/dashboard/low-stock-products', {
+        params: { limit }
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching low stock products:', error);
+      throw error.response?.data || { error: { message: 'Error al obtener productos con bajo stock' } };
+    }
+  },
+
+  /**
+   * US-INV-010 CA-7: Obtiene estadísticas adicionales
+   */
+  getDashboardAdditionalStats: async (days = 30) => {
+    try {
+      const response = await api.get('/inventory/dashboard/additional-stats', {
+        params: { days }
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching additional stats:', error);
+      throw error.response?.data || { error: { message: 'Error al obtener estadísticas' } };
+    }
   }
 };
 

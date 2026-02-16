@@ -39,6 +39,7 @@ import ManualAdjustments from './pages/Inventory/ManualAdjustments';  // US-INV-
 import MovementHistory from './pages/Inventory/MovementHistory';  // US-INV-003
 import CategoryInventoryView from './pages/Inventory/CategoryInventoryView';  // US-INV-006
 import OutOfStockProducts from './pages/Inventory/OutOfStockProducts';  // US-INV-007
+import InventoryDashboard from './pages/Inventory/InventoryDashboard';  // US-INV-010
 import CustomerList from './pages/Customers/CustomerList';  // US-CUST-001
 import CreateCustomer from './pages/Customers/CreateCustomer';  // US-CUST-001
 import CustomerDetail from './pages/Customers/CustomerDetail';  // US-CUST-004
@@ -214,6 +215,18 @@ function Navigation() {
             {/* US-PROD: Product and Category Management Navigation */}
             {(currentUser?.role === 'Admin' || currentUser?.role === 'Gerente de Almacén') && (
               <>
+                {/* US-INV-010: Dashboard de Inventario */}
+                <Button
+                  color="inherit"
+                  href="/inventory/dashboard"
+                  sx={{
+                    '&:hover': {
+                      color: '#a5d6a7',
+                    }
+                  }}
+                >
+                  Inventario
+                </Button>
                 <Button
                   color="inherit"
                   href="/products"
@@ -522,6 +535,16 @@ function App() {
                 element={
                   <ProtectedRoute allowedRoles={['Admin', 'Gerente de Almacén']}>
                     <OutOfStockProducts />
+                  </ProtectedRoute>
+                }
+              />
+
+              {/* US-INV-010: Inventory Dashboard Route */}
+              <Route
+                path="/inventory/dashboard"
+                element={
+                  <ProtectedRoute allowedRoles={['Admin', 'Gerente de Almacén']}>
+                    <InventoryDashboard />
                   </ProtectedRoute>
                 }
               />
