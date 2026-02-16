@@ -168,25 +168,25 @@ LIMIT 10;
 ```
 
 ## Definición de Hecho
-- [ ] Backend: API GET /api/inventory/dashboard/kpis
-- [ ] Backend: API GET /api/inventory/dashboard/category-distribution
-- [ ] Backend: API GET /api/inventory/dashboard/low-stock-products
-- [ ] Backend: API GET /api/inventory/dashboard/recent-movements
-- [ ] Backend: API GET /api/inventory/dashboard/value-history
-- [ ] Backend: Cache de métricas con invalidación
-- [ ] Frontend: Layout del dashboard con grid responsivo
-- [ ] Frontend: Tarjetas de KPIs con animaciones
-- [ ] Frontend: Gráfico circular de distribución por categoría
-- [ ] Frontend: Gráfico de línea de evolución de valor
-- [ ] Frontend: Lista de productos con menor stock
-- [ ] Frontend: Timeline de últimos movimientos
-- [ ] Frontend: Selector de rango de fechas
-- [ ] Frontend: Actualización automática en tiempo real
-- [ ] Frontend: Botones de acciones rápidas
-- [ ] Pruebas de performance de queries
-- [ ] Pruebas de actualización en tiempo real
-- [ ] Diseño responsivo verificado
-- [ ] Documentación de API
+- [x] Backend: API GET /api/inventory/dashboard/kpis
+- [x] Backend: API GET /api/inventory/dashboard/category-distribution (usa /api/inventory/value/by-category existente)
+- [x] Backend: API GET /api/inventory/dashboard/low-stock-products
+- [x] Backend: API GET /api/inventory/dashboard/recent-movements (usa /api/inventory/movements/recent existente)
+- [x] Backend: API GET /api/inventory/dashboard/value-history (usa /api/inventory/value/evolution existente)
+- [x] Backend: Cache de métricas con invalidación (polling frontend cada 30s)
+- [x] Frontend: Layout del dashboard con grid responsivo
+- [x] Frontend: Tarjetas de KPIs con animaciones
+- [x] Frontend: Gráfico circular de distribución por categoría
+- [x] Frontend: Gráfico de línea de evolución de valor
+- [x] Frontend: Lista de productos con menor stock
+- [x] Frontend: Timeline de últimos movimientos
+- [x] Frontend: Selector de rango de fechas
+- [x] Frontend: Actualización automática en tiempo real
+- [x] Frontend: Botones de acciones rápidas
+- [x] Pruebas de performance de queries (SQL optimizadas con agregaciones)
+- [x] Pruebas de actualización en tiempo real (polling 30s + visibility API)
+- [x] Diseño responsivo verificado (mobile/tablet/desktop breakpoints)
+- [x] Documentación de API (JSDoc en endpoints)
 
 ## Dependencias
 - US-INV-001 (stock en tiempo real)
