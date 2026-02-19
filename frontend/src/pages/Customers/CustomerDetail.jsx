@@ -52,27 +52,23 @@ import {
   Note as NoteIcon,
   Add as AddIcon,
   Inventory as InventoryIcon,
+  Badge as BadgeIcon,
+  AccountBalance as FiscalIcon,
 } from '@mui/icons-material';
 import customerService from '../../services/customerService';
 import authService from '../../services/authService';
 import DeleteCustomerDialog from '../../components/customers/DeleteCustomerDialog';
 
-/**
- * Formatea una fecha en formato legible
- */
 const formatDate = (dateString) => {
   if (!dateString) return 'N/A';
   const date = new Date(dateString);
-  return date.toLocaleDateString('es-MX', {
+  return date.toLocaleDateString('es-CO', {
     year: 'numeric',
     month: 'long',
     day: 'numeric',
   });
 };
 
-/**
- * Formatea una fecha relativa (hace X tiempo)
- */
 const formatRelativeDate = (dateString) => {
   if (!dateString) return 'N/A';
   const date = new Date(dateString);
@@ -88,41 +84,27 @@ const formatRelativeDate = (dateString) => {
   return `Hace ${Math.floor(diffDays / 365)} años`;
 };
 
-/**
- * Formatea un monto en moneda
- */
 const formatCurrency = (amount) => {
-  return new Intl.NumberFormat('es-MX', {
+  return new Intl.NumberFormat('es-CO', {
     style: 'currency',
-    currency: 'MXN',
+    currency: 'COP',
+    minimumFractionDigits: 0,
   }).format(amount || 0);
 };
 
-/**
- * CA-1: Obtiene el color del badge de categoría
- */
 const getCategoryColor = (category) => {
   switch (category) {
-    case 'VIP':
-      return 'warning';
-    case 'Frecuente':
-      return 'info';
-    default:
-      return 'default';
+    case 'VIP': return 'warning';
+    case 'Frecuente': return 'info';
+    default: return 'default';
   }
 };
 
-/**
- * CA-1: Obtiene el icono del badge de categoría
- */
 const getCategoryIcon = (category) => {
   switch (category) {
-    case 'VIP':
-      return <StarIcon fontSize="small" />;
-    case 'Frecuente':
-      return <TrendingUpIcon fontSize="small" />;
-    default:
-      return null;
+    case 'VIP': return <StarIcon fontSize="small" />;
+    case 'Frecuente': return <TrendingUpIcon fontSize="small" />;
+    default: return null;
   }
 };
 
@@ -134,7 +116,6 @@ export default function CustomerDetail() {
   const currentUser = authService.getCurrentUser();
   const isAdmin = currentUser?.role === 'Admin';
 
-  // State
   const [customer, setCustomer] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -143,9 +124,6 @@ export default function CustomerDetail() {
   const [toggling, setToggling] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
-  /**
-   * Cargar datos del cliente
-   */
   const loadCustomer = useCallback(async () => {
     setLoading(true);
     setError(null);
@@ -167,9 +145,6 @@ export default function CustomerDetail() {
     loadCustomer();
   }, [loadCustomer]);
 
-  /**
-   * CA-9: Toggle activar/inactivar cliente
-   */
   const handleToggleActive = async () => {
     setToggling(true);
     try {
@@ -193,62 +168,50 @@ export default function CustomerDetail() {
     }
   };
 
-  /**
-   * CA-3: Copiar dirección al portapapeles
-   */
   const handleCopyAddress = () => {
     if (!customer) return;
-    const address = `${customer.address_street}, ${customer.address_city}, ${customer.address_postal_code}, ${customer.address_country}`;
-    navigator.clipboard.writeText(address);
-    setSnackbar({
-      open: true,
-      message: 'Dirección copiada al portapapeles',
-      severity: 'success',
-    });
+    const parts = [
+      customer.direccion,
+      customer.municipio_ciudad,
+      customer.departamento,
+      customer.pais,
+    ].filter(Boolean);
+    navigator.clipboard.writeText(parts.join(', '));
+    setSnackbar({ open: true, message: 'Dirección copiada al portapapeles', severity: 'success' });
   };
 
-  /**
-   * CA-3: Abrir dirección en Google Maps
-   */
   const handleOpenMaps = () => {
     if (!customer) return;
-    const address = encodeURIComponent(
-      `${customer.address_street}, ${customer.address_city}, ${customer.address_postal_code}, ${customer.address_country}`
-    );
+    const parts = [
+      customer.direccion,
+      customer.municipio_ciudad,
+      customer.departamento,
+      customer.pais,
+    ].filter(Boolean);
+    const address = encodeURIComponent(parts.join(', '));
     window.open(`https://www.google.com/maps/search/?api=1&query=${address}`, '_blank');
   };
 
-  /**
-   * Cerrar snackbar
-   */
   const handleCloseSnackbar = () => {
     setSnackbar({ ...snackbar, open: false });
   };
 
-  /**
-   * US-CUST-006 CA-7: Handle successful deletion
-   */
   const handleCustomerDeleted = (response) => {
     setSnackbar({
       open: true,
-      message: response.message || `Cliente ${customer.full_name} eliminado permanentemente`,
+      message: response.message || `Cliente ${customer.nombre_razon_social} eliminado permanentemente`,
       severity: 'success',
     });
-    // Redirect to customer list after short delay
     setTimeout(() => {
       navigate('/customers');
     }, 1500);
   };
 
-  /**
-   * US-CUST-006 CA-10: Handle inactivate from delete dialog
-   */
   const handleInactivateFromDialog = async () => {
     setDeleteDialogOpen(false);
     await handleToggleActive();
   };
 
-  // Loading state
   if (loading) {
     return (
       <Container maxWidth="lg" sx={{ py: 4 }}>
@@ -272,35 +235,22 @@ export default function CustomerDetail() {
     );
   }
 
-  // Error state
   if (error) {
     return (
       <Container maxWidth="lg" sx={{ py: 4 }}>
-        <Alert severity="error" sx={{ mb: 3 }}>
-          {error}
-        </Alert>
-        <Button
-          variant="outlined"
-          startIcon={<ArrowBackIcon />}
-          onClick={() => navigate('/customers')}
-        >
+        <Alert severity="error" sx={{ mb: 3 }}>{error}</Alert>
+        <Button variant="outlined" startIcon={<ArrowBackIcon />} onClick={() => navigate('/customers')}>
           Volver a lista de clientes
         </Button>
       </Container>
     );
   }
 
-  // No customer found
   if (!customer) {
     return (
       <Container maxWidth="lg" sx={{ py: 4 }}>
         <Alert severity="warning">Cliente no encontrado</Alert>
-        <Button
-          variant="outlined"
-          startIcon={<ArrowBackIcon />}
-          onClick={() => navigate('/customers')}
-          sx={{ mt: 2 }}
-        >
+        <Button variant="outlined" startIcon={<ArrowBackIcon />} onClick={() => navigate('/customers')} sx={{ mt: 2 }}>
           Volver a lista de clientes
         </Button>
       </Container>
@@ -309,119 +259,80 @@ export default function CustomerDetail() {
 
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
-      {/* CA-10: Breadcrumbs */}
+      {/* Breadcrumbs */}
       <Breadcrumbs sx={{ mb: 2 }}>
-        <Link
-          component={RouterLink}
-          to="/dashboard"
-          underline="hover"
-          color="inherit"
-        >
-          Inicio
-        </Link>
-        <Link
-          component={RouterLink}
-          to="/customers"
-          underline="hover"
-          color="inherit"
-        >
-          Clientes
-        </Link>
-        <Typography color="text.primary">{customer.full_name}</Typography>
+        <Link component={RouterLink} to="/dashboard" underline="hover" color="inherit">Inicio</Link>
+        <Link component={RouterLink} to="/customers" underline="hover" color="inherit">Clientes</Link>
+        <Typography color="text.primary">{customer.nombre_razon_social}</Typography>
       </Breadcrumbs>
 
-      {/* CA-10: Navigation buttons */}
+      {/* Navigation */}
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-        <Button
-          variant="outlined"
-          startIcon={<ArrowBackIcon />}
-          onClick={() => navigate('/customers')}
-        >
+        <Button variant="outlined" startIcon={<ArrowBackIcon />} onClick={() => navigate('/customers')}>
           Volver a lista
         </Button>
-        {/* Future: Previous/Next navigation */}
         <Box sx={{ display: 'flex', gap: 1 }}>
           <Tooltip title="Cliente anterior (próximamente)">
-            <span>
-              <IconButton disabled>
-                <NavigateBeforeIcon />
-              </IconButton>
-            </span>
+            <span><IconButton disabled><NavigateBeforeIcon /></IconButton></span>
           </Tooltip>
           <Tooltip title="Cliente siguiente (próximamente)">
-            <span>
-              <IconButton disabled>
-                <NavigateNextIcon />
-              </IconButton>
-            </span>
+            <span><IconButton disabled><NavigateNextIcon /></IconButton></span>
           </Tooltip>
         </Box>
       </Box>
 
-      {/* CA-1: Cabecera del Perfil */}
+      {/* Header */}
       <Paper sx={{ p: 3, mb: 3 }}>
         <Grid container spacing={2} alignItems="center">
           <Grid item xs={12} md={8}>
-            {/* Nombre prominente */}
             <Typography variant="h4" component="h1" fontWeight="bold" gutterBottom>
-              {customer.full_name}
+              {customer.nombre_razon_social}
             </Typography>
 
-            {/* Badges */}
             <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mb: 2 }}>
-              {/* Badge de categoría */}
               <Chip
                 icon={getCategoryIcon(customer.customer_category)}
                 label={customer.customer_category || 'Regular'}
                 color={getCategoryColor(customer.customer_category)}
                 size="small"
               />
-
-              {/* Badge de estado */}
               <Chip
                 label={customer.is_active ? 'Activo' : 'Inactivo'}
                 color={customer.is_active ? 'success' : 'default'}
                 size="small"
               />
+              <Chip
+                label={`${customer.tipo_documento}: ${customer.numero_documento}`}
+                variant="outlined"
+                size="small"
+              />
+              <Chip
+                label={customer.tipo_contribuyente}
+                variant="outlined"
+                size="small"
+                color="primary"
+              />
             </Box>
 
-            {/* Fecha de registro */}
             <Typography variant="body2" color="text.secondary">
               <AccessTimeIcon fontSize="small" sx={{ verticalAlign: 'middle', mr: 0.5 }} />
               Cliente desde: {formatDate(customer.created_at)}
             </Typography>
           </Grid>
 
-          {/* CA-1 & CA-9: Botones de acción principales */}
           <Grid item xs={12} md={4}>
-            <Box
-              sx={{
-                display: 'flex',
-                gap: 1,
-                flexWrap: 'wrap',
-                justifyContent: isMobile ? 'flex-start' : 'flex-end',
-              }}
-            >
-              {/* CA-9: Editar - US-CUST-005 */}
-              <Button
-                variant="contained"
-                startIcon={<EditIcon />}
-                onClick={() => navigate(`/customers/${id}/edit`)}
-              >
+            <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', justifyContent: isMobile ? 'flex-start' : 'flex-end' }}>
+              <Button variant="contained" startIcon={<EditIcon />} onClick={() => navigate(`/customers/${id}/edit`)}>
                 Editar
               </Button>
-
-              {/* Crear Pedido */}
               <Button
                 variant="outlined"
                 startIcon={<ShoppingCartIcon />}
                 onClick={() => navigate(`/orders/new?customer=${id}`)}
-                disabled // US-ORD-001 pending
+                disabled
               >
                 Crear Pedido
               </Button>
-
-              {/* Activar/Inactivar */}
               <Button
                 variant="outlined"
                 color={customer.is_active ? 'warning' : 'success'}
@@ -431,21 +342,10 @@ export default function CustomerDetail() {
               >
                 {customer.is_active ? 'Inactivar' : 'Activar'}
               </Button>
-
-              {/* US-CUST-006 CA-1 & CA-9: Eliminar (solo Admin) */}
               {isAdmin && (
-                <Tooltip
-                  title={
-                    customer.order_count > 0
-                      ? 'No se puede eliminar (tiene pedidos)'
-                      : 'Eliminar cliente'
-                  }
-                >
+                <Tooltip title={customer.order_count > 0 ? 'No se puede eliminar (tiene pedidos)' : 'Eliminar cliente'}>
                   <span>
-                    <IconButton
-                      color="error"
-                      onClick={() => setDeleteDialogOpen(true)}
-                    >
+                    <IconButton color="error" onClick={() => setDeleteDialogOpen(true)}>
                       <DeleteIcon />
                     </IconButton>
                   </span>
@@ -456,101 +356,62 @@ export default function CustomerDetail() {
         </Grid>
       </Paper>
 
-      {/* Main content grid */}
       <Grid container spacing={3}>
         {/* Left column */}
         <Grid item xs={12} md={6}>
-          {/* CA-2: Información de Contacto */}
+
+          {/* Sección: Identificación */}
           <Paper sx={{ p: 3, mb: 3 }}>
             <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <PhoneIcon color="primary" />
-              Datos de Contacto
+              <BadgeIcon color="primary" />
+              Identificación
             </Typography>
             <Divider sx={{ mb: 2 }} />
-
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-              {/* Email */}
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                <Tooltip title="Enviar email">
-                  <IconButton
-                    component="a"
-                    href={`mailto:${customer.email}`}
-                    color="primary"
-                    size="small"
-                  >
-                    <EmailIcon />
-                  </IconButton>
-                </Tooltip>
-                <Box>
-                  <Typography variant="body2" color="text.secondary">
-                    Email
-                  </Typography>
-                  <Typography variant="body1">
-                    <Link href={`mailto:${customer.email}`} underline="hover">
-                      {customer.email}
-                    </Link>
-                  </Typography>
-                </Box>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+              <Box>
+                <Typography variant="body2" color="text.secondary">Tipo de Documento</Typography>
+                <Typography variant="body1">{customer.tipo_documento}</Typography>
               </Box>
-
-              {/* Teléfono principal */}
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                <Tooltip title="Llamar">
-                  <IconButton
-                    component="a"
-                    href={`tel:${customer.phone}`}
-                    color="primary"
-                    size="small"
-                  >
-                    <PhoneIcon />
-                  </IconButton>
-                </Tooltip>
-                <Box>
-                  <Typography variant="body2" color="text.secondary">
-                    Teléfono Principal
-                  </Typography>
-                  <Typography variant="body1">
-                    <Link href={`tel:${customer.phone}`} underline="hover">
-                      {customer.phone}
-                    </Link>
-                  </Typography>
-                </Box>
+              <Box>
+                <Typography variant="body2" color="text.secondary">Número de Documento</Typography>
+                <Typography variant="body1" fontWeight="medium">{customer.numero_documento}</Typography>
               </Box>
-
-              {/* Teléfono secundario */}
-              {customer.secondary_phone && (
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                  <Tooltip title="Llamar">
-                    <IconButton
-                      component="a"
-                      href={`tel:${customer.secondary_phone}`}
-                      color="primary"
-                      size="small"
-                    >
-                      <PhoneIcon />
-                    </IconButton>
-                  </Tooltip>
-                  <Box>
-                    <Typography variant="body2" color="text.secondary">
-                      Teléfono Secundario
-                    </Typography>
-                    <Typography variant="body1">
-                      <Link href={`tel:${customer.secondary_phone}`} underline="hover">
-                        {customer.secondary_phone}
-                      </Link>
-                    </Typography>
-                  </Box>
-                </Box>
-              )}
+              <Box>
+                <Typography variant="body2" color="text.secondary">Tipo de Contribuyente</Typography>
+                <Typography variant="body1">{customer.tipo_contribuyente}</Typography>
+              </Box>
             </Box>
           </Paper>
 
-          {/* CA-3: Dirección Completa */}
+          {/* Sección: Información Fiscal */}
+          <Paper sx={{ p: 3, mb: 3 }}>
+            <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <FiscalIcon color="primary" />
+              Información Fiscal
+            </Typography>
+            <Divider sx={{ mb: 2 }} />
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+              <Box>
+                <Typography variant="body2" color="text.secondary">Régimen Fiscal</Typography>
+                <Typography variant="body1">
+                  {customer.regimen_fiscal || <span style={{ color: '#9e9e9e', fontStyle: 'italic' }}>No especificado</span>}
+                </Typography>
+              </Box>
+              <Box>
+                <Typography variant="body2" color="text.secondary">Responsabilidad Tributaria</Typography>
+                <Typography variant="body1">
+                  {customer.responsabilidad_tributaria || <span style={{ color: '#9e9e9e', fontStyle: 'italic' }}>No especificada</span>}
+                </Typography>
+              </Box>
+            </Box>
+          </Paper>
+
+          {/* Sección: Ubicación */}
           <Paper sx={{ p: 3, mb: 3 }}>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
               <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <LocationOnIcon color="primary" />
-                Dirección de Envío
+                Ubicación
               </Typography>
               <Box>
                 <Tooltip title="Copiar dirección">
@@ -566,37 +427,93 @@ export default function CustomerDetail() {
               </Box>
             </Box>
             <Divider sx={{ mb: 2 }} />
-
-            <Typography variant="body1" sx={{ whiteSpace: 'pre-line' }}>
-              {customer.address_street}
-              {'\n'}
-              {customer.address_city}, {customer.address_postal_code}
-              {'\n'}
-              {customer.address_country}
-            </Typography>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+              <Box>
+                <Typography variant="body2" color="text.secondary">País</Typography>
+                <Typography variant="body1">{customer.pais || 'Colombia'}</Typography>
+              </Box>
+              {customer.departamento && (
+                <Box>
+                  <Typography variant="body2" color="text.secondary">Departamento</Typography>
+                  <Typography variant="body1">{customer.departamento}</Typography>
+                </Box>
+              )}
+              {customer.municipio_ciudad && (
+                <Box>
+                  <Typography variant="body2" color="text.secondary">Municipio / Ciudad</Typography>
+                  <Typography variant="body1">{customer.municipio_ciudad}</Typography>
+                </Box>
+              )}
+              {customer.direccion && (
+                <Box>
+                  <Typography variant="body2" color="text.secondary">Dirección</Typography>
+                  <Typography variant="body1">{customer.direccion}</Typography>
+                </Box>
+              )}
+              {!customer.departamento && !customer.municipio_ciudad && !customer.direccion && (
+                <Typography variant="body2" color="text.secondary" fontStyle="italic">
+                  Sin información de ubicación
+                </Typography>
+              )}
+            </Box>
           </Paper>
 
-          {/* CA-6: Notas sobre el Cliente */}
+          {/* Sección: Contacto */}
+          <Paper sx={{ p: 3, mb: 3 }}>
+            <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <PhoneIcon color="primary" />
+              Contacto
+            </Typography>
+            <Divider sx={{ mb: 2 }} />
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+              {/* Correo */}
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                <Tooltip title="Enviar correo">
+                  <IconButton component="a" href={`mailto:${customer.correo}`} color="primary" size="small">
+                    <EmailIcon />
+                  </IconButton>
+                </Tooltip>
+                <Box>
+                  <Typography variant="body2" color="text.secondary">Correo Electrónico</Typography>
+                  <Typography variant="body1">
+                    <Link href={`mailto:${customer.correo}`} underline="hover">{customer.correo}</Link>
+                  </Typography>
+                </Box>
+              </Box>
+
+              {/* Teléfono */}
+              {customer.telefono_movil && (
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                  <Tooltip title="Llamar">
+                    <IconButton component="a" href={`tel:${customer.telefono_movil}`} color="primary" size="small">
+                      <PhoneIcon />
+                    </IconButton>
+                  </Tooltip>
+                  <Box>
+                    <Typography variant="body2" color="text.secondary">Teléfono Móvil</Typography>
+                    <Typography variant="body1">
+                      <Link href={`tel:${customer.telefono_movil}`} underline="hover">{customer.telefono_movil}</Link>
+                    </Typography>
+                  </Box>
+                </Box>
+              )}
+            </Box>
+          </Paper>
+
+          {/* Notas */}
           <Paper sx={{ p: 3, mb: 3 }}>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
               <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <NoteIcon color="primary" />
                 Notas
               </Typography>
-              <Button
-                size="small"
-                startIcon={<AddIcon />}
-                disabled // US-CUST-009 pending
-              >
+              <Button size="small" startIcon={<AddIcon />} disabled>
                 Agregar nota
               </Button>
             </Box>
             <Divider sx={{ mb: 2 }} />
-
             {customer.notes ? (
-              <Typography variant="body1" sx={{ whiteSpace: 'pre-wrap' }}>
-                {customer.notes}
-              </Typography>
+              <Typography variant="body1" sx={{ whiteSpace: 'pre-wrap' }}>{customer.notes}</Typography>
             ) : (
               <Typography variant="body2" color="text.secondary" fontStyle="italic">
                 No hay notas sobre este cliente
@@ -607,46 +524,32 @@ export default function CustomerDetail() {
 
         {/* Right column */}
         <Grid item xs={12} md={6}>
-          {/* CA-4: Métricas del Cliente */}
+          {/* Estadísticas */}
           <Paper sx={{ p: 3, mb: 3 }}>
             <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
               <TrendingUpIcon color="primary" />
               Estadísticas del Cliente
             </Typography>
             <Divider sx={{ mb: 2 }} />
-
             <Grid container spacing={2}>
-              {/* Total de pedidos */}
               <Grid item xs={6}>
                 <Card variant="outlined">
                   <CardContent sx={{ textAlign: 'center', py: 2 }}>
                     <ShoppingBagIcon color="primary" sx={{ fontSize: 32, mb: 1 }} />
-                    <Typography variant="h4" fontWeight="bold">
-                      {customer.order_count || 0}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      Total de Pedidos
-                    </Typography>
+                    <Typography variant="h4" fontWeight="bold">{customer.order_count || 0}</Typography>
+                    <Typography variant="body2" color="text.secondary">Total de Pedidos</Typography>
                   </CardContent>
                 </Card>
               </Grid>
-
-              {/* Monto total gastado */}
               <Grid item xs={6}>
                 <Card variant="outlined">
                   <CardContent sx={{ textAlign: 'center', py: 2 }}>
                     <AttachMoneyIcon color="success" sx={{ fontSize: 32, mb: 1 }} />
-                    <Typography variant="h5" fontWeight="bold">
-                      {formatCurrency(customer.total_purchases)}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      Monto Total
-                    </Typography>
+                    <Typography variant="h5" fontWeight="bold">{formatCurrency(customer.total_purchases)}</Typography>
+                    <Typography variant="body2" color="text.secondary">Monto Total</Typography>
                   </CardContent>
                 </Card>
               </Grid>
-
-              {/* Promedio de compra */}
               <Grid item xs={6}>
                 <Card variant="outlined">
                   <CardContent sx={{ textAlign: 'center', py: 2 }}>
@@ -654,14 +557,10 @@ export default function CustomerDetail() {
                     <Typography variant="h5" fontWeight="bold">
                       {formatCurrency(customer.order_count > 0 ? customer.total_purchases / customer.order_count : 0)}
                     </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      Promedio por Compra
-                    </Typography>
+                    <Typography variant="body2" color="text.secondary">Promedio por Compra</Typography>
                   </CardContent>
                 </Card>
               </Grid>
-
-              {/* Última compra */}
               <Grid item xs={6}>
                 <Card variant="outlined">
                   <CardContent sx={{ textAlign: 'center', py: 2 }}>
@@ -669,15 +568,11 @@ export default function CustomerDetail() {
                     <Typography variant="h6" fontWeight="bold">
                       {customer.last_purchase_date ? formatRelativeDate(customer.last_purchase_date) : 'Sin compras'}
                     </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      Última Compra
-                    </Typography>
+                    <Typography variant="body2" color="text.secondary">Última Compra</Typography>
                   </CardContent>
                 </Card>
               </Grid>
             </Grid>
-
-            {/* Mensaje cuando no hay pedidos */}
             {customer.order_count === 0 && (
               <Alert severity="info" sx={{ mt: 2 }}>
                 Este cliente aún no ha realizado compras. Las estadísticas se actualizarán cuando se registren pedidos.
@@ -685,64 +580,46 @@ export default function CustomerDetail() {
             )}
           </Paper>
 
-          {/* CA-5: Resumen de Pedidos Recientes */}
+          {/* Últimos Pedidos */}
           <Paper sx={{ p: 3, mb: 3 }}>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
               <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <ShoppingCartIcon color="primary" />
                 Últimos Pedidos
               </Typography>
-              <Button
-                size="small"
-                endIcon={<OpenInNewIcon />}
-                onClick={() => navigate(`/customers/${id}/orders`)}
-                disabled // US-ORD-010 pending
-              >
+              <Button size="small" endIcon={<OpenInNewIcon />} onClick={() => navigate(`/customers/${id}/orders`)} disabled>
                 Ver todos
               </Button>
             </Box>
             <Divider sx={{ mb: 2 }} />
-
-            {/* Placeholder - Orders module pending */}
             <Alert severity="info" icon={<InventoryIcon />}>
-              <Typography variant="body2">
-                Este cliente aún no ha realizado compras.
-              </Typography>
+              <Typography variant="body2">Este cliente aún no ha realizado compras.</Typography>
               <Typography variant="caption" color="text.secondary">
                 El historial de pedidos estará disponible cuando se implemente el módulo de ventas.
               </Typography>
             </Alert>
           </Paper>
 
-          {/* CA-7: Productos Favoritos */}
+          {/* Productos Favoritos */}
           <Paper sx={{ p: 3, mb: 3 }}>
             <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
               <StarIcon color="primary" />
               Productos Más Comprados
             </Typography>
             <Divider sx={{ mb: 2 }} />
-
-            {/* Placeholder - Orders module pending */}
             <Alert severity="info" icon={<InventoryIcon />}>
-              <Typography variant="body2">
-                Aún no hay productos favoritos registrados.
-              </Typography>
+              <Typography variant="body2">Aún no hay productos favoritos registrados.</Typography>
               <Typography variant="caption" color="text.secondary">
                 Esta información se calculará automáticamente basándose en el historial de compras.
               </Typography>
             </Alert>
           </Paper>
 
-          {/* CA-8: Historial de Cambios (Admin only, collapsible) */}
+          {/* Historial (Admin only) */}
           {isAdmin && (
             <Paper sx={{ p: 3 }}>
               <Box
-                sx={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  cursor: 'pointer',
-                }}
+                sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer' }}
                 onClick={() => setActivityExpanded(!activityExpanded)}
               >
                 <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -769,8 +646,6 @@ export default function CustomerDetail() {
                     </Typography>
                   )}
                 </Box>
-
-                {/* Note: Detailed audit trail will require backend changes */}
                 <Typography variant="caption" color="text.secondary" sx={{ mt: 2, display: 'block' }}>
                   El historial detallado con información de usuarios estará disponible en futuras versiones.
                 </Typography>
@@ -780,7 +655,7 @@ export default function CustomerDetail() {
         </Grid>
       </Grid>
 
-      {/* Snackbar for notifications */}
+      {/* Snackbar */}
       <Snackbar
         open={snackbar.open}
         autoHideDuration={4000}
@@ -792,7 +667,7 @@ export default function CustomerDetail() {
         </Alert>
       </Snackbar>
 
-      {/* US-CUST-006: Delete Customer Dialog */}
+      {/* Delete Dialog */}
       <DeleteCustomerDialog
         open={deleteDialogOpen}
         onClose={() => setDeleteDialogOpen(false)}

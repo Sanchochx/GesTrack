@@ -199,7 +199,7 @@ const InventoryDashboard = () => {
 
   // Format currency
   const formatCurrency = (value) => {
-    return `$${Number(value || 0).toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    return new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(value || 0);
   };
 
   // CA-1: KPI Card component
@@ -356,7 +356,7 @@ const InventoryDashboard = () => {
           <Grid item xs={12} sm={6} md={3}>
             <KPICard
               title="Valor del Inventario"
-              value={kpis?.formatted_value || '$0.00'}
+              value={kpis?.formatted_value || 'COP 0'}
               subtitle={`${kpis?.total_units || 0} unidades totales`}
               icon={<MoneyIcon />}
               color='#1565c0'
@@ -416,7 +416,7 @@ const InventoryDashboard = () => {
                         fontSize={12}
                       />
                       <YAxis
-                        tickFormatter={(val) => `$${(val / 1000).toFixed(0)}k`}
+                        tickFormatter={(val) => `${(val / 1000).toFixed(0)}k COP`}
                         fontSize={12}
                       />
                       <RechartsTooltip

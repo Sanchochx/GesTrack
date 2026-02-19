@@ -158,10 +158,13 @@ const DeleteCustomerDialog = ({
                 {/* CA-3: Customer info */}
                 <Box sx={{ mb: 2, p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
                   <Typography variant="subtitle1" fontWeight="bold">
-                    {customer.full_name}
+                    {customer.nombre_razon_social}
                   </Typography>
                   <Typography variant="body2" color="text.secondary">
-                    {customer.email}
+                    {customer.tipo_documento}: {customer.numero_documento}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    {customer.correo}
                   </Typography>
                   <Box sx={{ display: 'flex', gap: 1, mt: 1 }}>
                     <Chip
@@ -180,7 +183,7 @@ const DeleteCustomerDialog = ({
                 {/* CA-3: Warning message */}
                 <Alert severity="warning" sx={{ mb: 2 }}>
                   <AlertTitle>Acción irreversible</AlertTitle>
-                  Esta acción eliminará permanentemente a <strong>{customer.full_name}</strong> del sistema y no se puede deshacer.
+                  Esta acción eliminará permanentemente a <strong>{customer.nombre_razon_social}</strong> del sistema y no se puede deshacer.
                   <Box sx={{ mt: 1 }}>
                     <Typography variant="body2">
                       Se eliminarán todos los datos del cliente, incluyendo notas y configuraciones.

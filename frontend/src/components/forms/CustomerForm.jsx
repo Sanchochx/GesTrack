@@ -3,6 +3,7 @@ import {
   Box,
   Grid,
   TextField,
+  MenuItem,
   Button,
   Typography,
   Paper,
@@ -17,11 +18,10 @@ import {
   DialogActions,
 } from '@mui/material';
 import {
-  Person as PersonIcon,
-  Email as EmailIcon,
-  Phone as PhoneIcon,
-  Home as AddressIcon,
-  Notes as NotesIcon,
+  Badge as BadgeIcon,
+  AccountBalance as FiscalIcon,
+  LocationOn as LocationIcon,
+  ContactMail as ContactIcon,
   Save as SaveIcon,
   Cancel as CancelIcon,
   Check as CheckIcon,
@@ -29,8 +29,22 @@ import {
 } from '@mui/icons-material';
 import customerService from '../../services/customerService';
 
+const TIPOS_DOCUMENTO = ['CC', 'NIT', 'CE', 'PAS', 'TI'];
+const TIPOS_CONTRIBUYENTE = ['Persona Natural', 'Persona Jurídica'];
+const REGIMENES_FISCALES = ['', 'R-99-PN', 'R-48'];
+const RESPONSABILIDADES_TRIBUTARIAS = ['', 'O-13', 'O-15', 'O-23', 'O-47', 'R-99-PN', 'ZZ-No aplica'];
+
+const DEPARTAMENTOS = [
+  'Amazonas', 'Antioquia', 'Arauca', 'Atlántico', 'Bogotá D.C.', 'Bolívar',
+  'Boyacá', 'Caldas', 'Caquetá', 'Casanare', 'Cauca', 'Cesar', 'Chocó',
+  'Córdoba', 'Cundinamarca', 'Guainía', 'Guaviare', 'Huila', 'La Guajira',
+  'Magdalena', 'Meta', 'Nariño', 'Norte de Santander', 'Putumayo', 'Quindío',
+  'Risaralda', 'San Andrés y Providencia', 'Santander', 'Sucre', 'Tolima',
+  'Valle del Cauca', 'Vaupés', 'Vichada',
+];
+
 /**
- * CustomerForm Component
+ * CustomerForm Component - Facturación Electrónica Colombia (DIAN)
  * US-CUST-001: Formulario de Registro de Cliente
  *
  * Props:
@@ -40,35 +54,35 @@ import customerService from '../../services/customerService';
  * - mode: 'create' | 'edit'
  */
 const CustomerForm = ({ onSuccess, onCancel, initialData = null, mode = 'create' }) => {
-  // CA-2, CA-3, CA-4: Form state
   const [formData, setFormData] = useState({
-    full_name: initialData?.full_name || '',
-    email: initialData?.email || '',
-    phone: initialData?.phone || '',
-    secondary_phone: initialData?.secondary_phone || '',
-    address_street: initialData?.address_street || '',
-    address_city: initialData?.address_city || '',
-    address_postal_code: initialData?.address_postal_code || '',
-    address_country: initialData?.address_country || 'México',
+    tipo_documento: initialData?.tipo_documento || 'CC',
+    numero_documento: initialData?.numero_documento || '',
+    nombre_razon_social: initialData?.nombre_razon_social || '',
+    tipo_contribuyente: initialData?.tipo_contribuyente || 'Persona Natural',
+    regimen_fiscal: initialData?.regimen_fiscal || '',
+    responsabilidad_tributaria: initialData?.responsabilidad_tributaria || '',
+    pais: initialData?.pais || 'Colombia',
+    departamento: initialData?.departamento || '',
+    municipio_ciudad: initialData?.municipio_ciudad || '',
+    direccion: initialData?.direccion || '',
+    telefono_movil: initialData?.telefono_movil || '',
+    correo: initialData?.correo || '',
     notes: initialData?.notes || '',
   });
 
-  // Validation state
   const [errors, setErrors] = useState({});
   const [touched, setTouched] = useState({});
 
-  // CA-5: Email uniqueness check state
-  const [emailStatus, setEmailStatus] = useState(null); // null | 'checking' | 'available' | 'taken'
-  const [existingCustomer, setExistingCustomer] = useState(null);
+  // Uniqueness check states
+  const [documentoStatus, setDocumentoStatus] = useState(null); // null | 'checking' | 'available' | 'taken'
+  const [correoStatus, setCorreoStatus] = useState(null);
+  const [existingByDocumento, setExistingByDocumento] = useState(null);
+  const [existingByCorreo, setExistingByCorreo] = useState(null);
 
-  // Submit state
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState(null);
-
-  // CA-10: Cancel confirmation dialog
   const [showCancelDialog, setShowCancelDialog] = useState(false);
 
-  // Check if form has been modified
   const isFormDirty = () => {
     if (!initialData) {
       return Object.values(formData).some(v => v && v.trim && v.trim() !== '');
@@ -76,118 +90,96 @@ const CustomerForm = ({ onSuccess, onCancel, initialData = null, mode = 'create'
     return Object.keys(formData).some(key => formData[key] !== (initialData[key] || ''));
   };
 
-  // CA-8: Real-time validation
   const validateField = (name, value) => {
     let error = '';
-
     switch (name) {
-      case 'full_name':
+      case 'tipo_documento':
+        if (!value) error = 'El tipo de documento es requerido';
+        break;
+
+      case 'numero_documento':
         if (!value || !value.trim()) {
-          error = 'El nombre completo es requerido';
+          error = 'El número de documento es requerido';
+        } else if (value.length > 20) {
+          error = 'No puede exceder 20 caracteres';
+        } else if (!/^[\d\-]+$/.test(value.trim())) {
+          error = 'Solo dígitos y guión (-)';
+        }
+        break;
+
+      case 'nombre_razon_social':
+        if (!value || !value.trim()) {
+          error = 'El nombre o razón social es requerido';
         } else if (value.length > 200) {
-          error = 'El nombre no puede exceder 200 caracteres';
-        } else if (!/^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s.\-]+$/.test(value.trim())) {
-          error = 'El nombre solo puede contener letras y espacios';
+          error = 'No puede exceder 200 caracteres';
+        } else if (!/^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ0-9\s.\-,&']+$/.test(value.trim())) {
+          error = 'Solo letras, números y caracteres especiales';
         }
         break;
 
-      case 'email':
+      case 'tipo_contribuyente':
+        if (!value) error = 'El tipo de contribuyente es requerido';
+        break;
+
+      case 'correo':
         if (!value || !value.trim()) {
-          error = 'El email es requerido';
+          error = 'El correo es requerido';
         } else if (value.length > 100) {
-          error = 'El email no puede exceder 100 caracteres';
+          error = 'No puede exceder 100 caracteres';
         } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim())) {
-          error = 'Formato de email inválido';
+          error = 'Formato de correo inválido';
         }
         break;
 
-      case 'phone':
-        if (!value || !value.trim()) {
-          error = 'El teléfono es requerido';
-        } else if (value.length > 20) {
-          error = 'El teléfono no puede exceder 20 caracteres';
-        } else if (!/^[\d\s\-()+ ]+$/.test(value.trim())) {
-          error = 'Solo números, guiones, paréntesis y espacios';
-        }
-        break;
-
-      case 'secondary_phone':
+      case 'telefono_movil':
         if (value && value.trim()) {
-          if (value.length > 20) {
-            error = 'El teléfono no puede exceder 20 caracteres';
-          } else if (!/^[\d\s\-()+ ]+$/.test(value.trim())) {
-            error = 'Solo números, guiones, paréntesis y espacios';
-          }
+          if (value.length > 20) error = 'No puede exceder 20 caracteres';
+          else if (!/^[\d\s\-+]+$/.test(value.trim())) error = 'Solo números, guiones, espacios y +';
         }
         break;
 
-      case 'address_street':
-        if (!value || !value.trim()) {
-          error = 'La dirección es requerida';
-        } else if (value.length > 300) {
-          error = 'La dirección no puede exceder 300 caracteres';
-        }
+      case 'direccion':
+        if (value && value.length > 300) error = 'No puede exceder 300 caracteres';
         break;
 
-      case 'address_city':
-        if (!value || !value.trim()) {
-          error = 'La ciudad es requerida';
-        } else if (value.length > 100) {
-          error = 'La ciudad no puede exceder 100 caracteres';
-        }
+      case 'municipio_ciudad':
+        if (value && value.length > 100) error = 'No puede exceder 100 caracteres';
         break;
 
-      case 'address_postal_code':
-        if (!value || !value.trim()) {
-          error = 'El código postal es requerido';
-        } else if (value.length > 20) {
-          error = 'El código postal no puede exceder 20 caracteres';
-        } else if (!/^[\d\-\s]+$/.test(value.trim())) {
-          error = 'Solo números y guiones';
-        }
-        break;
-
-      case 'address_country':
-        if (!value || !value.trim()) {
-          error = 'El país es requerido';
-        } else if (value.length > 100) {
-          error = 'El país no puede exceder 100 caracteres';
-        }
+      case 'pais':
+        if (value && value.length > 100) error = 'No puede exceder 100 caracteres';
         break;
 
       case 'notes':
-        if (value && value.length > 500) {
-          error = 'Las notas no pueden exceder 500 caracteres';
-        }
+        if (value && value.length > 500) error = 'No puede exceder 500 caracteres';
         break;
 
       default:
         break;
     }
-
     return error;
   };
 
-  // Handle field change with real-time validation
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
     setSubmitError(null);
 
-    // Validate on change if field has been touched
     if (touched[name]) {
       const error = validateField(name, value);
       setErrors(prev => ({ ...prev, [name]: error }));
     }
 
-    // Reset email status when email changes
-    if (name === 'email') {
-      setEmailStatus(null);
-      setExistingCustomer(null);
+    if (name === 'numero_documento') {
+      setDocumentoStatus(null);
+      setExistingByDocumento(null);
+    }
+    if (name === 'correo') {
+      setCorreoStatus(null);
+      setExistingByCorreo(null);
     }
   };
 
-  // Handle field blur - validate and check email uniqueness
   const handleBlur = async (e) => {
     const { name, value } = e.target;
     setTouched(prev => ({ ...prev, [name]: true }));
@@ -195,46 +187,60 @@ const CustomerForm = ({ onSuccess, onCancel, initialData = null, mode = 'create'
     const error = validateField(name, value);
     setErrors(prev => ({ ...prev, [name]: error }));
 
-    // CA-5: Check email uniqueness on blur
-    if (name === 'email' && !error && value.trim()) {
-      await checkEmailUniqueness(value.trim());
+    if (name === 'numero_documento' && !error && value.trim()) {
+      await checkDocumentoUniqueness(value.trim());
+    }
+    if (name === 'correo' && !error && value.trim()) {
+      await checkCorreoUniqueness(value.trim());
     }
   };
 
-  // CA-5: Email uniqueness check
-  const checkEmailUniqueness = useCallback(async (email) => {
-    setEmailStatus('checking');
+  const checkDocumentoUniqueness = useCallback(async (numeroDocumento) => {
+    setDocumentoStatus('checking');
     try {
-      const result = await customerService.checkEmail(email, initialData?.id);
+      const result = await customerService.checkDocumento(numeroDocumento, initialData?.id);
       if (result.success) {
         if (result.data.available) {
-          setEmailStatus('available');
-          setExistingCustomer(null);
+          setDocumentoStatus('available');
+          setExistingByDocumento(null);
         } else {
-          setEmailStatus('taken');
-          setExistingCustomer(result.data.existing_customer || null);
-          setErrors(prev => ({ ...prev, email: 'Este email ya está registrado' }));
+          setDocumentoStatus('taken');
+          setExistingByDocumento(result.data.existing_customer || null);
+          setErrors(prev => ({ ...prev, numero_documento: 'Este número de documento ya está registrado' }));
         }
       }
     } catch {
-      setEmailStatus(null);
+      setDocumentoStatus(null);
     }
   }, [initialData?.id]);
 
-  // Validate all fields
+  const checkCorreoUniqueness = useCallback(async (correo) => {
+    setCorreoStatus('checking');
+    try {
+      const result = await customerService.checkCorreo(correo, initialData?.id);
+      if (result.success) {
+        if (result.data.available) {
+          setCorreoStatus('available');
+          setExistingByCorreo(null);
+        } else {
+          setCorreoStatus('taken');
+          setExistingByCorreo(result.data.existing_customer || null);
+          setErrors(prev => ({ ...prev, correo: 'Este correo ya está registrado' }));
+        }
+      }
+    } catch {
+      setCorreoStatus(null);
+    }
+  }, [initialData?.id]);
+
   const validateAll = () => {
     const newErrors = {};
-    const requiredFields = [
-      'full_name', 'email', 'phone', 'address_street',
-      'address_city', 'address_postal_code', 'address_country'
-    ];
+    const requiredFields = ['tipo_documento', 'numero_documento', 'nombre_razon_social', 'tipo_contribuyente', 'correo'];
 
-    // Mark all required fields as touched
     const newTouched = {};
     requiredFields.forEach(field => { newTouched[field] = true; });
     setTouched(prev => ({ ...prev, ...newTouched }));
 
-    // Validate each field
     Object.keys(formData).forEach(field => {
       const error = validateField(field, formData[field]);
       if (error) newErrors[field] = error;
@@ -244,26 +250,16 @@ const CustomerForm = ({ onSuccess, onCancel, initialData = null, mode = 'create'
     return Object.keys(newErrors).length === 0;
   };
 
-  // Check if form is valid for submit button state
   const isFormValid = () => {
-    const requiredFields = [
-      'full_name', 'email', 'phone', 'address_street',
-      'address_city', 'address_postal_code', 'address_country'
-    ];
-
-    const allRequiredFilled = requiredFields.every(
-      field => formData[field] && formData[field].trim()
-    );
-
+    const requiredFields = ['tipo_documento', 'numero_documento', 'nombre_razon_social', 'tipo_contribuyente', 'correo'];
+    const allRequiredFilled = requiredFields.every(field => formData[field] && formData[field].trim());
     const noErrors = Object.values(errors).every(e => !e);
-    const emailOk = emailStatus !== 'taken';
-
-    return allRequiredFilled && noErrors && emailOk;
+    const uniquenessOk = documentoStatus !== 'taken' && correoStatus !== 'taken';
+    return allRequiredFilled && noErrors && uniquenessOk;
   };
 
-  // CA-6: Check if there are actual changes (for edit mode)
   const hasChanges = () => {
-    if (!initialData) return true; // In create mode, always allow submit
+    if (!initialData) return true;
     return Object.keys(formData).some(key => {
       const currentValue = formData[key]?.trim() || '';
       const initialValue = initialData[key]?.trim() || '';
@@ -271,15 +267,13 @@ const CustomerForm = ({ onSuccess, onCancel, initialData = null, mode = 'create'
     });
   };
 
-  // CA-9: Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSubmitError(null);
 
     if (!validateAll()) return;
-    if (emailStatus === 'taken') return;
+    if (documentoStatus === 'taken' || correoStatus === 'taken') return;
 
-    // CA-6: Check for changes in edit mode
     if (mode === 'edit' && !hasChanges()) {
       setSubmitError('No hay cambios para guardar');
       return;
@@ -288,20 +282,22 @@ const CustomerForm = ({ onSuccess, onCancel, initialData = null, mode = 'create'
     setIsSubmitting(true);
 
     try {
-      // Build clean data
       const submitData = {
-        full_name: formData.full_name.trim(),
-        email: formData.email.trim(),
-        phone: formData.phone.trim(),
-        secondary_phone: formData.secondary_phone?.trim() || null,
-        address_street: formData.address_street.trim(),
-        address_city: formData.address_city.trim(),
-        address_postal_code: formData.address_postal_code.trim(),
-        address_country: formData.address_country.trim(),
+        tipo_documento: formData.tipo_documento,
+        numero_documento: formData.numero_documento.trim(),
+        nombre_razon_social: formData.nombre_razon_social.trim(),
+        tipo_contribuyente: formData.tipo_contribuyente,
+        correo: formData.correo.trim(),
+        telefono_movil: formData.telefono_movil?.trim() || null,
+        pais: formData.pais?.trim() || 'Colombia',
+        departamento: formData.departamento?.trim() || null,
+        municipio_ciudad: formData.municipio_ciudad?.trim() || null,
+        direccion: formData.direccion?.trim() || null,
+        regimen_fiscal: formData.regimen_fiscal || null,
+        responsabilidad_tributaria: formData.responsabilidad_tributaria || null,
         notes: formData.notes?.trim() || null,
       };
 
-      // US-CUST-005: Use update in edit mode, create in create mode
       let result;
       if (mode === 'edit' && initialData?.id) {
         result = await customerService.updateCustomer(initialData.id, submitData);
@@ -315,11 +311,13 @@ const CustomerForm = ({ onSuccess, onCancel, initialData = null, mode = 'create'
         setSubmitError(result.error?.message || (mode === 'edit' ? 'Error al actualizar cliente' : 'Error al registrar cliente'));
       }
     } catch (error) {
-      if (error.error?.code === 'DUPLICATE_EMAIL') {
-        setErrors(prev => ({ ...prev, email: 'Este email ya está registrado por otro cliente' }));
-        setEmailStatus('taken');
+      if (error.error?.code === 'DUPLICATE_DOCUMENTO') {
+        setErrors(prev => ({ ...prev, numero_documento: 'Este número de documento ya está registrado por otro cliente' }));
+        setDocumentoStatus('taken');
+      } else if (error.error?.code === 'DUPLICATE_CORREO') {
+        setErrors(prev => ({ ...prev, correo: 'Este correo ya está registrado por otro cliente' }));
+        setCorreoStatus('taken');
       } else if (error.error?.details) {
-        // Map backend validation errors to form fields
         const backendErrors = {};
         Object.entries(error.error.details).forEach(([field, messages]) => {
           backendErrors[field] = Array.isArray(messages) ? messages[0] : messages;
@@ -333,7 +331,6 @@ const CustomerForm = ({ onSuccess, onCancel, initialData = null, mode = 'create'
     }
   };
 
-  // CA-10: Handle cancel
   const handleCancel = () => {
     if (isFormDirty()) {
       setShowCancelDialog(true);
@@ -342,262 +339,321 @@ const CustomerForm = ({ onSuccess, onCancel, initialData = null, mode = 'create'
     }
   };
 
-  // Email status adornment for CA-5
-  const getEmailAdornment = () => {
-    if (emailStatus === 'checking') {
-      return (
-        <InputAdornment position="end">
-          <CircularProgress size={20} />
-        </InputAdornment>
-      );
-    }
-    if (emailStatus === 'available') {
-      return (
-        <InputAdornment position="end">
-          <CheckIcon sx={{ color: 'success.main' }} />
-        </InputAdornment>
-      );
-    }
-    if (emailStatus === 'taken') {
-      return (
-        <InputAdornment position="end">
-          <CloseIcon sx={{ color: 'error.main' }} />
-        </InputAdornment>
-      );
-    }
+  const getStatusAdornment = (status) => {
+    if (status === 'checking') return <InputAdornment position="end"><CircularProgress size={20} /></InputAdornment>;
+    if (status === 'available') return <InputAdornment position="end"><CheckIcon sx={{ color: 'success.main' }} /></InputAdornment>;
+    if (status === 'taken') return <InputAdornment position="end"><CloseIcon sx={{ color: 'error.main' }} /></InputAdornment>;
     return null;
   };
 
   return (
     <Box component="form" onSubmit={handleSubmit} noValidate>
-      {/* Submit error */}
       {submitError && (
         <Paper sx={{ p: 2, mb: 3, bgcolor: 'error.light', color: 'error.contrastText' }}>
           <Typography variant="body2">{submitError}</Typography>
         </Paper>
       )}
 
-      {/* CA-2: Información Personal */}
+      {/* Sección 1: Identificación */}
       <Paper sx={{ p: 3, mb: 3 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-          <PersonIcon sx={{ mr: 1, color: 'primary.main' }} />
-          <Typography variant="h6">Información Personal</Typography>
+          <BadgeIcon sx={{ mr: 1, color: 'primary.main' }} />
+          <Typography variant="h6">Identificación</Typography>
         </Box>
         <Divider sx={{ mb: 3 }} />
 
         <Grid container spacing={3}>
-          <Grid item xs={12}>
+          <Grid item xs={12} md={3}>
             <TextField
               required
               fullWidth
-              label="Nombre Completo"
-              name="full_name"
-              value={formData.full_name}
+              select
+              label="Tipo de Documento"
+              name="tipo_documento"
+              value={formData.tipo_documento}
               onChange={handleChange}
               onBlur={handleBlur}
-              error={touched.full_name && !!errors.full_name}
-              helperText={touched.full_name && errors.full_name}
-              inputProps={{ maxLength: 200 }}
-              placeholder="Ej: Juan Pérez García"
+              error={touched.tipo_documento && !!errors.tipo_documento}
+              helperText={touched.tipo_documento && errors.tipo_documento}
+            >
+              {TIPOS_DOCUMENTO.map(tipo => (
+                <MenuItem key={tipo} value={tipo}>{tipo}</MenuItem>
+              ))}
+            </TextField>
+          </Grid>
+
+          <Grid item xs={12} md={4}>
+            <TextField
+              required
+              fullWidth
+              label="Número de Documento"
+              name="numero_documento"
+              value={formData.numero_documento}
+              onChange={handleChange}
+              onBlur={handleBlur}
+              error={touched.numero_documento && !!errors.numero_documento}
+              helperText={
+                touched.numero_documento && errors.numero_documento ? (
+                  <>
+                    {errors.numero_documento}
+                    {documentoStatus === 'taken' && existingByDocumento && (
+                      <>
+                        {' - '}
+                        <Link
+                          component="button"
+                          type="button"
+                          variant="body2"
+                          onClick={() => window.open(`/customers/${existingByDocumento.id}`, '_blank')}
+                        >
+                          Ver cliente existente
+                        </Link>
+                      </>
+                    )}
+                  </>
+                ) : (formData.tipo_documento === 'NIT' ? 'Ej: 900123456-1' : '')
+              }
+              InputProps={{ endAdornment: getStatusAdornment(documentoStatus) }}
+              inputProps={{ maxLength: 20 }}
+              placeholder={formData.tipo_documento === 'NIT' ? '900123456-1' : '1234567890'}
             />
+          </Grid>
+
+          <Grid item xs={12} md={5}>
+            <TextField
+              required
+              fullWidth
+              label="Nombre / Razón Social"
+              name="nombre_razon_social"
+              value={formData.nombre_razon_social}
+              onChange={handleChange}
+              onBlur={handleBlur}
+              error={touched.nombre_razon_social && !!errors.nombre_razon_social}
+              helperText={touched.nombre_razon_social && errors.nombre_razon_social}
+              inputProps={{ maxLength: 200 }}
+              placeholder={formData.tipo_contribuyente === 'Persona Jurídica' ? 'Empresa S.A.S.' : 'Juan Pérez García'}
+            />
+          </Grid>
+
+          <Grid item xs={12} md={4}>
+            <TextField
+              required
+              fullWidth
+              select
+              label="Tipo de Contribuyente"
+              name="tipo_contribuyente"
+              value={formData.tipo_contribuyente}
+              onChange={handleChange}
+              onBlur={handleBlur}
+              error={touched.tipo_contribuyente && !!errors.tipo_contribuyente}
+              helperText={touched.tipo_contribuyente && errors.tipo_contribuyente}
+            >
+              {TIPOS_CONTRIBUYENTE.map(tipo => (
+                <MenuItem key={tipo} value={tipo}>{tipo}</MenuItem>
+              ))}
+            </TextField>
+          </Grid>
+        </Grid>
+      </Paper>
+
+      {/* Sección 2: Información Fiscal */}
+      <Paper sx={{ p: 3, mb: 3 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+          <FiscalIcon sx={{ mr: 1, color: 'primary.main' }} />
+          <Typography variant="h6">Información Fiscal <Typography component="span" variant="body2" color="text.secondary">(opcional)</Typography></Typography>
+        </Box>
+        <Divider sx={{ mb: 3 }} />
+
+        <Grid container spacing={3}>
+          <Grid item xs={12} md={4}>
+            <TextField
+              fullWidth
+              select
+              label="Régimen Fiscal"
+              name="regimen_fiscal"
+              value={formData.regimen_fiscal}
+              onChange={handleChange}
+            >
+              <MenuItem value="">— Sin especificar —</MenuItem>
+              {REGIMENES_FISCALES.filter(r => r).map(r => (
+                <MenuItem key={r} value={r}>{r}</MenuItem>
+              ))}
+            </TextField>
           </Grid>
 
           <Grid item xs={12} md={6}>
             <TextField
-              required
               fullWidth
-              label="Email"
-              name="email"
-              type="email"
-              value={formData.email}
+              select
+              label="Responsabilidad Tributaria"
+              name="responsabilidad_tributaria"
+              value={formData.responsabilidad_tributaria}
               onChange={handleChange}
-              onBlur={handleBlur}
-              error={touched.email && !!errors.email}
-              helperText={
-                touched.email && errors.email
-                  ? (
-                    <>
-                      {errors.email}
-                      {emailStatus === 'taken' && existingCustomer && (
-                        <>
-                          {' - '}
-                          <Link
-                            component="button"
-                            type="button"
-                            variant="body2"
-                            onClick={() => window.open(`/customers/${existingCustomer.id}`, '_blank')}
-                          >
-                            Ver cliente existente
-                          </Link>
-                        </>
-                      )}
-                    </>
-                  )
-                  : ''
-              }
-              InputProps={{
-                endAdornment: getEmailAdornment(),
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <EmailIcon sx={{ color: 'action.active' }} />
-                  </InputAdornment>
-                ),
-              }}
-              inputProps={{ maxLength: 100 }}
-              placeholder="correo@ejemplo.com"
-            />
-          </Grid>
-
-          <Grid item xs={12} md={3}>
-            <TextField
-              required
-              fullWidth
-              label="Teléfono Principal"
-              name="phone"
-              value={formData.phone}
-              onChange={handleChange}
-              onBlur={handleBlur}
-              error={touched.phone && !!errors.phone}
-              helperText={touched.phone && errors.phone}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <PhoneIcon sx={{ color: 'action.active' }} />
-                  </InputAdornment>
-                ),
-              }}
-              inputProps={{ maxLength: 20 }}
-              placeholder="(555) 123-4567"
-            />
-          </Grid>
-
-          <Grid item xs={12} md={3}>
-            <TextField
-              fullWidth
-              label="Teléfono Secundario"
-              name="secondary_phone"
-              value={formData.secondary_phone}
-              onChange={handleChange}
-              onBlur={handleBlur}
-              error={touched.secondary_phone && !!errors.secondary_phone}
-              helperText={touched.secondary_phone && errors.secondary_phone}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <PhoneIcon sx={{ color: 'action.active' }} />
-                  </InputAdornment>
-                ),
-              }}
-              inputProps={{ maxLength: 20 }}
-              placeholder="(Opcional)"
-            />
+            >
+              <MenuItem value="">— Sin especificar —</MenuItem>
+              {RESPONSABILIDADES_TRIBUTARIAS.filter(r => r).map(r => (
+                <MenuItem key={r} value={r}>{r}</MenuItem>
+              ))}
+            </TextField>
           </Grid>
         </Grid>
       </Paper>
 
-      {/* CA-3: Dirección Completa */}
+      {/* Sección 3: Ubicación */}
       <Paper sx={{ p: 3, mb: 3 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-          <AddressIcon sx={{ mr: 1, color: 'primary.main' }} />
-          <Typography variant="h6">Dirección</Typography>
+          <LocationIcon sx={{ mr: 1, color: 'primary.main' }} />
+          <Typography variant="h6">Ubicación <Typography component="span" variant="body2" color="text.secondary">(opcional)</Typography></Typography>
         </Box>
         <Divider sx={{ mb: 3 }} />
 
         <Grid container spacing={3}>
-          <Grid item xs={12}>
-            <TextField
-              required
-              fullWidth
-              label="Calle / Dirección"
-              name="address_street"
-              value={formData.address_street}
-              onChange={handleChange}
-              onBlur={handleBlur}
-              error={touched.address_street && !!errors.address_street}
-              helperText={touched.address_street && errors.address_street}
-              inputProps={{ maxLength: 300 }}
-              placeholder="Calle, número, colonia, referencias"
-            />
-          </Grid>
-
           <Grid item xs={12} md={4}>
             <TextField
-              required
-              fullWidth
-              label="Ciudad"
-              name="address_city"
-              value={formData.address_city}
-              onChange={handleChange}
-              onBlur={handleBlur}
-              error={touched.address_city && !!errors.address_city}
-              helperText={touched.address_city && errors.address_city}
-              inputProps={{ maxLength: 100 }}
-              placeholder="Ej: Ciudad de México"
-            />
-          </Grid>
-
-          <Grid item xs={12} md={4}>
-            <TextField
-              required
-              fullWidth
-              label="Código Postal"
-              name="address_postal_code"
-              value={formData.address_postal_code}
-              onChange={handleChange}
-              onBlur={handleBlur}
-              error={touched.address_postal_code && !!errors.address_postal_code}
-              helperText={touched.address_postal_code && errors.address_postal_code}
-              inputProps={{ maxLength: 20 }}
-              placeholder="Ej: 06600"
-            />
-          </Grid>
-
-          <Grid item xs={12} md={4}>
-            <TextField
-              required
               fullWidth
               label="País"
-              name="address_country"
-              value={formData.address_country}
+              name="pais"
+              value={formData.pais}
               onChange={handleChange}
               onBlur={handleBlur}
-              error={touched.address_country && !!errors.address_country}
-              helperText={touched.address_country && errors.address_country}
+              error={touched.pais && !!errors.pais}
+              helperText={touched.pais && errors.pais}
               inputProps={{ maxLength: 100 }}
+            />
+          </Grid>
+
+          <Grid item xs={12} md={4}>
+            <TextField
+              fullWidth
+              select
+              label="Departamento"
+              name="departamento"
+              value={formData.departamento}
+              onChange={handleChange}
+            >
+              <MenuItem value="">— Seleccionar —</MenuItem>
+              {DEPARTAMENTOS.map(dep => (
+                <MenuItem key={dep} value={dep}>{dep}</MenuItem>
+              ))}
+            </TextField>
+          </Grid>
+
+          <Grid item xs={12} md={4}>
+            <TextField
+              fullWidth
+              label="Municipio / Ciudad"
+              name="municipio_ciudad"
+              value={formData.municipio_ciudad}
+              onChange={handleChange}
+              onBlur={handleBlur}
+              error={touched.municipio_ciudad && !!errors.municipio_ciudad}
+              helperText={touched.municipio_ciudad && errors.municipio_ciudad}
+              inputProps={{ maxLength: 100 }}
+              placeholder="Ej: Medellín"
+            />
+          </Grid>
+
+          <Grid item xs={12}>
+            <TextField
+              fullWidth
+              label="Dirección"
+              name="direccion"
+              value={formData.direccion}
+              onChange={handleChange}
+              onBlur={handleBlur}
+              error={touched.direccion && !!errors.direccion}
+              helperText={touched.direccion && errors.direccion}
+              inputProps={{ maxLength: 300 }}
+              placeholder="Calle / Carrera, número, barrio"
             />
           </Grid>
         </Grid>
       </Paper>
 
-      {/* CA-4: Información Adicional */}
+      {/* Sección 4: Contacto y Notas */}
       <Paper sx={{ p: 3, mb: 3 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-          <NotesIcon sx={{ mr: 1, color: 'primary.main' }} />
-          <Typography variant="h6">Información Adicional</Typography>
+          <ContactIcon sx={{ mr: 1, color: 'primary.main' }} />
+          <Typography variant="h6">Contacto y Notas</Typography>
         </Box>
         <Divider sx={{ mb: 3 }} />
 
-        <TextField
-          fullWidth
-          multiline
-          rows={3}
-          label="Notas"
-          name="notes"
-          value={formData.notes}
-          onChange={handleChange}
-          onBlur={handleBlur}
-          error={touched.notes && !!errors.notes}
-          helperText={
-            touched.notes && errors.notes
-              ? errors.notes
-              : `${formData.notes.length}/500 caracteres`
-          }
-          inputProps={{ maxLength: 500 }}
-          placeholder="Información adicional sobre el cliente..."
-        />
+        <Grid container spacing={3}>
+          <Grid item xs={12} md={4}>
+            <TextField
+              fullWidth
+              label="Teléfono Móvil"
+              name="telefono_movil"
+              value={formData.telefono_movil}
+              onChange={handleChange}
+              onBlur={handleBlur}
+              error={touched.telefono_movil && !!errors.telefono_movil}
+              helperText={touched.telefono_movil && errors.telefono_movil}
+              inputProps={{ maxLength: 20 }}
+              placeholder="+57 300 123 4567"
+            />
+          </Grid>
+
+          <Grid item xs={12} md={8}>
+            <TextField
+              required
+              fullWidth
+              label="Correo Electrónico"
+              name="correo"
+              type="email"
+              value={formData.correo}
+              onChange={handleChange}
+              onBlur={handleBlur}
+              error={touched.correo && !!errors.correo}
+              helperText={
+                touched.correo && errors.correo ? (
+                  <>
+                    {errors.correo}
+                    {correoStatus === 'taken' && existingByCorreo && (
+                      <>
+                        {' - '}
+                        <Link
+                          component="button"
+                          type="button"
+                          variant="body2"
+                          onClick={() => window.open(`/customers/${existingByCorreo.id}`, '_blank')}
+                        >
+                          Ver cliente existente
+                        </Link>
+                      </>
+                    )}
+                  </>
+                ) : ''
+              }
+              InputProps={{ endAdornment: getStatusAdornment(correoStatus) }}
+              inputProps={{ maxLength: 100 }}
+              placeholder="correo@empresa.com"
+            />
+          </Grid>
+
+          <Grid item xs={12}>
+            <TextField
+              fullWidth
+              multiline
+              rows={3}
+              label="Notas"
+              name="notes"
+              value={formData.notes}
+              onChange={handleChange}
+              onBlur={handleBlur}
+              error={touched.notes && !!errors.notes}
+              helperText={
+                touched.notes && errors.notes
+                  ? errors.notes
+                  : `${formData.notes.length}/500 caracteres`
+              }
+              inputProps={{ maxLength: 500 }}
+              placeholder="Información adicional sobre el cliente..."
+            />
+          </Grid>
+        </Grid>
       </Paper>
 
-      {/* CA-9: Action Buttons */}
+      {/* Action Buttons */}
       <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
         <Button
           variant="outlined"
@@ -619,7 +675,7 @@ const CustomerForm = ({ onSuccess, onCancel, initialData = null, mode = 'create'
         </Button>
       </Box>
 
-      {/* CA-10: Cancel Confirmation Dialog */}
+      {/* Cancel Confirmation Dialog */}
       <Dialog open={showCancelDialog} onClose={() => setShowCancelDialog(false)}>
         <DialogTitle>Descartar Cambios</DialogTitle>
         <DialogContent>

@@ -118,7 +118,7 @@ const ValueEvolutionChart = () => {
             {data.date}
           </Typography>
           <Typography variant="body2" sx={{ color: 'primary.main', fontWeight: 'bold' }}>
-            Valor: ${data.value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            Valor: {new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(data.value)}
           </Typography>
           <Typography variant="caption" color="text.secondary" display="block">
             Productos: {data.products}

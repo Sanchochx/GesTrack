@@ -110,7 +110,7 @@ const CategoryValueBreakdown = ({ onCategoryClick }) => {
             {data.name}
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            Valor: ${data.value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            Valor: {new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(data.value)}
           </Typography>
           <Typography variant="body2" color="text.secondary">
             Porcentaje: {data.percentage.toFixed(2)}%

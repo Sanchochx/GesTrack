@@ -178,7 +178,7 @@ const InventoryValueWidget = ({ period = '7d' }) => {
 
         {/* Valor Principal */}
         <Typography variant="h3" component="div" sx={{ fontWeight: 'bold', color: 'primary.main', mb: 1 }}>
-          {valueData?.formatted_value || '$0.00'}
+          {valueData?.formatted_value || 'COP 0'}
         </Typography>
 
         {/* Indicador de Cambio */}

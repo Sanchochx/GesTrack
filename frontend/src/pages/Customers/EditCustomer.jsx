@@ -67,7 +67,7 @@ const EditCustomer = () => {
   const handleSuccess = (updatedCustomer) => {
     setSnackbar({
       open: true,
-      message: `Cliente ${updatedCustomer.full_name} actualizado correctamente`,
+      message: `Cliente ${updatedCustomer.nombre_razon_social} actualizado correctamente`,
       severity: 'success',
     });
 
@@ -172,7 +172,7 @@ const EditCustomer = () => {
           color="inherit"
           onClick={() => navigate(`/customers/${id}`)}
         >
-          {customer.full_name}
+          {customer.nombre_razon_social}
         </Link>
         <Typography
           sx={{ display: 'flex', alignItems: 'center' }}
@@ -186,7 +186,7 @@ const EditCustomer = () => {
       {/* CA-2: Page Header */}
       <Box sx={{ mb: 4 }}>
         <Typography variant="h4" component="h1" gutterBottom>
-          Editar Cliente: {customer.full_name}
+          Editar Cliente: {customer.nombre_razon_social}
         </Typography>
         <Typography variant="body2" color="textSecondary">
           Modifique los campos que desea actualizar. Los campos marcados con * son obligatorios.

@@ -65,7 +65,7 @@ const CustomerList = () => {
   const [showInactive, setShowInactive] = useState(getInitialShowInactive());
 
   // Sort state
-  const [sortField, setSortField] = useState('full_name');
+  const [sortField, setSortField] = useState('nombre_razon_social');
   const [sortOrder, setSortOrder] = useState('asc');
 
   // UI state

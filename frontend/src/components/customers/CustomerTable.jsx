@@ -55,7 +55,7 @@ const CustomerTable = ({
   onItemsPerPageChange,
   onSort,
   onToggleActive,
-  onDelete,  // US-CUST-006: Delete handler
+  onDelete,
 }) => {
   const navigate = useNavigate();
   const theme = useTheme();
@@ -98,18 +98,15 @@ const CustomerTable = ({
         navigate(`/customers/${id}/edit`);
         break;
       case 'orders':
-        // Placeholder - Orders module not yet built
         navigate(`/customers/${id}`);
         break;
       case 'new-order':
-        // Placeholder - Orders module not yet built
         navigate(`/customers/${id}`);
         break;
       case 'toggle-active':
         onToggleActive(selectedCustomer);
         break;
       case 'delete':
-        // US-CUST-006: Delete customer (Admin only)
         onDelete?.(selectedCustomer);
         break;
     }
@@ -126,10 +123,10 @@ const CustomerTable = ({
   };
 
   const formatPrice = (price) => {
-    return new Intl.NumberFormat('es-MX', {
+    return new Intl.NumberFormat('es-CO', {
       style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 2,
+      currency: 'COP',
+      minimumFractionDigits: 0,
     }).format(price);
   };
 
@@ -155,10 +152,10 @@ const CustomerTable = ({
   };
 
   const columns = [
-    { id: 'full_name', label: 'Nombre', sortable: true },
-    { id: 'email', label: 'Email', sortable: true },
-    { id: 'phone', label: 'Teléfono', sortable: false },
-    { id: 'address_city', label: 'Ciudad', sortable: true },
+    { id: 'nombre_razon_social', label: 'Nombre / Razón Social', sortable: true },
+    { id: 'correo', label: 'Correo', sortable: true },
+    { id: 'telefono_movil', label: 'Teléfono', sortable: false },
+    { id: 'municipio_ciudad', label: 'Ciudad', sortable: true },
     { id: 'total_purchases', label: 'Total Compras', sortable: false },
     { id: 'last_purchase', label: 'Última Compra', sortable: false },
     { id: 'status', label: 'Estado', sortable: false },
@@ -248,59 +245,72 @@ const CustomerTable = ({
                     }}
                     onClick={() => handleRowClick(customer.id)}
                   >
-                    {/* Name + Category Badge */}
+                    {/* Nombre + Documento + Categoría */}
                     <TableCell>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <Box>
-                          <Typography variant="body1" fontWeight="medium">
-                            {customer.full_name}
+                      <Box>
+                        <Typography variant="body1" fontWeight="medium">
+                          {customer.nombre_razon_social}
+                        </Typography>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 0.5 }}>
+                          <Chip
+                            label={customer.tipo_documento}
+                            size="small"
+                            variant="outlined"
+                            sx={{ fontSize: '0.65rem', height: 18 }}
+                          />
+                          <Typography variant="caption" color="text.secondary">
+                            {customer.numero_documento}
                           </Typography>
-                          {getCategoryChip(customer.customer_category)}
                         </Box>
+                        {getCategoryChip(customer.customer_category)}
                       </Box>
                     </TableCell>
 
-                    {/* Email */}
+                    {/* Correo */}
                     <TableCell>
                       <Typography
                         variant="body2"
                         component="a"
-                        href={`mailto:${customer.email}`}
+                        href={`mailto:${customer.correo}`}
                         onClick={(e) => e.stopPropagation()}
                         sx={{ color: 'primary.main', textDecoration: 'none', '&:hover': { textDecoration: 'underline' } }}
                       >
-                        {customer.email}
+                        {customer.correo}
                       </Typography>
                     </TableCell>
 
-                    {/* Phone */}
+                    {/* Teléfono */}
                     <TableCell>
-                      <Typography
-                        variant="body2"
-                        component="a"
-                        href={`tel:${customer.phone}`}
-                        onClick={(e) => e.stopPropagation()}
-                        sx={{ color: 'primary.main', textDecoration: 'none', '&:hover': { textDecoration: 'underline' } }}
-                      >
-                        {customer.phone}
-                      </Typography>
+                      {customer.telefono_movil ? (
+                        <Typography
+                          variant="body2"
+                          component="a"
+                          href={`tel:${customer.telefono_movil}`}
+                          onClick={(e) => e.stopPropagation()}
+                          sx={{ color: 'primary.main', textDecoration: 'none', '&:hover': { textDecoration: 'underline' } }}
+                        >
+                          {customer.telefono_movil}
+                        </Typography>
+                      ) : (
+                        <Typography variant="body2" color="text.disabled">—</Typography>
+                      )}
                     </TableCell>
 
-                    {/* City */}
+                    {/* Ciudad */}
                     <TableCell>
                       <Typography variant="body2">
-                        {customer.address_city}
+                        {customer.municipio_ciudad || '—'}
                       </Typography>
                     </TableCell>
 
-                    {/* Total Purchases */}
+                    {/* Total Compras */}
                     <TableCell>
                       <Typography variant="body2" fontWeight="medium">
                         {formatPrice(customer.total_purchases)}
                       </Typography>
                     </TableCell>
 
-                    {/* Last Purchase */}
+                    {/* Última Compra */}
                     <TableCell>
                       <Tooltip title={lastPurchase.exactDate || ''}>
                         <Typography
@@ -312,7 +322,7 @@ const CustomerTable = ({
                       </Tooltip>
                     </TableCell>
 
-                    {/* Status */}
+                    {/* Estado */}
                     <TableCell>
                       <Chip
                         label={customer.is_active ? 'Activo' : 'Inactivo'}
@@ -322,7 +332,7 @@ const CustomerTable = ({
                       />
                     </TableCell>
 
-                    {/* Actions */}
+                    {/* Acciones */}
                     <TableCell align="right" onClick={(e) => e.stopPropagation()}>
                       <Tooltip title="Ver perfil">
                         <IconButton
@@ -333,26 +343,28 @@ const CustomerTable = ({
                           <VisibilityIcon fontSize="small" />
                         </IconButton>
                       </Tooltip>
-                      <Tooltip title="Enviar email">
+                      <Tooltip title="Enviar correo">
                         <IconButton
                           size="small"
                           color="primary"
                           component="a"
-                          href={`mailto:${customer.email}`}
+                          href={`mailto:${customer.correo}`}
                         >
                           <EmailIcon fontSize="small" />
                         </IconButton>
                       </Tooltip>
-                      <Tooltip title="Llamar">
-                        <IconButton
-                          size="small"
-                          color="primary"
-                          component="a"
-                          href={`tel:${customer.phone}`}
-                        >
-                          <PhoneIcon fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
+                      {customer.telefono_movil && (
+                        <Tooltip title="Llamar">
+                          <IconButton
+                            size="small"
+                            color="primary"
+                            component="a"
+                            href={`tel:${customer.telefono_movil}`}
+                          >
+                            <PhoneIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                      )}
                       <IconButton
                         size="small"
                         onClick={(e) => handleMenuOpen(e, customer)}
@@ -431,7 +443,6 @@ const CustomerTable = ({
             {selectedCustomer?.is_active ? 'Inactivar' : 'Activar'}
           </ListItemText>
         </MenuItem>
-        {/* US-CUST-006 CA-9: Delete option (Admin only) */}
         {isAdmin && (
           <>
             <Divider />

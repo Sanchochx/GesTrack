@@ -150,7 +150,7 @@ const CustomerCardView = ({
                         maxWidth: 200,
                       }}
                     >
-                      {customer.full_name}
+                      {customer.nombre_razon_social}
                     </Typography>
                     <Box sx={{ display: 'flex', gap: 1, mt: 0.5 }}>
                       {getCategoryChip(customer.customer_category)}
@@ -179,7 +179,7 @@ const CustomerCardView = ({
                   <Typography
                     variant="body2"
                     component="a"
-                    href={`mailto:${customer.email}`}
+                    href={`mailto:${customer.correo}`}
                     onClick={(e) => e.stopPropagation()}
                     sx={{
                       color: 'primary.main',
@@ -190,7 +190,7 @@ const CustomerCardView = ({
                       '&:hover': { textDecoration: 'underline' },
                     }}
                   >
-                    {customer.email}
+                    {customer.correo}
                   </Typography>
                 </Box>
 
@@ -199,7 +199,7 @@ const CustomerCardView = ({
                   <Typography
                     variant="body2"
                     component="a"
-                    href={`tel:${customer.phone}`}
+                    href={`tel:${customer.telefono_movil}`}
                     onClick={(e) => e.stopPropagation()}
                     sx={{
                       color: 'primary.main',
@@ -207,14 +207,14 @@ const CustomerCardView = ({
                       '&:hover': { textDecoration: 'underline' },
                     }}
                   >
-                    {customer.phone}
+                    {customer.telefono_movil || '—'}
                   </Typography>
                 </Box>
 
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                   <CityIcon fontSize="small" color="action" />
                   <Typography variant="body2" color="text.secondary">
-                    {customer.address_city}
+                    {customer.municipio_ciudad || '—'}
                   </Typography>
                 </Box>
               </CardContent>

@@ -15,64 +15,57 @@ import {
 } from '@mui/material';
 import {
   Home as HomeIcon,
-  People as CustomersIcon,
-  PersonAdd as AddIcon,
+  ShoppingCart as OrdersIcon,
+  AddShoppingCart as AddOrderIcon,
 } from '@mui/icons-material';
-import CustomerForm from '../../components/forms/CustomerForm';
+import OrderForm from '../../components/forms/OrderForm';
 
 /**
- * CreateCustomer Page
- * US-CUST-001: Registrar Nuevo Cliente
+ * CreateOrder Page
+ * US-ORD-001: Crear Pedido
  *
- * CA-1: Formulario accesible desde "+ Nuevo Cliente"
- * CA-9: Confirmación y opciones post-creación
+ * CA-8: Guardado y confirmación
+ * CA-9: Manejo de errores
  */
-const CreateCustomer = () => {
+const CreateOrder = () => {
   const navigate = useNavigate();
 
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
-  const [createdCustomer, setCreatedCustomer] = useState(null);
+  const [createdOrder, setCreatedOrder] = useState(null);
+  const [successMessage, setSuccessMessage] = useState('');
 
   /**
-   * CA-9: Handle successful customer creation
+   * CA-8: Handle successful order creation
    */
-  const handleSuccess = (customer) => {
-    setCreatedCustomer(customer);
+  const handleSuccess = (order, message) => {
+    setCreatedOrder(order);
+    setSuccessMessage(message || `Pedido ${order.order_number} creado exitosamente`);
     setShowSuccessDialog(true);
   };
 
   /**
-   * Navigate to customer profile
+   * CA-8: Navigate to order details
    */
-  const handleViewCustomer = () => {
-    if (createdCustomer) {
-      navigate(`/customers/${createdCustomer.id}`);
-    }
+  const handleViewOrder = () => {
+    // TODO: Navigate to order detail when implemented
+    // For now, go to orders list placeholder
+    navigate('/orders');
   };
 
   /**
-   * CA-9: Register another customer
+   * CA-8: Create another order
    */
   const handleCreateAnother = () => {
     setShowSuccessDialog(false);
-    setCreatedCustomer(null);
+    setCreatedOrder(null);
     window.location.reload();
-  };
-
-  /**
-   * Go to customer list
-   */
-  const handleGoToList = () => {
-    navigate('/customers', {
-      state: { message: 'Cliente registrado exitosamente' }
-    });
   };
 
   /**
    * Handle cancel
    */
   const handleCancel = () => {
-    navigate('/customers');
+    navigate('/dashboard');
   };
 
   return (
@@ -92,52 +85,66 @@ const CreateCustomer = () => {
           underline="hover"
           sx={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}
           color="inherit"
-          onClick={() => navigate('/customers')}
+          onClick={() => navigate('/orders')}
         >
-          <CustomersIcon sx={{ mr: 0.5 }} fontSize="small" />
-          Clientes
+          <OrdersIcon sx={{ mr: 0.5 }} fontSize="small" />
+          Pedidos
         </Link>
         <Typography
           sx={{ display: 'flex', alignItems: 'center' }}
           color="text.primary"
         >
-          <AddIcon sx={{ mr: 0.5 }} fontSize="small" />
-          Registrar Cliente
+          <AddOrderIcon sx={{ mr: 0.5 }} fontSize="small" />
+          Nuevo Pedido
         </Typography>
       </Breadcrumbs>
 
-      {/* CA-1: Page Header */}
+      {/* Page Header */}
       <Box sx={{ mb: 4 }}>
         <Typography variant="h4" component="h1" gutterBottom>
-          Registrar Nuevo Cliente
+          Crear Nuevo Pedido
         </Typography>
         <Typography variant="body2" color="textSecondary">
-          Complete el formulario para registrar un nuevo cliente en el sistema.
-          Los campos marcados con * son obligatorios.
+          Seleccione un cliente, agregue productos y configure los detalles del pedido.
         </Typography>
       </Box>
 
-      {/* Customer Form */}
-      <CustomerForm
+      {/* Order Form */}
+      <OrderForm
         onSuccess={handleSuccess}
         onCancel={handleCancel}
       />
 
-      {/* CA-9: Success Dialog */}
+      {/* CA-8: Success Dialog */}
       <Dialog
         open={showSuccessDialog}
-        onClose={handleGoToList}
+        onClose={handleCreateAnother}
         maxWidth="sm"
         fullWidth
       >
         <DialogTitle>
-          Cliente Registrado Exitosamente
+          Pedido Creado Exitosamente
         </DialogTitle>
         <DialogContent>
           <Alert severity="success" sx={{ mb: 2 }}>
-            El cliente <strong>{createdCustomer?.nombre_razon_social}</strong> ha sido
-            registrado correctamente en el sistema.
+            {successMessage}
           </Alert>
+          {createdOrder && (
+            <Box sx={{ mb: 2 }}>
+              <Typography variant="body2" color="textSecondary" gutterBottom>
+                <strong>Pedido:</strong> {createdOrder.order_number}
+              </Typography>
+              <Typography variant="body2" color="textSecondary" gutterBottom>
+                <strong>Cliente:</strong> {createdOrder.customer?.nombre_razon_social}
+              </Typography>
+              <Typography variant="body2" color="textSecondary" gutterBottom>
+                <strong>Total:</strong> {new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(createdOrder.total || 0)}
+              </Typography>
+              <Typography variant="body2" color="textSecondary">
+                <strong>Items:</strong> {createdOrder.items_count} producto{createdOrder.items_count !== 1 ? 's' : ''}
+              </Typography>
+            </Box>
+          )}
           <Typography variant="body2" color="textSecondary">
             ¿Qué desea hacer a continuación?
           </Typography>
@@ -146,24 +153,24 @@ const CreateCustomer = () => {
           <Button
             fullWidth
             variant="contained"
-            onClick={handleViewCustomer}
-            disabled={!createdCustomer}
+            onClick={handleViewOrder}
+            disabled={!createdOrder}
           >
-            Ver Perfil del Cliente
+            Ver Detalles del Pedido
           </Button>
           <Button
             fullWidth
             variant="outlined"
             onClick={handleCreateAnother}
           >
-            Registrar Otro Cliente
+            Crear Otro Pedido
           </Button>
           <Button
             fullWidth
             variant="text"
-            onClick={handleGoToList}
+            onClick={() => navigate('/dashboard')}
           >
-            Ir a Lista de Clientes
+            Ir al Dashboard
           </Button>
         </DialogActions>
       </Dialog>
@@ -171,4 +178,4 @@ const CreateCustomer = () => {
   );
 };
 
-export default CreateCustomer;
+export default CreateOrder;

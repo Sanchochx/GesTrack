@@ -166,9 +166,10 @@ const OutOfStockProducts = () => {
 
   // Format price
   const formatPrice = (price) => {
-    return new Intl.NumberFormat('es-ES', {
+    return new Intl.NumberFormat('es-CO', {
       style: 'currency',
-      currency: 'USD',
+      currency: 'COP',
+      minimumFractionDigits: 0,
     }).format(price || 0);
   };
 

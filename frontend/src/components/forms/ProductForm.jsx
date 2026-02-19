@@ -235,8 +235,8 @@ const ProductForm = ({ initialData = null, onSuccess, onCancel }) => {
       if (costChange >= 20) {
         changes.push({
           field: 'Precio de Costo',
-          oldValue: `$${origCost.toFixed(2)}`,
-          newValue: `$${newCost.toFixed(2)}`,
+          oldValue: `COP ${origCost.toLocaleString('es-CO')}`,
+          newValue: `COP ${newCost.toLocaleString('es-CO')}`,
           changePercent: costChange.toFixed(1),
         });
       }
@@ -249,8 +249,8 @@ const ProductForm = ({ initialData = null, onSuccess, onCancel }) => {
       if (saleChange >= 20) {
         changes.push({
           field: 'Precio de Venta',
-          oldValue: `$${origSale.toFixed(2)}`,
-          newValue: `$${newSale.toFixed(2)}`,
+          oldValue: `COP ${origSale.toLocaleString('es-CO')}`,
+          newValue: `COP ${newSale.toLocaleString('es-CO')}`,
           changePercent: saleChange.toFixed(1),
         });
       }
@@ -917,8 +917,8 @@ const ProductForm = ({ initialData = null, onSuccess, onCancel }) => {
         </DialogTitle>
         <DialogContent>
           <DialogContentText>
-            ⚠️ El precio de venta (${formData.sale_price}) es menor al costo (${formData.cost_price}).
-            Esto generará pérdidas de ${(parseFloat(formData.cost_price) - parseFloat(formData.sale_price)).toFixed(2)} por unidad.
+            ⚠️ El precio de venta (COP {parseFloat(formData.sale_price).toLocaleString('es-CO')}) es menor al costo (COP {parseFloat(formData.cost_price).toLocaleString('es-CO')}).
+            Esto generará pérdidas de COP {(parseFloat(formData.cost_price) - parseFloat(formData.sale_price)).toLocaleString('es-CO')} por unidad.
           </DialogContentText>
           <DialogContentText sx={{ mt: 2, fontWeight: 'bold' }}>
             ¿Estás seguro de que deseas guardar con precio de venta menor al costo?

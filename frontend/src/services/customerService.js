@@ -1,13 +1,12 @@
 import api from './api';
 
 /**
- * Servicio de clientes
+ * Servicio de clientes - Facturación Electrónica Colombia (DIAN)
  * US-CUST-001: Registrar Nuevo Cliente
  */
 const customerService = {
   /**
    * Crea un nuevo cliente
-   * CA-9: Guardado y confirmación
    * @param {Object} customerData - Datos del cliente
    * @returns {Promise} - Respuesta del servidor
    */
@@ -24,17 +23,36 @@ const customerService = {
   },
 
   /**
-   * Verifica si un email ya está registrado
-   * CA-5: Validación de email único
-   * @param {string} email - Email a verificar
+   * Verifica si un número de documento ya está registrado
+   * @param {string} numeroDocumento - Número a verificar
    * @param {string} excludeId - ID de cliente a excluir (para edición)
    * @returns {Promise} - { available: boolean, existing_customer?: {...} }
    */
-  async checkEmail(email, excludeId = null) {
+  async checkDocumento(numeroDocumento, excludeId = null) {
     try {
-      const params = { email };
+      const params = { numero_documento: numeroDocumento };
       if (excludeId) params.exclude_id = excludeId;
-      const response = await api.get('/customers/check-email', { params });
+      const response = await api.get('/customers/check-documento', { params });
+      return response.data;
+    } catch (error) {
+      if (error.response && error.response.data) {
+        throw error.response.data;
+      }
+      throw { success: false, error: { message: 'Error de conexión con el servidor' } };
+    }
+  },
+
+  /**
+   * Verifica si un correo ya está registrado
+   * @param {string} correo - Correo a verificar
+   * @param {string} excludeId - ID de cliente a excluir (para edición)
+   * @returns {Promise} - { available: boolean, existing_customer?: {...} }
+   */
+  async checkCorreo(correo, excludeId = null) {
+    try {
+      const params = { correo };
+      if (excludeId) params.exclude_id = excludeId;
+      const response = await api.get('/customers/check-correo', { params });
       return response.data;
     } catch (error) {
       if (error.response && error.response.data) {

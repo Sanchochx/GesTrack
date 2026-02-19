@@ -112,7 +112,7 @@ const AdjustmentConfirmDialog = ({
                   Valor Anterior
                 </Typography>
                 <Typography variant="body2">
-                  ${valueImpact.previous_value.toFixed(2)}
+                  {new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(valueImpact.previous_value)}
                 </Typography>
               </Grid>
               <Grid item xs={6}>
@@ -120,7 +120,7 @@ const AdjustmentConfirmDialog = ({
                   Nuevo Valor
                 </Typography>
                 <Typography variant="body2">
-                  ${valueImpact.new_value.toFixed(2)}
+                  {new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(valueImpact.new_value)}
                 </Typography>
               </Grid>
               <Grid item xs={12}>
@@ -129,7 +129,7 @@ const AdjustmentConfirmDialog = ({
                   fontWeight="bold"
                   color={valueImpact.impact >= 0 ? 'success.main' : 'error.main'}
                 >
-                  Impacto: {valueImpact.impact >= 0 ? '+' : ''}${valueImpact.impact.toFixed(2)}
+                  Impacto: {valueImpact.impact >= 0 ? '+' : ''}{new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(valueImpact.impact)}
                 </Typography>
               </Grid>
             </Grid>

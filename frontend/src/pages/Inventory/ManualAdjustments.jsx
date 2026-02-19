@@ -209,7 +209,7 @@ const ManualAdjustments = () => {
                       Impacto Monetario:
                     </Typography>
                     <Typography variant="body2">
-                      {adjustmentResult.value_impact.impact >= 0 ? '+' : ''}${adjustmentResult.value_impact.impact.toFixed(2)}
+                      {adjustmentResult.value_impact.impact >= 0 ? '+' : ''}{new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(adjustmentResult.value_impact.impact)}
                     </Typography>
                   </Box>
                 )}

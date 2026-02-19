@@ -44,6 +44,7 @@ import CustomerList from './pages/Customers/CustomerList';  // US-CUST-001
 import CreateCustomer from './pages/Customers/CreateCustomer';  // US-CUST-001
 import CustomerDetail from './pages/Customers/CustomerDetail';  // US-CUST-004
 import EditCustomer from './pages/Customers/EditCustomer';  // US-CUST-005
+import CreateOrder from './pages/Orders/CreateOrder';  // US-ORD-001
 import ProtectedRoute from './components/common/ProtectedRoute';
 import authService from './services/authService';
 
@@ -324,6 +325,21 @@ function Navigation() {
               </Button>
             )}
 
+            {/* US-ORD-001: Orders Navigation */}
+            {(currentUser?.role === 'Admin' || currentUser?.role === 'Personal de Ventas' || currentUser?.role === 'Gerente de Almacén') && (
+              <Button
+                color="inherit"
+                href="/orders/new"
+                sx={{
+                  '&:hover': {
+                    color: '#a5d6a7',
+                  }
+                }}
+              >
+                Nuevo Pedido
+              </Button>
+            )}
+
             {/* US-AUTH-004: CA-1 - Menú de usuario con dropdown */}
             <IconButton
               color="inherit"
@@ -581,6 +597,16 @@ function App() {
                 element={
                   <ProtectedRoute allowedRoles={['Admin', 'Personal de Ventas', 'Gerente de Almacén']}>
                     <EditCustomer />
+                  </ProtectedRoute>
+                }
+              />
+
+              {/* US-ORD-001: Order Management Routes */}
+              <Route
+                path="/orders/new"
+                element={
+                  <ProtectedRoute allowedRoles={['Admin', 'Personal de Ventas', 'Gerente de Almacén']}>
+                    <CreateOrder />
                   </ProtectedRoute>
                 }
               />

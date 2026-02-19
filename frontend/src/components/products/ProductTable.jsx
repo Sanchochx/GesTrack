@@ -128,10 +128,10 @@ const ProductTable = ({
    * Format price to currency
    */
   const formatPrice = (price) => {
-    return new Intl.NumberFormat('es-ES', {
+    return new Intl.NumberFormat('es-CO', {
       style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 2,
+      currency: 'COP',
+      minimumFractionDigits: 0,
     }).format(price);
   };
 
