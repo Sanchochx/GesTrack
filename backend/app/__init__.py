@@ -52,6 +52,7 @@ def create_app(config_name=None):
     from app.routes.stock import stock_bp  # US-INV-001 CA-3
     from app.routes.inventory import inventory_bp  # US-INV-002
     from app.routes.customers import customers_bp  # US-CUST-001
+    from app.routes.orders import orders_bp  # US-ORD-001
 
     app.register_blueprint(auth_bp, url_prefix='/api/auth')
     app.register_blueprint(categories_bp)
@@ -59,6 +60,7 @@ def create_app(config_name=None):
     app.register_blueprint(stock_bp)  # US-INV-001 CA-3
     app.register_blueprint(inventory_bp)  # US-INV-002
     app.register_blueprint(customers_bp)  # US-CUST-001
+    app.register_blueprint(orders_bp)  # US-ORD-001
 
     # Manejador de errores global
     @app.errorhandler(404)

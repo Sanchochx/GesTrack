@@ -61,7 +61,7 @@ class InventoryValueService:
         total_value = round(total_value, 2)
 
         # Formatear como moneda (CA-1)
-        formatted_value = f"${total_value:,.2f}"
+        formatted_value = f"COP {total_value:,.0f}"
 
         return {
             'total_value': total_value,
@@ -137,7 +137,7 @@ class InventoryValueService:
                 'product_count': row.product_count,
                 'total_quantity': row.total_quantity,
                 'percentage': percentage,
-                'formatted_value': f"${total_value:,.2f}"
+                'formatted_value': f"COP {total_value:,.0f}"
             })
 
         return categories_breakdown
@@ -197,7 +197,7 @@ class InventoryValueService:
                 'cost_price': float(p.cost_price) if p.cost_price else 0.0,
                 'stock_quantity': p.stock_quantity,
                 'total_value': total_value,
-                'formatted_value': f"${total_value:,.2f}",
+                'formatted_value': f"COP {total_value:,.0f}",
                 'category_name': p.category_name
             })
 
@@ -301,7 +301,7 @@ class InventoryValueService:
                 'total_value': total_value,
                 'total_products': snapshot.total_products,
                 'total_quantity': snapshot.total_quantity,
-                'formatted_value': f"${total_value:,.2f}"
+                'formatted_value': f"COP {total_value:,.0f}"
             })
 
         return evolution

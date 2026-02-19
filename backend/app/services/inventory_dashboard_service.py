@@ -71,7 +71,7 @@ class InventoryDashboardService:
             'total_products': total_products,
             'new_products_30d': new_products,
             'total_value': total_value,
-            'formatted_value': f"${total_value:,.2f}",
+            'formatted_value': f"COP {total_value:,.0f}",
             'total_units': total_units,
             'low_stock_count': low_stock_count,
             'out_of_stock_count': out_of_stock_count,
