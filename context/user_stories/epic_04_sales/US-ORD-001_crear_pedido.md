@@ -103,21 +103,21 @@
 - Cachear lista de productos para mejorar performance del buscador
 
 ## Definición de Hecho
-- [ ] Frontend: Formulario de creación de pedido implementado
-- [ ] Frontend: Buscador de clientes funcional
-- [ ] Frontend: Modal de creación rápida de cliente
-- [ ] Frontend: Buscador de productos con validación de stock
-- [ ] Frontend: Lista de items del pedido con edición y eliminación
-- [ ] Frontend: Cálculo automático de totales en tiempo real
-- [ ] Frontend: Validaciones de formulario
-- [ ] Backend: API POST /api/orders implementado
-- [ ] Backend: Validación de disponibilidad de stock
-- [ ] Backend: Generación automática de order_number único
-- [ ] Backend: Transacción completa de creación de pedido
-- [ ] Backend: Actualización de inventario
-- [ ] Backend: Creación de movimientos de inventario
-- [ ] Backend: Registro de auditoría y historial de estados
-- [ ] Base de datos: Tablas orders, order_items, order_status_history creadas
+- [x] Frontend: Formulario de creación de pedido implementado
+- [x] Frontend: Buscador de clientes funcional
+- [ ] Frontend: Modal de creación rápida de cliente (diferido a US-CUST-010)
+- [x] Frontend: Buscador de productos con validación de stock
+- [x] Frontend: Lista de items del pedido con edición y eliminación
+- [x] Frontend: Cálculo automático de totales en tiempo real
+- [x] Frontend: Validaciones de formulario
+- [x] Backend: API POST /api/orders implementado
+- [x] Backend: Validación de disponibilidad de stock
+- [x] Backend: Generación automática de order_number único
+- [x] Backend: Transacción completa de creación de pedido
+- [x] Backend: Actualización de inventario
+- [x] Backend: Creación de movimientos de inventario
+- [x] Backend: Registro de auditoría y historial de estados
+- [x] Base de datos: Tablas orders, order_items, order_status_history creadas
 - [ ] Pruebas unitarias de validaciones
 - [ ] Pruebas de integración de transacción completa
 - [ ] Pruebas de concurrencia (dos usuarios comprando mismo producto)

@@ -12,12 +12,12 @@
 │  PROGRESO GLOBAL DEL PROYECTO                               │
 ├─────────────────────────────────────────────────────────────┤
 │  Total Historias de Usuario:     82                         │
-│  ✅ Completadas:                   32                        │
+│  ✅ Completadas:                   33                        │
 │  🔄 Parcialmente Completadas:     0                         │
 │  ⏳ En Progreso:                   0                         │
-│  ⏸️  Pendientes:                   50                        │
+│  ⏸️  Pendientes:                   49                        │
 │                                                             │
-│  Progreso: [████████░░░░░░░░░░░░] 39% (32/82)              │
+│  Progreso: [████████░░░░░░░░░░░░] 40% (33/82)              │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -30,7 +30,7 @@
 | 01 | Foundation | 6 | 6 | 0 | 0 | [██████████] 100% |
 | 02 | Core Data | 10 | 10 | 0 | 0 | [██████████] 100% |
 | 03 | Stock Management | 10 | 9 | 0 | 1 | [█████████░] 90% |
-| 04 | Sales | 26 | 6 | 0 | 20 | [██░░░░░░░░] 23% |
+| 04 | Sales | 26 | 7 | 0 | 19 | [██░░░░░░░░] 27% |
 | 05 | Supply Chain | 15 | 0 | 0 | 15 | [░░░░░░░░░░] 0% |
 | 06 | Analytics | 15 | 0 | 0 | 15 | [░░░░░░░░░░] 0% |
 
@@ -356,7 +356,7 @@
 **Objetivo:** Implementar funcionalidades principales de negocio
 **Épicas:** 03 Stock Management, 04 Sales
 **Total US:** 36
-**Progreso:** [████░░░░░░] 39% (14/36 completadas) 🔄 EN PROGRESO
+**Progreso:** [████░░░░░░] 42% (15/36 completadas) 🔄 EN PROGRESO
 
 ---
 
@@ -624,7 +624,7 @@
 ## Epic 04: Sales - Gestión de Clientes y Pedidos
 
 **Prioridad:** ⭐⭐⭐ ALTA
-**Progreso:** [██░░░░░░░░] 23% (6/26)
+**Progreso:** [██░░░░░░░░] 27% (7/26)
 **Carpeta:** `context/user_stories/epic_04_sales/`
 
 ### 📋 Módulo: Clientes
@@ -828,12 +828,42 @@
 
 ### 📋 Módulo: Pedidos
 
-#### [ ] US-ORD-001: Crear Pedido
+#### [x] US-ORD-001: Crear Pedido
 - **Archivo:** `context/user_stories/epic_04_sales/US-ORD-001_crear_pedido.md`
 - **Prioridad:** ALTA
-- **Estimación:** 8 pts
-- **Estado:** ⏸️ Pendiente
-- **Criterios de Aceptación:** 9
+- **Estimación:** 13 pts
+- **Estado:** ✅ COMPLETADA
+- **Criterios de Aceptación:** 10 ✅
+- **Progreso Backend:** ✅ 100% - Todos los CA implementados
+  - Order, OrderItem, OrderStatusHistory models con relaciones ✅
+  - OrderCreateSchema con validaciones Marshmallow ✅
+  - OrderService con transacción atómica (stock + movimientos) ✅
+  - POST /api/orders con validación completa ✅
+  - POST /api/orders/validate-stock para validación en tiempo real ✅
+  - Generación automática ORD-YYYYMMDD-XXXX ✅
+  - Registro de auditoría y historial de estados ✅
+  - Migración: orders, order_items, order_status_history ✅
+- **Progreso Frontend:** ✅ 100% - Todos los CA core implementados
+  - CA-1: Buscador de clientes con Autocomplete y debounce 300ms ✅
+  - CA-2: Buscador de productos con preview de stock y precio ✅
+  - CA-3: Validación de stock en frontend y backend ✅
+  - CA-4: Tabla de items con edición de cantidad/precio y eliminación ✅
+  - CA-5: Info de pedido auto-generada en backend ✅
+  - CA-6: Cálculo de totales en tiempo real (subtotal, impuesto, envío, descuento) ✅
+  - CA-7: Validaciones completas incluyendo justificación descuento >20% ✅
+  - CA-8: Guardado con diálogo de éxito y opciones post-creación ✅
+  - CA-9: Manejo de errores específicos (stock insuficiente, validación) ✅
+  - CA-10: Auditoría en backend (created_by, status_history) ✅
+- **Archivos Creados:**
+  - Backend: `models/order.py`, `schemas/order_schema.py`, `services/order_service.py`, `routes/orders.py`
+  - Frontend: `services/orderService.js`, `components/forms/OrderForm.jsx`, `pages/Orders/CreateOrder.jsx`
+- **Archivos Modificados:**
+  - Backend: `models/__init__.py`, `__init__.py` (blueprint)
+  - Frontend: `App.jsx` (ruta /orders/new + navegación)
+- **CA Diferidos:**
+  - CA-1: Modal "+ Nuevo Cliente" (diferido a US-CUST-010)
+  - CA-9: localStorage persistence (diferido, menor impacto)
+- **Fecha de completación:** 2026-02-17
 
 #### [ ] US-ORD-002: Cálculo Automático de Totales
 - **Archivo:** `context/user_stories/epic_04_sales/US-ORD-002_calculo_totales.md`
