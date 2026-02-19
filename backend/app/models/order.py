@@ -59,9 +59,9 @@ class Order(db.Model):
             'customer_id': self.customer_id,
             'customer': {
                 'id': self.customer.id,
-                'full_name': self.customer.full_name,
-                'email': self.customer.email,
-                'phone': self.customer.phone,
+                'nombre_razon_social': self.customer.nombre_razon_social,
+                'correo': self.customer.correo,
+                'telefono_movil': self.customer.telefono_movil,
             } if self.customer else None,
             'created_by_id': self.created_by_id,
             'created_by_name': self.created_by.full_name if self.created_by else None,

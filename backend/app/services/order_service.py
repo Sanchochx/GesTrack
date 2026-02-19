@@ -123,6 +123,7 @@ class OrderService:
             )
 
             db.session.add(order)
+            db.session.flush()  # Populates order.id before referencing it in status_history
 
             # 7. CA-10: Reducir stock y registrar movimientos de inventario
             # Se hace directamente (sin StockService) para mantener atomicidad

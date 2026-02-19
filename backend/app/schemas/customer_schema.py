@@ -1,114 +1,122 @@
 """
-Esquemas de validación para Cliente
+Esquemas de validación para Cliente - Facturación Electrónica Colombia (DIAN)
 US-CUST-001: Registrar Nuevo Cliente
 """
 from marshmallow import Schema, fields, validates, ValidationError
 import re
 
+TIPOS_DOCUMENTO = ['CC', 'NIT', 'CE', 'PAS', 'TI']
+TIPOS_CONTRIBUYENTE = ['Persona Natural', 'Persona Jurídica']
+REGIMENES_FISCALES = ['R-99-PN', 'R-48']
+RESPONSABILIDADES_TRIBUTARIAS = ['O-13', 'O-15', 'O-23', 'O-47', 'R-99-PN', 'ZZ-No aplica']
+
 
 class CustomerCreateSchema(Schema):
     """Schema para crear un cliente nuevo"""
 
-    # CA-2: Información Personal
-    full_name = fields.Str(required=True, error_messages={
-        'required': 'El nombre completo es requerido'
+    # Requeridos
+    nombre_razon_social = fields.Str(required=True, error_messages={
+        'required': 'El nombre o razón social es requerido'
     })
-    email = fields.Email(required=True, error_messages={
-        'required': 'El email es requerido',
-        'invalid': 'Formato de email inválido'
+    correo = fields.Email(required=True, error_messages={
+        'required': 'El correo electrónico es requerido',
+        'invalid': 'Formato de correo inválido'
     })
-    phone = fields.Str(required=True, error_messages={
-        'required': 'El teléfono es requerido'
+    tipo_documento = fields.Str(required=True, error_messages={
+        'required': 'El tipo de documento es requerido'
     })
-    secondary_phone = fields.Str(required=False, allow_none=True, load_default=None)
+    numero_documento = fields.Str(required=True, error_messages={
+        'required': 'El número de documento es requerido'
+    })
+    tipo_contribuyente = fields.Str(required=True, error_messages={
+        'required': 'El tipo de contribuyente es requerido'
+    })
 
-    # CA-3: Dirección Completa
-    address_street = fields.Str(required=True, error_messages={
-        'required': 'La dirección es requerida'
-    })
-    address_city = fields.Str(required=True, error_messages={
-        'required': 'La ciudad es requerida'
-    })
-    address_postal_code = fields.Str(required=True, error_messages={
-        'required': 'El código postal es requerido'
-    })
-    address_country = fields.Str(required=False, load_default='México')
-
-    # CA-4: Información Adicional
+    # Opcionales
+    telefono_movil = fields.Str(required=False, allow_none=True, load_default=None)
+    direccion = fields.Str(required=False, allow_none=True, load_default=None)
+    municipio_ciudad = fields.Str(required=False, allow_none=True, load_default=None)
+    departamento = fields.Str(required=False, allow_none=True, load_default=None)
+    pais = fields.Str(required=False, load_default='Colombia')
+    regimen_fiscal = fields.Str(required=False, allow_none=True, load_default=None)
+    responsabilidad_tributaria = fields.Str(required=False, allow_none=True, load_default=None)
     notes = fields.Str(required=False, allow_none=True, load_default=None)
 
-    @validates('full_name')
-    def validate_full_name(self, value):
-        """CA-2: Validar nombre completo"""
+    @validates('nombre_razon_social')
+    def validate_nombre_razon_social(self, value):
         if not value or not value.strip():
-            raise ValidationError('El nombre completo no puede estar vacío')
+            raise ValidationError('El nombre o razón social no puede estar vacío')
         if len(value) > 200:
             raise ValidationError('El nombre no puede exceder 200 caracteres')
-        if not re.match(r'^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s\.\-]+$', value.strip()):
-            raise ValidationError('El nombre solo puede contener letras y espacios')
+        if not re.match(r'^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ0-9\s\.\-\,\&\']+$', value.strip()):
+            raise ValidationError('El nombre solo puede contener letras, números, espacios y caracteres especiales')
 
-    @validates('email')
-    def validate_email(self, value):
-        """CA-2: Validar formato de email"""
+    @validates('correo')
+    def validate_correo(self, value):
         if not value or not value.strip():
-            raise ValidationError('El email no puede estar vacío')
+            raise ValidationError('El correo no puede estar vacío')
         if len(value) > 100:
-            raise ValidationError('El email no puede exceder 100 caracteres')
+            raise ValidationError('El correo no puede exceder 100 caracteres')
 
-    @validates('phone')
-    def validate_phone(self, value):
-        """CA-2: Validar teléfono principal"""
+    @validates('tipo_documento')
+    def validate_tipo_documento(self, value):
+        if value not in TIPOS_DOCUMENTO:
+            raise ValidationError(f'Tipo de documento inválido. Opciones: {", ".join(TIPOS_DOCUMENTO)}')
+
+    @validates('numero_documento')
+    def validate_numero_documento(self, value):
         if not value or not value.strip():
-            raise ValidationError('El teléfono no puede estar vacío')
+            raise ValidationError('El número de documento no puede estar vacío')
         if len(value) > 20:
-            raise ValidationError('El teléfono no puede exceder 20 caracteres')
-        if not re.match(r'^[\d\s\-\(\)\+]+$', value.strip()):
-            raise ValidationError('El teléfono solo puede contener números, guiones, paréntesis y espacios')
+            raise ValidationError('El número de documento no puede exceder 20 caracteres')
+        if not re.match(r'^[\d\-]+$', value.strip()):
+            raise ValidationError('El número de documento solo puede contener dígitos y guión (-)')
 
-    @validates('secondary_phone')
-    def validate_secondary_phone(self, value):
-        """CA-2: Validar teléfono secundario (opcional)"""
+    @validates('tipo_contribuyente')
+    def validate_tipo_contribuyente(self, value):
+        if value not in TIPOS_CONTRIBUYENTE:
+            raise ValidationError(f'Tipo de contribuyente inválido. Opciones: {", ".join(TIPOS_CONTRIBUYENTE)}')
+
+    @validates('regimen_fiscal')
+    def validate_regimen_fiscal(self, value):
+        if value and value not in REGIMENES_FISCALES:
+            raise ValidationError(f'Régimen fiscal inválido. Opciones: {", ".join(REGIMENES_FISCALES)}')
+
+    @validates('responsabilidad_tributaria')
+    def validate_responsabilidad_tributaria(self, value):
+        if value and value not in RESPONSABILIDADES_TRIBUTARIAS:
+            raise ValidationError(f'Responsabilidad tributaria inválida. Opciones: {", ".join(RESPONSABILIDADES_TRIBUTARIAS)}')
+
+    @validates('telefono_movil')
+    def validate_telefono_movil(self, value):
         if value and value.strip():
             if len(value) > 20:
-                raise ValidationError('El teléfono secundario no puede exceder 20 caracteres')
-            if not re.match(r'^[\d\s\-\(\)\+]+$', value.strip()):
-                raise ValidationError('El teléfono solo puede contener números, guiones, paréntesis y espacios')
+                raise ValidationError('El teléfono no puede exceder 20 caracteres')
+            if not re.match(r'^[\d\s\-\+]+$', value.strip()):
+                raise ValidationError('El teléfono solo puede contener números, guiones, espacios y +')
 
-    @validates('address_street')
-    def validate_address_street(self, value):
-        """CA-3: Validar dirección"""
-        if not value or not value.strip():
-            raise ValidationError('La dirección no puede estar vacía')
-        if len(value) > 300:
+    @validates('direccion')
+    def validate_direccion(self, value):
+        if value and len(value) > 300:
             raise ValidationError('La dirección no puede exceder 300 caracteres')
 
-    @validates('address_city')
-    def validate_address_city(self, value):
-        """CA-3: Validar ciudad"""
-        if not value or not value.strip():
-            raise ValidationError('La ciudad no puede estar vacía')
-        if len(value) > 100:
-            raise ValidationError('La ciudad no puede exceder 100 caracteres')
+    @validates('municipio_ciudad')
+    def validate_municipio_ciudad(self, value):
+        if value and len(value) > 100:
+            raise ValidationError('El municipio/ciudad no puede exceder 100 caracteres')
 
-    @validates('address_postal_code')
-    def validate_address_postal_code(self, value):
-        """CA-3: Validar código postal"""
-        if not value or not value.strip():
-            raise ValidationError('El código postal no puede estar vacío')
-        if len(value) > 20:
-            raise ValidationError('El código postal no puede exceder 20 caracteres')
-        if not re.match(r'^[\d\-\s]+$', value.strip()):
-            raise ValidationError('El código postal solo puede contener números y guiones')
+    @validates('departamento')
+    def validate_departamento(self, value):
+        if value and len(value) > 100:
+            raise ValidationError('El departamento no puede exceder 100 caracteres')
 
-    @validates('address_country')
-    def validate_address_country(self, value):
-        """CA-3: Validar país"""
+    @validates('pais')
+    def validate_pais(self, value):
         if value and len(value) > 100:
             raise ValidationError('El país no puede exceder 100 caracteres')
 
     @validates('notes')
     def validate_notes(self, value):
-        """CA-4: Validar notas"""
         if value and len(value) > 500:
             raise ValidationError('Las notas no pueden exceder 500 caracteres')
 
@@ -119,76 +127,76 @@ class CustomerUpdateSchema(Schema):
     class Meta:
         unknown = 'exclude'
 
-    full_name = fields.Str(required=False)
-    email = fields.Email(required=False)
-    phone = fields.Str(required=False)
-    secondary_phone = fields.Str(required=False, allow_none=True)
-    address_street = fields.Str(required=False)
-    address_city = fields.Str(required=False)
-    address_postal_code = fields.Str(required=False)
-    address_country = fields.Str(required=False)
+    nombre_razon_social = fields.Str(required=False)
+    correo = fields.Email(required=False)
+    tipo_documento = fields.Str(required=False)
+    numero_documento = fields.Str(required=False)
+    tipo_contribuyente = fields.Str(required=False)
+    regimen_fiscal = fields.Str(required=False, allow_none=True)
+    responsabilidad_tributaria = fields.Str(required=False, allow_none=True)
+    telefono_movil = fields.Str(required=False, allow_none=True)
+    direccion = fields.Str(required=False, allow_none=True)
+    municipio_ciudad = fields.Str(required=False, allow_none=True)
+    departamento = fields.Str(required=False, allow_none=True)
+    pais = fields.Str(required=False)
     notes = fields.Str(required=False, allow_none=True)
     is_active = fields.Bool(required=False)
 
-    @validates('full_name')
-    def validate_full_name(self, value):
+    @validates('nombre_razon_social')
+    def validate_nombre_razon_social(self, value):
         if value is not None:
             if not value.strip():
-                raise ValidationError('El nombre completo no puede estar vacío')
+                raise ValidationError('El nombre o razón social no puede estar vacío')
             if len(value) > 200:
                 raise ValidationError('El nombre no puede exceder 200 caracteres')
-            if not re.match(r'^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s\.\-]+$', value.strip()):
-                raise ValidationError('El nombre solo puede contener letras y espacios')
+            if not re.match(r'^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ0-9\s\.\-\,\&\']+$', value.strip()):
+                raise ValidationError('El nombre solo puede contener letras, números, espacios y caracteres especiales')
 
-    @validates('email')
-    def validate_email(self, value):
+    @validates('correo')
+    def validate_correo(self, value):
         if value is not None:
             if not value.strip():
-                raise ValidationError('El email no puede estar vacío')
+                raise ValidationError('El correo no puede estar vacío')
             if len(value) > 100:
-                raise ValidationError('El email no puede exceder 100 caracteres')
+                raise ValidationError('El correo no puede exceder 100 caracteres')
 
-    @validates('phone')
-    def validate_phone(self, value):
+    @validates('tipo_documento')
+    def validate_tipo_documento(self, value):
+        if value is not None and value not in TIPOS_DOCUMENTO:
+            raise ValidationError(f'Tipo de documento inválido. Opciones: {", ".join(TIPOS_DOCUMENTO)}')
+
+    @validates('numero_documento')
+    def validate_numero_documento(self, value):
         if value is not None:
             if not value.strip():
-                raise ValidationError('El teléfono no puede estar vacío')
+                raise ValidationError('El número de documento no puede estar vacío')
             if len(value) > 20:
-                raise ValidationError('El teléfono no puede exceder 20 caracteres')
-            if not re.match(r'^[\d\s\-\(\)\+]+$', value.strip()):
-                raise ValidationError('El teléfono solo puede contener números, guiones, paréntesis y espacios')
+                raise ValidationError('El número de documento no puede exceder 20 caracteres')
+            if not re.match(r'^[\d\-]+$', value.strip()):
+                raise ValidationError('El número de documento solo puede contener dígitos y guión (-)')
 
-    @validates('secondary_phone')
-    def validate_secondary_phone(self, value):
+    @validates('tipo_contribuyente')
+    def validate_tipo_contribuyente(self, value):
+        if value is not None and value not in TIPOS_CONTRIBUYENTE:
+            raise ValidationError(f'Tipo de contribuyente inválido. Opciones: {", ".join(TIPOS_CONTRIBUYENTE)}')
+
+    @validates('regimen_fiscal')
+    def validate_regimen_fiscal(self, value):
+        if value and value not in REGIMENES_FISCALES:
+            raise ValidationError(f'Régimen fiscal inválido. Opciones: {", ".join(REGIMENES_FISCALES)}')
+
+    @validates('responsabilidad_tributaria')
+    def validate_responsabilidad_tributaria(self, value):
+        if value and value not in RESPONSABILIDADES_TRIBUTARIAS:
+            raise ValidationError(f'Responsabilidad tributaria inválida. Opciones: {", ".join(RESPONSABILIDADES_TRIBUTARIAS)}')
+
+    @validates('telefono_movil')
+    def validate_telefono_movil(self, value):
         if value and value.strip():
             if len(value) > 20:
-                raise ValidationError('El teléfono secundario no puede exceder 20 caracteres')
-            if not re.match(r'^[\d\s\-\(\)\+]+$', value.strip()):
-                raise ValidationError('El teléfono solo puede contener números, guiones, paréntesis y espacios')
-
-    @validates('address_street')
-    def validate_address_street(self, value):
-        if value is not None:
-            if not value.strip():
-                raise ValidationError('La dirección no puede estar vacía')
-            if len(value) > 300:
-                raise ValidationError('La dirección no puede exceder 300 caracteres')
-
-    @validates('address_city')
-    def validate_address_city(self, value):
-        if value is not None:
-            if not value.strip():
-                raise ValidationError('La ciudad no puede estar vacía')
-            if len(value) > 100:
-                raise ValidationError('La ciudad no puede exceder 100 caracteres')
-
-    @validates('address_postal_code')
-    def validate_address_postal_code(self, value):
-        if value is not None:
-            if not value.strip():
-                raise ValidationError('El código postal no puede estar vacío')
-            if len(value) > 20:
-                raise ValidationError('El código postal no puede exceder 20 caracteres')
+                raise ValidationError('El teléfono no puede exceder 20 caracteres')
+            if not re.match(r'^[\d\s\-\+]+$', value.strip()):
+                raise ValidationError('El teléfono solo puede contener números, guiones, espacios y +')
 
     @validates('notes')
     def validate_notes(self, value):
@@ -200,14 +208,18 @@ class CustomerResponseSchema(Schema):
     """Schema para respuestas de cliente"""
 
     id = fields.Str()
-    full_name = fields.Str()
-    email = fields.Str()
-    phone = fields.Str()
-    secondary_phone = fields.Str(allow_none=True)
-    address_street = fields.Str()
-    address_city = fields.Str()
-    address_postal_code = fields.Str()
-    address_country = fields.Str()
+    tipo_documento = fields.Str()
+    numero_documento = fields.Str()
+    nombre_razon_social = fields.Str()
+    tipo_contribuyente = fields.Str()
+    regimen_fiscal = fields.Str(allow_none=True)
+    responsabilidad_tributaria = fields.Str(allow_none=True)
+    pais = fields.Str()
+    departamento = fields.Str(allow_none=True)
+    municipio_ciudad = fields.Str(allow_none=True)
+    direccion = fields.Str(allow_none=True)
+    telefono_movil = fields.Str(allow_none=True)
+    correo = fields.Str()
     notes = fields.Str(allow_none=True)
     is_active = fields.Bool()
     created_at = fields.DateTime()

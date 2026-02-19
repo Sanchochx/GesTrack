@@ -1,5 +1,5 @@
 """
-Rutas API para gestión de Clientes
+Rutas API para gestión de Clientes - Facturación Electrónica Colombia (DIAN)
 US-CUST-001: Registrar Nuevo Cliente
 US-CUST-002: Listar Clientes
 US-CUST-006: Eliminar Cliente
@@ -20,7 +20,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy import func, case
 from datetime import datetime
 
-ALLOWED_SORT_FIELDS = ['full_name', 'email', 'phone', 'address_city', 'created_at']
+ALLOWED_SORT_FIELDS = ['nombre_razon_social', 'correo', 'numero_documento', 'municipio_ciudad', 'created_at']
 
 customers_bp = Blueprint('customers', __name__, url_prefix='/api/customers')
 
@@ -31,44 +31,61 @@ customers_bp = Blueprint('customers', __name__, url_prefix='/api/customers')
 def create_customer():
     """
     POST /api/customers
-    CA-9: Crea un nuevo cliente
+    Crea un nuevo cliente con campos para facturación electrónica colombiana
 
     Body:
-        - full_name: Nombre completo (requerido)
-        - email: Email (requerido, único)
-        - phone: Teléfono principal (requerido)
-        - secondary_phone: Teléfono secundario (opcional)
-        - address_street: Dirección (requerido)
-        - address_city: Ciudad (requerido)
-        - address_postal_code: Código postal (requerido)
-        - address_country: País (opcional, default: México)
-        - notes: Notas (opcional)
+        - tipo_documento: Tipo de documento (CC, NIT, CE, PAS, TI) - requerido
+        - numero_documento: Número de documento - requerido, único
+        - nombre_razon_social: Nombre o razón social - requerido
+        - tipo_contribuyente: Persona Natural / Persona Jurídica - requerido
+        - correo: Correo electrónico - requerido, único
+        - telefono_movil: Teléfono - opcional
+        - pais: País - opcional (default: Colombia)
+        - departamento: Departamento - opcional
+        - municipio_ciudad: Municipio/Ciudad - opcional
+        - direccion: Dirección - opcional
+        - regimen_fiscal: R-99-PN / R-48 - opcional
+        - responsabilidad_tributaria: código DIAN - opcional
+        - notes: Notas - opcional
     """
     try:
-        # Validar datos de entrada
         data = customer_create_schema.load(request.json)
 
-        # CA-5: Validar unicidad del email
-        if not Customer.validate_email_unique(data['email']):
+        # Validar unicidad del número de documento
+        if not Customer.validate_numero_documento_unique(data['numero_documento']):
             return jsonify({
                 'success': False,
                 'error': {
-                    'code': 'DUPLICATE_EMAIL',
-                    'message': 'Este email ya está registrado',
-                    'field': 'email'
+                    'code': 'DUPLICATE_DOCUMENTO',
+                    'message': 'Este número de documento ya está registrado',
+                    'field': 'numero_documento'
                 }
             }), 400
 
-        # Crear nuevo cliente (CA-6: timestamp automático, CA-7: estado activo)
+        # Validar unicidad del correo
+        if not Customer.validate_correo_unique(data['correo']):
+            return jsonify({
+                'success': False,
+                'error': {
+                    'code': 'DUPLICATE_CORREO',
+                    'message': 'Este correo ya está registrado',
+                    'field': 'correo'
+                }
+            }), 400
+
         new_customer = Customer(
-            full_name=data['full_name'].strip(),
-            email=data['email'].strip().lower(),
-            phone=data['phone'].strip(),
-            secondary_phone=data.get('secondary_phone', '').strip() if data.get('secondary_phone') else None,
-            address_street=data['address_street'].strip(),
-            address_city=data['address_city'].strip(),
-            address_postal_code=data['address_postal_code'].strip(),
-            address_country=data.get('address_country', 'México').strip(),
+            tipo_documento=data['tipo_documento'],
+            numero_documento=data['numero_documento'].strip(),
+            nombre_razon_social=data['nombre_razon_social'].strip(),
+            tipo_contribuyente=data['tipo_contribuyente'],
+            correo=data['correo'].strip().lower(),
+            telefono_movil=data.get('telefono_movil', '').strip() if data.get('telefono_movil') else None,
+            pais=data.get('pais', 'Colombia').strip(),
+            departamento=data.get('departamento', '').strip() if data.get('departamento') else None,
+            municipio_ciudad=data.get('municipio_ciudad', '').strip() if data.get('municipio_ciudad') else None,
+            direccion=data.get('direccion', '').strip() if data.get('direccion') else None,
+            regimen_fiscal=data.get('regimen_fiscal') or None,
+            responsabilidad_tributaria=data.get('responsabilidad_tributaria') or None,
             notes=data.get('notes', '').strip() if data.get('notes') else None,
         )
 
@@ -78,7 +95,7 @@ def create_customer():
         return jsonify({
             'success': True,
             'data': new_customer.to_dict(),
-            'message': f'Cliente {new_customer.full_name} registrado correctamente'
+            'message': f'Cliente {new_customer.nombre_razon_social} registrado correctamente'
         }), 201
 
     except ValidationError as e:
@@ -96,8 +113,8 @@ def create_customer():
         return jsonify({
             'success': False,
             'error': {
-                'code': 'DUPLICATE_EMAIL',
-                'message': 'Este email ya está registrado'
+                'code': 'DUPLICATE_DOCUMENTO',
+                'message': 'Este número de documento o correo ya está registrado'
             }
         }), 400
 
@@ -113,47 +130,46 @@ def create_customer():
         }), 500
 
 
-@customers_bp.route('/check-email', methods=['GET'])
+@customers_bp.route('/check-documento', methods=['GET'])
 @jwt_required()
-def check_email():
+def check_documento():
     """
-    GET /api/customers/check-email?email=...
-    CA-5: Validar que el email no esté registrado
+    GET /api/customers/check-documento?numero_documento=...
+    Validar que el número de documento no esté registrado
 
     Query params:
-        - email: Email a verificar
+        - numero_documento: Número a verificar
         - exclude_id: ID de cliente a excluir (para edición)
     """
     try:
-        email = request.args.get('email', '').strip()
+        numero_documento = request.args.get('numero_documento', '').strip()
         exclude_id = request.args.get('exclude_id', None)
 
-        if not email:
+        if not numero_documento:
             return jsonify({
                 'success': False,
                 'error': {
                     'code': 'VALIDATION_ERROR',
-                    'message': 'El email es requerido'
+                    'message': 'El número de documento es requerido'
                 }
             }), 400
 
-        is_available = Customer.validate_email_unique(email, exclude_id=exclude_id)
+        is_available = Customer.validate_numero_documento_unique(numero_documento, exclude_id=exclude_id)
 
         result = {
             'success': True,
             'data': {
-                'email': email,
+                'numero_documento': numero_documento,
                 'available': is_available
             }
         }
 
-        # Si el email ya existe, incluir info del cliente existente
         if not is_available:
-            existing = Customer.query.filter(db.func.lower(Customer.email) == email.lower()).first()
+            existing = Customer.query.filter(Customer.numero_documento == numero_documento).first()
             if existing:
                 result['data']['existing_customer'] = {
                     'id': existing.id,
-                    'full_name': existing.full_name
+                    'nombre_razon_social': existing.nombre_razon_social
                 }
 
         return jsonify(result), 200
@@ -163,7 +179,62 @@ def check_email():
             'success': False,
             'error': {
                 'code': 'SERVER_ERROR',
-                'message': 'Error al verificar email',
+                'message': 'Error al verificar número de documento',
+                'details': str(e)
+            }
+        }), 500
+
+
+@customers_bp.route('/check-correo', methods=['GET'])
+@jwt_required()
+def check_correo():
+    """
+    GET /api/customers/check-correo?correo=...
+    Validar que el correo no esté registrado
+
+    Query params:
+        - correo: Correo a verificar
+        - exclude_id: ID de cliente a excluir (para edición)
+    """
+    try:
+        correo = request.args.get('correo', '').strip()
+        exclude_id = request.args.get('exclude_id', None)
+
+        if not correo:
+            return jsonify({
+                'success': False,
+                'error': {
+                    'code': 'VALIDATION_ERROR',
+                    'message': 'El correo es requerido'
+                }
+            }), 400
+
+        is_available = Customer.validate_correo_unique(correo, exclude_id=exclude_id)
+
+        result = {
+            'success': True,
+            'data': {
+                'correo': correo,
+                'available': is_available
+            }
+        }
+
+        if not is_available:
+            existing = Customer.query.filter(db.func.lower(Customer.correo) == correo.lower()).first()
+            if existing:
+                result['data']['existing_customer'] = {
+                    'id': existing.id,
+                    'nombre_razon_social': existing.nombre_razon_social
+                }
+
+        return jsonify(result), 200
+
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': {
+                'code': 'SERVER_ERROR',
+                'message': 'Error al verificar correo',
                 'details': str(e)
             }
         }), 500
@@ -180,9 +251,9 @@ def get_customers():
     Query params:
         - page: Número de página (default: 1)
         - limit: Resultados por página (default: 20)
-        - search: Buscar por nombre, email o teléfono
+        - search: Buscar por nombre, correo, número de documento o teléfono
         - is_active: Filtrar por estado (true/false)
-        - sort_by: Campo para ordenar (full_name, email, created_at) default: full_name
+        - sort_by: Campo para ordenar (default: nombre_razon_social)
         - order: Orden (asc, desc) default: asc
     """
     try:
@@ -190,31 +261,25 @@ def get_customers():
         limit = request.args.get('limit', 20, type=int)
         search = request.args.get('search', '').strip()
         is_active = request.args.get('is_active', None)
-        sort_by = request.args.get('sort_by', 'full_name')
+        sort_by = request.args.get('sort_by', 'nombre_razon_social')
         order = request.args.get('order', 'asc')
 
-        # Validate sort field against whitelist
         if sort_by not in ALLOWED_SORT_FIELDS:
-            sort_by = 'full_name'
+            sort_by = 'nombre_razon_social'
 
         query = Customer.query
 
-        # Búsqueda (applied before is_active filter for statistics)
-        # US-CUST-003 CA-3: Search in name, email, phone, secondary_phone
-        # CA-4: Case-insensitive with ILIKE
-        # CA-5: Partial matches with %search%
         if search:
             search_filter = f'%{search}%'
             query = query.filter(
                 db.or_(
-                    Customer.full_name.ilike(search_filter),
-                    Customer.email.ilike(search_filter),
-                    Customer.phone.ilike(search_filter),
-                    Customer.secondary_phone.ilike(search_filter),
+                    Customer.nombre_razon_social.ilike(search_filter),
+                    Customer.correo.ilike(search_filter),
+                    Customer.numero_documento.ilike(search_filter),
+                    Customer.telefono_movil.ilike(search_filter),
                 )
             )
 
-        # US-CUST-002: Statistics (computed on search-filtered, NOT is_active-filtered)
         stats_query = query.with_entities(
             func.count(Customer.id).label('total'),
             func.count(case((Customer.is_active == True, 1))).label('active'),
@@ -225,21 +290,18 @@ def get_customers():
             'total': stats_query.total if stats_query else 0,
             'active': stats_query.active if stats_query else 0,
             'inactive': stats_query.inactive if stats_query else 0,
-            'vip': 0,  # Placeholder until Orders module is built
+            'vip': 0,
         }
 
-        # Filtro por estado activo (applied after statistics)
         if is_active is not None:
             query = query.filter(Customer.is_active == (is_active.lower() == 'true'))
 
-        # Ordenamiento
-        sort_column = getattr(Customer, sort_by, Customer.full_name)
+        sort_column = getattr(Customer, sort_by, Customer.nombre_razon_social)
         if order == 'desc':
             query = query.order_by(sort_column.desc())
         else:
             query = query.order_by(sort_column.asc())
 
-        # Paginación
         pagination = query.paginate(page=page, per_page=limit, error_out=False)
         customers = pagination.items
 
@@ -309,17 +371,6 @@ def update_customer(customer_id):
     """
     PUT /api/customers/:id
     US-CUST-005: Actualizar información del cliente
-
-    Body:
-        - full_name: Nombre completo
-        - email: Email (validar unicidad excluyendo propio)
-        - phone: Teléfono principal
-        - secondary_phone: Teléfono secundario
-        - address_street: Dirección
-        - address_city: Ciudad
-        - address_postal_code: Código postal
-        - address_country: País
-        - notes: Notas
     """
     try:
         customer = Customer.query.get(customer_id)
@@ -333,43 +384,57 @@ def update_customer(customer_id):
                 }
             }), 404
 
-        # Validar datos de entrada
         data = customer_create_schema.load(request.json)
 
-        # CA-4: Validar unicidad del email (excluyendo el propio cliente)
-        new_email = data['email'].strip().lower()
-        if new_email != customer.email.lower():
-            if not Customer.validate_email_unique(new_email, exclude_id=customer_id):
+        # Validar unicidad número de documento (excluyendo el propio)
+        new_numero = data['numero_documento'].strip()
+        if new_numero != customer.numero_documento:
+            if not Customer.validate_numero_documento_unique(new_numero, exclude_id=customer_id):
                 return jsonify({
                     'success': False,
                     'error': {
-                        'code': 'DUPLICATE_EMAIL',
-                        'message': 'Este email ya está registrado por otro cliente',
-                        'field': 'email'
+                        'code': 'DUPLICATE_DOCUMENTO',
+                        'message': 'Este número de documento ya está registrado por otro cliente',
+                        'field': 'numero_documento'
                     }
                 }), 400
 
-        # CA-6: Detectar cambios (para logging)
+        # Validar unicidad correo (excluyendo el propio)
+        new_correo = data['correo'].strip().lower()
+        if new_correo != customer.correo.lower():
+            if not Customer.validate_correo_unique(new_correo, exclude_id=customer_id):
+                return jsonify({
+                    'success': False,
+                    'error': {
+                        'code': 'DUPLICATE_CORREO',
+                        'message': 'Este correo ya está registrado por otro cliente',
+                        'field': 'correo'
+                    }
+                }), 400
+
+        # Detectar cambios
         changes = []
-        if data['full_name'].strip() != customer.full_name:
-            changes.append('full_name')
-        if new_email != customer.email.lower():
-            changes.append('email')
-        if data['phone'].strip() != customer.phone:
-            changes.append('phone')
+        if data['nombre_razon_social'].strip() != customer.nombre_razon_social:
+            changes.append('nombre_razon_social')
+        if new_correo != customer.correo.lower():
+            changes.append('correo')
+        if new_numero != customer.numero_documento:
+            changes.append('numero_documento')
 
         # Actualizar campos
-        customer.full_name = data['full_name'].strip()
-        customer.email = new_email
-        customer.phone = data['phone'].strip()
-        customer.secondary_phone = data.get('secondary_phone', '').strip() if data.get('secondary_phone') else None
-        customer.address_street = data['address_street'].strip()
-        customer.address_city = data['address_city'].strip()
-        customer.address_postal_code = data['address_postal_code'].strip()
-        customer.address_country = data.get('address_country', 'México').strip()
+        customer.tipo_documento = data['tipo_documento']
+        customer.numero_documento = new_numero
+        customer.nombre_razon_social = data['nombre_razon_social'].strip()
+        customer.tipo_contribuyente = data['tipo_contribuyente']
+        customer.correo = new_correo
+        customer.telefono_movil = data.get('telefono_movil', '').strip() if data.get('telefono_movil') else None
+        customer.pais = data.get('pais', 'Colombia').strip()
+        customer.departamento = data.get('departamento', '').strip() if data.get('departamento') else None
+        customer.municipio_ciudad = data.get('municipio_ciudad', '').strip() if data.get('municipio_ciudad') else None
+        customer.direccion = data.get('direccion', '').strip() if data.get('direccion') else None
+        customer.regimen_fiscal = data.get('regimen_fiscal') or None
+        customer.responsabilidad_tributaria = data.get('responsabilidad_tributaria') or None
         customer.notes = data.get('notes', '').strip() if data.get('notes') else None
-
-        # CA-7: Actualizar timestamp
         customer.updated_at = datetime.utcnow()
 
         db.session.commit()
@@ -377,7 +442,7 @@ def update_customer(customer_id):
         return jsonify({
             'success': True,
             'data': customer.to_dict(),
-            'message': f'Cliente {customer.full_name} actualizado correctamente',
+            'message': f'Cliente {customer.nombre_razon_social} actualizado correctamente',
             'changes': changes
         }), 200
 
@@ -396,8 +461,8 @@ def update_customer(customer_id):
         return jsonify({
             'success': False,
             'error': {
-                'code': 'DUPLICATE_EMAIL',
-                'message': 'Este email ya está registrado por otro cliente'
+                'code': 'DUPLICATE_DOCUMENTO',
+                'message': 'Este número de documento o correo ya está registrado por otro cliente'
             }
         }), 400
 
@@ -441,7 +506,7 @@ def toggle_active(customer_id):
         return jsonify({
             'success': True,
             'data': customer.to_dict(),
-            'message': f'Cliente {customer.full_name} {status_text} correctamente'
+            'message': f'Cliente {customer.nombre_razon_social} {status_text} correctamente'
         }), 200
 
     except Exception as e:
@@ -458,7 +523,7 @@ def toggle_active(customer_id):
 
 @customers_bp.route('/<customer_id>', methods=['DELETE'])
 @jwt_required()
-@require_role(['Admin'])  # CA-1: Solo Admin puede eliminar
+@require_role(['Admin'])
 def delete_customer(customer_id):
     """
     DELETE /api/customers/:id
@@ -466,12 +531,6 @@ def delete_customer(customer_id):
 
     CA-1: Solo Admin puede eliminar
     CA-2: No se puede eliminar si tiene pedidos asociados
-    CA-5: Eliminación permanente (hard delete) solo si no tiene pedidos
-    CA-6: Limpieza de datos relacionados
-    CA-8: Registro de auditoría
-
-    Body (opcional):
-        - reason: Razón de eliminación
     """
     try:
         current_user_id = get_jwt_identity()
@@ -486,24 +545,6 @@ def delete_customer(customer_id):
                 }
             }), 404
 
-        # CA-2: Validar que no tenga pedidos asociados
-        # Nota: La tabla Orders aún no existe, preparamos la validación
-        # Cuando exista, descomentar y ajustar:
-        # from app.models.order import Order
-        # orders_count = Order.query.filter_by(customer_id=customer_id).count()
-        # if orders_count > 0:
-        #     return jsonify({
-        #         'success': False,
-        #         'error': {
-        #             'code': 'HAS_ORDERS',
-        #             'message': 'No se puede eliminar este cliente porque tiene pedidos asociados',
-        #             'orders_count': orders_count,
-        #             'suggestion': 'En su lugar, puedes inactivar el cliente'
-        #         }
-        #     }), 409
-
-        # Por ahora, usamos el order_count del to_dict (placeholder = 0)
-        # Esto se actualizará cuando Orders module esté implementado
         orders_count = customer.to_dict().get('order_count', 0)
         if orders_count > 0:
             return jsonify({
@@ -516,11 +557,9 @@ def delete_customer(customer_id):
                 }
             }), 409
 
-        # Obtener razón de eliminación del body (opcional)
         data = request.get_json(silent=True) or {}
         reason = data.get('reason', '').strip() if data.get('reason') else None
 
-        # CA-8: Crear registro de auditoría antes de eliminar
         audit_record = CustomerDeletionAudit.create_audit_record(
             customer=customer,
             user_id=current_user_id,
@@ -528,13 +567,9 @@ def delete_customer(customer_id):
         )
         db.session.add(audit_record)
 
-        # Guardar nombre para el mensaje de respuesta
-        customer_name = customer.full_name
-        customer_email = customer.email
+        customer_name = customer.nombre_razon_social
+        customer_correo = customer.correo
 
-        # CA-5 & CA-6: Eliminación permanente
-        # Nota: Si existiera una tabla customer_notes, se eliminarían primero
-        # por ahora las notas están inline en el modelo Customer
         db.session.delete(customer)
         db.session.commit()
 
@@ -544,7 +579,7 @@ def delete_customer(customer_id):
             'data': {
                 'customer_id': customer_id,
                 'customer_name': customer_name,
-                'customer_email': customer_email,
+                'customer_correo': customer_correo,
                 'audit_id': audit_record.id
             }
         }), 200
@@ -568,11 +603,6 @@ def can_delete_customer(customer_id):
     """
     GET /api/customers/:id/can-delete
     US-CUST-006 CA-9: Verificar si un cliente puede ser eliminado
-
-    Returns:
-        - can_delete: boolean
-        - reason: mensaje si no se puede eliminar
-        - orders_count: número de pedidos asociados
     """
     try:
         customer = Customer.query.get(customer_id)
@@ -586,16 +616,14 @@ def can_delete_customer(customer_id):
                 }
             }), 404
 
-        # Verificar pedidos asociados (placeholder por ahora)
         orders_count = customer.to_dict().get('order_count', 0)
-
         can_delete = orders_count == 0
 
         return jsonify({
             'success': True,
             'data': {
                 'customer_id': customer_id,
-                'customer_name': customer.full_name,
+                'customer_name': customer.nombre_razon_social,
                 'can_delete': can_delete,
                 'orders_count': orders_count,
                 'reason': None if can_delete else 'Este cliente tiene pedidos asociados y no puede ser eliminado',
