@@ -32,7 +32,21 @@
       "Bash(nul)",
       "Bash(xargs rmdir /s /q 2)",
       "Bash(powershell \"Stop-Process 19048 -Force; Stop-Process 12904 -Force; Stop-Process 26300 -Force\")",
-      "Bash(python3:*)"
+      "Bash(python3:*)",
+      "Bash(set PYTHONIOENCODING=utf-8)",
+      "Bash(npx vite build:*)",
+      "Bash(powershell -Command:*)",
+      "Bash(Select-Object -First 10)",
+      "Bash(powershell \"Select-String -Path ''C:\\\\Users\\\\santi\\\\.claude\\\\projects\\\\C--Users-santi-OneDrive-Documents-devv-personal-projects-GesTrack\\\\544c050e-c0e9-4e9d-9bed-af058c453f9c.jsonl'' -Pattern ''US-CUST-006'' -SimpleMatch | Measure-Object | Select-Object -ExpandProperty Count\")",
+      "Bash(powershell \"Select-String -Path ''C:\\\\Users\\\\santi\\\\.claude\\\\projects\\\\C--Users-santi-OneDrive-Documents-devv-personal-projects-GesTrack\\\\91108b5d-6b0b-4dc6-9ccf-354ffed5eeaf.jsonl'' -Pattern ''US-CUST-006|próxima|siguiente|backlog'' -SimpleMatch | Measure-Object | Select-Object -ExpandProperty Count\")",
+      "Bash(cd:*)",
+      "Bash(\"C:/Users/santi/AppData/Local/Programs/Python/Python312/python.exe\" -m flask db migrate -m \"Add orders, order_items, order_status_history tables\")",
+      "Bash(\"C:/Users/santi/AppData/Local/Programs/Python/Python312/python.exe\" -m flask db upgrade)",
+      "Bash(\"C:/Users/santi/AppData/Local/Programs/Python/Python312/python.exe\":*)",
+      "Bash(\"C:/Users/santi/AppData/Local/Programs/Python/Python312/python.exe\" -c \"\nfrom app import create_app\napp = create_app\\(\\)\nprint\\(''App created successfully''\\)\nprint\\(''Order routes:''\\)\nfor rule in app.url_map.iter_rules\\(\\):\n    if ''order'' in str\\(rule\\).lower\\(\\):\n        print\\(f''  {rule.methods} {rule}''\\)\n\")",
+      "Bash(del \"C:\\\\Users\\\\santi\\\\OneDrive\\\\Documents\\\\dev\\\\personal projects\\\\GesTrack\\\\backend\\\\instance\\\\gestrack.db\")",
+      "Bash(/c/Users/santi/AppData/Local/Programs/Python/Python312/Scripts/flask db upgrade)",
+      "Bash(/c/Users/santi/AppData/Local/Programs/Python/Python312/Scripts/flask db current)"
     ],
     "deny": [],
     "ask": []
