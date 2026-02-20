@@ -6,14 +6,19 @@ US-CUST-006: Eliminar Cliente
 US-CUST-007: Historial de Compras del Cliente
 """
 from flask import Blueprint, request, jsonify
-from flask_jwt_extended import jwt_required, get_jwt_identity
+from flask_jwt_extended import jwt_required, get_jwt_identity, get_jwt
 from app import db
 from app.models.customer import Customer
 from app.models.customer_deletion_audit import CustomerDeletionAudit
+from app.models.customer_note import CustomerNote
 from app.schemas.customer_schema import (
     customer_create_schema,
     customer_response_schema,
     customers_response_schema
+)
+from app.schemas.customer_note_schema import (
+    customer_note_create_schema,
+    customer_note_update_schema
 )
 from app.utils.decorators import require_role
 from marshmallow import ValidationError
@@ -694,18 +699,120 @@ def export_customer_orders_history(customer_id):
         customer_name = customer_name.replace(' ', '_')[:50]
         filename_prefix = f'Historial_{customer_name}'
 
+        # Fetch notes for CA-10 export
+        notes_records = CustomerNote.query.filter_by(customer_id=customer_id)\
+            .order_by(CustomerNote.is_important.desc(), CustomerNote.created_at.desc())\
+            .all()
+        notes_export = []
+        for n in notes_records:
+            creator = n.created_by.full_name if n.created_by else 'Desconocido'
+            notes_export.append({
+                'content': n.content,
+                'created_at': n.created_at.strftime('%Y-%m-%d %H:%M') if n.created_at else '',
+                'creator': creator,
+                'is_important': 'Sí' if n.is_important else 'No',
+                'edited': n.updated_at.strftime('%Y-%m-%d %H:%M') if n.updated_at else '',
+            })
+
         if format_type == 'excel':
-            return ExportHelper.export_to_excel(
-                data=export_data,
-                columns=columns,
-                filename_prefix=filename_prefix,
-                sheet_name='Historial de Compras'
-            )
+            try:
+                from openpyxl import Workbook
+                from openpyxl.styles import Font, PatternFill, Alignment
+                from openpyxl.utils import get_column_letter
+                import io as _io
+                from flask import Response as _Response
+
+                wb = Workbook()
+
+                # Sheet 1: Orders
+                ws1 = wb.active
+                ws1.title = 'Historial de Compras'
+                header_font = Font(bold=True, color='FFFFFF')
+                header_fill = PatternFill(start_color='2e7d32', end_color='2e7d32', fill_type='solid')
+                header_align = Alignment(horizontal='center', vertical='center')
+                for col_num, (_, header) in enumerate(columns, 1):
+                    cell = ws1.cell(row=1, column=col_num, value=header)
+                    cell.font = header_font
+                    cell.fill = header_fill
+                    cell.alignment = header_align
+                for row_num, row in enumerate(export_data, 2):
+                    for col_num, (col_key, _) in enumerate(columns, 1):
+                        ws1.cell(row=row_num, column=col_num, value=row.get(col_key, ''))
+                for col_num in range(1, len(columns) + 1):
+                    ws1.column_dimensions[get_column_letter(col_num)].width = 15
+
+                # Sheet 2: Notes
+                ws2 = wb.create_sheet('Notas del Cliente')
+                note_columns = [
+                    ('content', 'Contenido'),
+                    ('created_at', 'Fecha'),
+                    ('creator', 'Autor'),
+                    ('is_important', 'Importante'),
+                    ('edited', 'Editado'),
+                ]
+                for col_num, (_, header) in enumerate(note_columns, 1):
+                    cell = ws2.cell(row=1, column=col_num, value=header)
+                    cell.font = header_font
+                    cell.fill = header_fill
+                    cell.alignment = header_align
+                for row_num, row in enumerate(notes_export, 2):
+                    for col_num, (col_key, _) in enumerate(note_columns, 1):
+                        ws2.cell(row=row_num, column=col_num, value=row.get(col_key, ''))
+                ws2.column_dimensions['A'].width = 60
+                for col_num in range(2, len(note_columns) + 1):
+                    ws2.column_dimensions[get_column_letter(col_num)].width = 18
+
+                output = _io.BytesIO()
+                wb.save(output)
+                output.seek(0)
+                timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+                fname = f'{filename_prefix}_{timestamp}.xlsx'
+                return _Response(
+                    output.getvalue(),
+                    mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                    headers={
+                        'Content-Disposition': f'attachment; filename={fname}',
+                        'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+                    }
+                )
+            except ImportError:
+                return ExportHelper.export_to_excel(
+                    data=export_data, columns=columns,
+                    filename_prefix=filename_prefix, sheet_name='Historial de Compras'
+                )
         else:
-            return ExportHelper.export_to_csv(
-                data=export_data,
-                columns=columns,
-                filename_prefix=filename_prefix
+            # CSV: orders block + notes block
+            import csv as _csv
+            import io as _io
+            from flask import Response as _Response
+
+            si = _io.StringIO()
+            writer = _csv.writer(si, quoting=_csv.QUOTE_ALL)
+
+            # Orders
+            writer.writerow([col[1] for col in columns])
+            for row in export_data:
+                writer.writerow([str(row.get(k, '')) for k, _ in columns])
+
+            # Notes separator
+            if notes_export:
+                writer.writerow([])
+                writer.writerow(['NOTAS DEL CLIENTE'])
+                writer.writerow(['Contenido', 'Fecha', 'Autor', 'Importante', 'Editado'])
+                for n in notes_export:
+                    writer.writerow([n['content'], n['created_at'], n['creator'], n['is_important'], n['edited']])
+
+            output = si.getvalue()
+            si.close()
+            timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+            fname = f'{filename_prefix}_{timestamp}.csv'
+            return _Response(
+                output,
+                mimetype='text/csv',
+                headers={
+                    'Content-Disposition': f'attachment; filename={fname}',
+                    'Content-Type': 'text/csv; charset=utf-8'
+                }
             )
 
     except Exception as e:
@@ -1077,6 +1184,171 @@ def delete_customer(customer_id):
                 'message': 'Error al eliminar cliente',
                 'details': str(e)
             }
+        }), 500
+
+
+@customers_bp.route('/<customer_id>/notes', methods=['POST'])
+@jwt_required()
+@require_role(['Admin', 'Personal de Ventas', 'Gerente de Almacén'])
+def create_customer_note(customer_id):
+    """
+    POST /api/customers/:id/notes
+    US-CUST-009 CA-1 & CA-2: Agregar una nota al cliente
+    """
+    try:
+        current_user_id = get_jwt_identity()
+        claims = get_jwt()
+        is_admin = claims.get('role') == 'Admin'
+
+        customer = Customer.query.get(customer_id)
+        if not customer:
+            return jsonify({
+                'success': False,
+                'error': {'code': 'NOT_FOUND', 'message': 'Cliente no encontrado'}
+            }), 404
+
+        data = customer_note_create_schema.load(request.json or {})
+
+        note = CustomerNote(
+            customer_id=customer_id,
+            created_by_id=current_user_id,
+            content=data['content'].strip(),
+            is_important=data.get('is_important', False),
+        )
+        db.session.add(note)
+        db.session.commit()
+
+        note_dict = note.to_dict(current_user_id=current_user_id)
+        if is_admin:
+            note_dict['can_edit'] = True
+
+        return jsonify({
+            'success': True,
+            'data': note_dict,
+            'message': 'Nota agregada correctamente'
+        }), 201
+
+    except ValidationError as e:
+        return jsonify({
+            'success': False,
+            'error': {'code': 'VALIDATION_ERROR', 'message': 'Error de validación', 'details': e.messages}
+        }), 400
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({
+            'success': False,
+            'error': {'code': 'SERVER_ERROR', 'message': 'Error al crear nota', 'details': str(e)}
+        }), 500
+
+
+@customers_bp.route('/<customer_id>/notes', methods=['GET'])
+@jwt_required()
+@require_role(['Admin', 'Personal de Ventas', 'Gerente de Almacén'])
+def get_customer_notes(customer_id):
+    """
+    GET /api/customers/:id/notes
+    US-CUST-009 CA-3 & CA-9: Listar notas del cliente ordenadas por importancia y fecha
+    """
+    try:
+        current_user_id = get_jwt_identity()
+        claims = get_jwt()
+        is_admin = claims.get('role') == 'Admin'
+
+        customer = Customer.query.get(customer_id)
+        if not customer:
+            return jsonify({
+                'success': False,
+                'error': {'code': 'NOT_FOUND', 'message': 'Cliente no encontrado'}
+            }), 404
+
+        notes = CustomerNote.query.filter_by(customer_id=customer_id)\
+            .order_by(CustomerNote.is_important.desc(), CustomerNote.created_at.desc())\
+            .all()
+
+        notes_data = []
+        for note in notes:
+            note_dict = note.to_dict(current_user_id=current_user_id)
+            if is_admin:
+                note_dict['can_edit'] = True
+            notes_data.append(note_dict)
+
+        return jsonify({
+            'success': True,
+            'data': notes_data
+        }), 200
+
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': {'code': 'SERVER_ERROR', 'message': 'Error al obtener notas', 'details': str(e)}
+        }), 500
+
+
+@customers_bp.route('/<customer_id>/notes/<note_id>', methods=['PUT'])
+@jwt_required()
+@require_role(['Admin', 'Personal de Ventas', 'Gerente de Almacén'])
+def update_customer_note(customer_id, note_id):
+    """
+    PUT /api/customers/:id/notes/:note_id
+    US-CUST-009 CA-4 & CA-5: Editar nota (solo el creador o Admin)
+    """
+    try:
+        current_user_id = get_jwt_identity()
+        claims = get_jwt()
+        is_admin = claims.get('role') == 'Admin'
+
+        customer = Customer.query.get(customer_id)
+        if not customer:
+            return jsonify({
+                'success': False,
+                'error': {'code': 'NOT_FOUND', 'message': 'Cliente no encontrado'}
+            }), 404
+
+        note = CustomerNote.query.filter_by(id=note_id, customer_id=customer_id).first()
+        if not note:
+            return jsonify({
+                'success': False,
+                'error': {'code': 'NOT_FOUND', 'message': 'Nota no encontrada'}
+            }), 404
+
+        if not is_admin and note.created_by_id != current_user_id:
+            return jsonify({
+                'success': False,
+                'error': {'code': 'FORBIDDEN', 'message': 'No tienes permiso para editar esta nota'}
+            }), 403
+
+        data = customer_note_update_schema.load(request.json or {})
+
+        if 'content' in data and data['content'] is not None:
+            note.content = data['content'].strip()
+        if 'is_important' in data and data['is_important'] is not None:
+            note.is_important = data['is_important']
+
+        note.updated_at = datetime.utcnow()
+        note.updated_by_id = current_user_id
+
+        db.session.commit()
+
+        note_dict = note.to_dict(current_user_id=current_user_id)
+        if is_admin:
+            note_dict['can_edit'] = True
+
+        return jsonify({
+            'success': True,
+            'data': note_dict,
+            'message': 'Nota actualizada correctamente'
+        }), 200
+
+    except ValidationError as e:
+        return jsonify({
+            'success': False,
+            'error': {'code': 'VALIDATION_ERROR', 'message': 'Error de validación', 'details': e.messages}
+        }), 400
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({
+            'success': False,
+            'error': {'code': 'SERVER_ERROR', 'message': 'Error al actualizar nota', 'details': str(e)}
         }), 500
 
 

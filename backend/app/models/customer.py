@@ -53,6 +53,14 @@ class Customer(db.Model):
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
 
+    # US-CUST-009: Notas del Cliente
+    customer_notes = db.relationship(
+        'CustomerNote',
+        back_populates='customer',
+        cascade='all, delete-orphan',
+        lazy='dynamic'
+    )
+
     def __repr__(self):
         return f'<Customer {self.nombre_razon_social} ({self.numero_documento})>'
 

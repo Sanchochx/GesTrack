@@ -9,6 +9,7 @@ from app.models.inventory_alert import InventoryAlert
 from app.models.inventory_value_history import InventoryValueHistory
 from app.models.customer import Customer
 from app.models.customer_deletion_audit import CustomerDeletionAudit
+from app.models.customer_note import CustomerNote
 from app.models.order import Order, OrderItem, OrderStatusHistory
 
-__all__ = ['User', 'LoginAttempt', 'PasswordResetToken', 'Category', 'Product', 'InventoryMovement', 'ProductDeletionAudit', 'InventoryAlert', 'InventoryValueHistory', 'Customer', 'CustomerDeletionAudit', 'Order', 'OrderItem', 'OrderStatusHistory']
+__all__ = ['User', 'LoginAttempt', 'PasswordResetToken', 'Category', 'Product', 'InventoryMovement', 'ProductDeletionAudit', 'InventoryAlert', 'InventoryValueHistory', 'Customer', 'CustomerDeletionAudit', 'CustomerNote', 'Order', 'OrderItem', 'OrderStatusHistory']
