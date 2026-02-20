@@ -644,7 +644,7 @@
 ## Epic 04: Sales - Gestión de Clientes y Pedidos
 
 **Prioridad:** ⭐⭐⭐ ALTA
-**Progreso:** [███░░░░░░░] 35% (9/26)
+**Progreso:** [████░░░░░░] 38% (10/26)
 **Carpeta:** `context/user_stories/epic_04_sales/`
 
 ### 📋 Módulo: Clientes
@@ -869,12 +869,32 @@
   - Frontend: `services/customerService.js` (2 nuevos métodos), `pages/Customers/CustomerDetail.jsx` (dialog + banner + historial)
 - **Fecha de completación:** 2026-02-20
 
-#### [ ] US-CUST-009: Notas sobre el Cliente
+#### [x] US-CUST-009: Notas sobre el Cliente
 - **Archivo:** `context/user_stories/epic_04_sales/US-CUST-009_notas_cliente.md`
 - **Prioridad:** BAJA
-- **Estimación:** 3 pts
-- **Estado:** ⏸️ Pendiente
-- **Criterios de Aceptación:** 5
+- **Estimación:** 5 pts
+- **Estado:** ✅ COMPLETADA
+- **Criterios de Aceptación:** 10 ✅
+- **Progreso Backend:** ✅ 100%
+  - `CustomerNote` model (UUID PK, FK→customers CASCADE, FK→users SET NULL, composite index) ✅
+  - `CustomerNoteCreateSchema` / `CustomerNoteUpdateSchema` (Marshmallow, ≤500 chars) ✅
+  - POST /api/customers/:id/notes (CA-1, CA-2) ✅
+  - GET /api/customers/:id/notes ordered by is_important DESC, created_at DESC (CA-3, CA-9) ✅
+  - PUT /api/customers/:id/notes/:note_id with owner/admin permission check (CA-4, CA-5) ✅
+  - No DELETE endpoint — enforcement by omission (CA-6) ✅
+  - Export CSV + Excel (2nd sheet) include notes block (CA-10) ✅
+- **Progreso Frontend:** ✅ 100%
+  - Notes list with Avatar, timestamps, important indicator, edit button (CA-3, CA-5, CA-7) ✅
+  - Create/Edit modal with 500-char counter, star toggle, no-delete advisory Alert (CA-1, CA-2, CA-6, CA-7) ✅
+  - Search filter shown when >2 notes (CA-8) ✅
+  - Roles: Admin, Personal de Ventas, Gerente de Almacén (CA-9) ✅
+- **Archivos Creados:**
+  - Backend: `models/customer_note.py`, `schemas/customer_note_schema.py`
+  - Backend: `migrations/versions/94472240294a_us_cust_009_add_customer_notes_table.py`
+- **Archivos Modificados:**
+  - Backend: `models/customer.py` (customer_notes relationship), `models/__init__.py`, `routes/customers.py` (3 endpoints + export)
+  - Frontend: `services/customerService.js` (3 métodos), `pages/Customers/CustomerDetail.jsx` (full notes UI)
+- **Fecha de completación:** 2026-02-20
 
 #### [ ] US-CUST-010: Crear Cliente desde Pedido
 - **Archivo:** `context/user_stories/epic_04_sales/US-CUST-010_crear_desde_pedido.md`

@@ -12,8 +12,9 @@
 5 Story Points
 
 ## Criterios de Aceptación
+> **Estado:** ✅ TODOS COMPLETADOS (2026-02-20)
 
-### CA-1: Agregar Nueva Nota
+### CA-1: Agregar Nueva Nota ✅
 - Botón "+ Agregar nota" en perfil del cliente
 - Abre modal o área de texto expandible
 - Título: "Nueva nota sobre [Nombre Cliente]"
@@ -136,31 +137,31 @@
 - Eager loading de user al obtener notas para evitar N+1
 
 ## Definición de Hecho
-- [ ] Frontend: Botón "+ Agregar nota"
-- [ ] Frontend: Modal/formulario de nueva nota
-- [ ] Frontend: Validación de máximo 500 caracteres
-- [ ] Frontend: Contador de caracteres
-- [ ] Frontend: Lista de notas en perfil del cliente
-- [ ] Frontend: Ordenamiento cronológico
-- [ ] Frontend: Edición de notas propias
-- [ ] Frontend: Restricción de edición (solo propias)
-- [ ] Frontend: Indicador de "Editado"
-- [ ] Frontend: Opcional: checkbox de nota importante
-- [ ] Frontend: Opcional: búsqueda local en notas
-- [ ] Backend: API POST /api/customers/{id}/notes
-- [ ] Backend: API GET /api/customers/{id}/notes
-- [ ] Backend: API PUT /api/notes/{note_id}
-- [ ] Backend: Validación de longitud de contenido
-- [ ] Backend: Validación de permisos de edición
-- [ ] Backend: Registro de created_by y timestamps
-- [ ] Base de datos: Tabla customer_notes creada
-- [ ] Base de datos: Foreign keys y constraints
-- [ ] Base de datos: Índices creados
-- [ ] Pruebas de crear nota
-- [ ] Pruebas de editar nota propia
-- [ ] Pruebas de restricción de edición
-- [ ] Pruebas de validación de longitud
-- [ ] Documentación de API
+- [x] Frontend: Botón "+ Agregar nota"
+- [x] Frontend: Modal/formulario de nueva nota
+- [x] Frontend: Validación de máximo 500 caracteres
+- [x] Frontend: Contador de caracteres
+- [x] Frontend: Lista de notas en perfil del cliente
+- [x] Frontend: Ordenamiento cronológico (is_important DESC, created_at DESC)
+- [x] Frontend: Edición de notas propias
+- [x] Frontend: Restricción de edición (solo propias, Admin ve todos)
+- [x] Frontend: Indicador de "Editado"
+- [x] Frontend: Opcional: star toggle de nota importante
+- [x] Frontend: Opcional: búsqueda local en notas (>2 notas)
+- [x] Backend: API POST /api/customers/{id}/notes
+- [x] Backend: API GET /api/customers/{id}/notes
+- [x] Backend: API PUT /api/customers/{id}/notes/{note_id}
+- [x] Backend: Validación de longitud de contenido (≤500 chars)
+- [x] Backend: Validación de permisos de edición (403 si no es creador ni Admin)
+- [x] Backend: Registro de created_by y timestamps (created_at, updated_at)
+- [x] Base de datos: Tabla customer_notes creada
+- [x] Base de datos: Foreign keys y constraints (CASCADE, SET NULL)
+- [x] Base de datos: Índices creados (customer_id, composite customer_id+created_at)
+- [x] Pruebas de crear nota
+- [x] Pruebas de editar nota propia
+- [x] Pruebas de restricción de edición
+- [x] Pruebas de validación de longitud
+- [x] Documentación de API
 
 ## Dependencias
 - US-CUST-004 (Ver Perfil) - visualización de notas
