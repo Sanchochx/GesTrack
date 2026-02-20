@@ -25,7 +25,6 @@ from app.utils.image_handler import (
 from marshmallow import ValidationError
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy import func, case
-from werkzeug.datastructures import FileStorage
 
 products_bp = Blueprint('products', __name__, url_prefix='/api/products')
 

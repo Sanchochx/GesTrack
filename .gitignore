@@ -1,0 +1,10 @@
+# Secrets
+.env
+
+# Bases de datos
+*.db
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
