@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import {
   ThemeProvider,
@@ -56,6 +56,7 @@ import CustomerList from './pages/Customers/CustomerList';  // US-CUST-001
 import CreateCustomer from './pages/Customers/CreateCustomer';  // US-CUST-001
 import CustomerDetail from './pages/Customers/CustomerDetail';  // US-CUST-004
 import EditCustomer from './pages/Customers/EditCustomer';  // US-CUST-005
+import CustomerOrderHistory from './pages/Customers/CustomerOrderHistory';  // US-CUST-007
 import CreateOrder from './pages/Orders/CreateOrder';  // US-ORD-001
 import ProtectedRoute from './components/common/ProtectedRoute';
 import authService from './services/authService';
@@ -113,7 +114,6 @@ function Navigation() {
   const [userMenuAnchor, setUserMenuAnchor] = useState(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [expandedAccordion, setExpandedAccordion] = useState(null);
-  const closeTimers = useRef({});
 
   // Actualizar estado de autenticación cuando cambie la ruta
   useEffect(() => {
@@ -123,28 +123,7 @@ function Navigation() {
     }
   }, [location.pathname]);
 
-  // Limpiar timers al desmontar
-  useEffect(() => {
-    const timers = closeTimers.current;
-    return () => Object.values(timers).forEach(clearTimeout);
-  }, []);
-
-  // --- Handlers para dropdowns con soporte hover ---
-  const openDropdown = (id, event) => {
-    clearTimeout(closeTimers.current[id]);
-    setDropdownAnchors(prev => ({ ...prev, [id]: event.currentTarget }));
-  };
-
-  const scheduleCloseDropdown = (id) => {
-    closeTimers.current[id] = setTimeout(() => {
-      setDropdownAnchors(prev => ({ ...prev, [id]: null }));
-    }, 150);
-  };
-
-  const cancelCloseDropdown = (id) => {
-    clearTimeout(closeTimers.current[id]);
-  };
-
+  // --- Handlers para dropdowns ---
   const navigateTo = (path, closeId) => {
     setDropdownAnchors(prev => ({ ...prev, [closeId]: null }));
     navigate(path);
@@ -225,14 +204,14 @@ function Navigation() {
   );
 
   // Estilos para botón activo / inactivo en desktop
-  const activeBtnSx = { borderBottom: '2px solid white', borderRadius: 0, pb: '4px' };
-  const inactiveBtnSx = { borderBottom: '2px solid transparent', borderRadius: 0, pb: '4px' };
+  const activeBtnSx = { borderBottom: '2px solid white', borderRadius: 0, pb: '4px', textDecoration: 'none', outline: 'none', '&:hover': { textDecoration: 'none' }, '&:focus': { outline: 'none' }, '&.Mui-focusVisible': { boxShadow: 'none', background: 'transparent' } };
+  const inactiveBtnSx = { borderBottom: '2px solid transparent', borderRadius: 0, pb: '4px', textDecoration: 'none', outline: 'none', '&:hover': { textDecoration: 'none' }, '&:focus': { outline: 'none' }, '&.Mui-focusVisible': { boxShadow: 'none', background: 'transparent' } };
 
   return (
     <AppBar position="static">
       <Toolbar>
         <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-          GesTrack - Sistema de Gestión
+          GesTrack
         </Typography>
 
         {!isAuthenticated ? (
@@ -362,8 +341,6 @@ function Navigation() {
                   <Box
                     key={group.id}
                     sx={{ display: 'inline-flex' }}
-                    onMouseEnter={(e) => openDropdown(group.id, e)}
-                    onMouseLeave={() => scheduleCloseDropdown(group.id)}
                   >
                     <Button
                       color="inherit"
@@ -377,11 +354,10 @@ function Navigation() {
                           }}
                         />
                       }
-                      onClick={() => {
-                        if (Boolean(dropdownAnchors[group.id])) {
-                          setDropdownAnchors(prev => ({ ...prev, [group.id]: null }));
-                        }
-                      }}
+                      onClick={(e) => setDropdownAnchors(prev => ({
+                        ...prev,
+                        [group.id]: prev[group.id] ? null : e.currentTarget,
+                      }))}
                       sx={{
                         '&:hover': { color: '#a5d6a7' },
                         ...(isGroupActive(group.paths) ? activeBtnSx : inactiveBtnSx),
@@ -395,10 +371,6 @@ function Navigation() {
                       onClose={() =>
                         setDropdownAnchors(prev => ({ ...prev, [group.id]: null }))
                       }
-                      MenuListProps={{
-                        onMouseEnter: () => cancelCloseDropdown(group.id),
-                        onMouseLeave: () => scheduleCloseDropdown(group.id),
-                      }}
                       anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
                       transformOrigin={{ vertical: 'top', horizontal: 'left' }}
                       disableAutoFocusItem
@@ -675,6 +647,15 @@ function App() {
                 element={
                   <ProtectedRoute allowedRoles={['Admin', 'Personal de Ventas', 'Gerente de Almacén']}>
                     <EditCustomer />
+                  </ProtectedRoute>
+                }
+              />
+              {/* US-CUST-007: Customer Order History Route */}
+              <Route
+                path="/customers/:id/orders"
+                element={
+                  <ProtectedRoute allowedRoles={['Admin', 'Personal de Ventas', 'Gerente de Almacén']}>
+                    <CustomerOrderHistory />
                   </ProtectedRoute>
                 }
               />

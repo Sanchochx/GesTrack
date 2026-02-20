@@ -167,6 +167,65 @@ const customerService = {
       throw { success: false, error: { message: 'Error de conexión con el servidor' } };
     }
   },
+
+  /**
+   * US-CUST-007: Obtener historial de compras del cliente
+   * @param {string} customerId - ID del cliente
+   * @param {Object} filters - { page, limit, date_from, date_to, status, payment_status }
+   * @returns {Promise} - Historial con orders, metrics, top_products, chart_data
+   */
+  async getOrdersHistory(customerId, filters = {}) {
+    try {
+      const response = await api.get(`/customers/${customerId}/orders-history`, { params: filters });
+      return response.data;
+    } catch (error) {
+      if (error.response && error.response.data) {
+        throw error.response.data;
+      }
+      throw { success: false, error: { message: 'Error de conexión con el servidor' } };
+    }
+  },
+
+  /**
+   * US-CUST-007 CA-10: Exportar historial de compras del cliente
+   * @param {string} customerId - ID del cliente
+   * @param {Object} params - { format: 'csv'|'excel', date_from, date_to, status, payment_status }
+   * @param {string} customerName - Nombre del cliente para el archivo
+   * @returns {Promise} - Descarga del archivo
+   */
+  async exportOrdersHistory(customerId, params = {}, customerName = 'cliente') {
+    try {
+      const response = await api.get(`/customers/${customerId}/orders-history/export`, {
+        params,
+        responseType: 'blob',
+      });
+
+      const contentDisposition = response.headers['content-disposition'];
+      const ext = params.format === 'excel' ? 'xlsx' : 'csv';
+      const date = new Date().toISOString().slice(0, 10);
+      let filename = `Historial_${customerName}_${date}.${ext}`;
+      if (contentDisposition) {
+        const match = contentDisposition.match(/filename=([^;]+)/);
+        if (match) filename = match[1].trim();
+      }
+
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', filename);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+
+      return { success: true };
+    } catch (error) {
+      if (error.response && error.response.data) {
+        throw error.response.data;
+      }
+      throw { success: false, error: { message: 'Error al exportar historial' } };
+    }
+  },
 };
 
 export default customerService;

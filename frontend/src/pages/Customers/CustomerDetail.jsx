@@ -587,15 +587,16 @@ export default function CustomerDetail() {
                 <ShoppingCartIcon color="primary" />
                 Últimos Pedidos
               </Typography>
-              <Button size="small" endIcon={<OpenInNewIcon />} onClick={() => navigate(`/customers/${id}/orders`)} disabled>
-                Ver todos
+              <Button size="small" endIcon={<OpenInNewIcon />} onClick={() => navigate(`/customers/${id}/orders`)}>
+                Ver historial completo
               </Button>
             </Box>
             <Divider sx={{ mb: 2 }} />
             <Alert severity="info" icon={<InventoryIcon />}>
-              <Typography variant="body2">Este cliente aún no ha realizado compras.</Typography>
-              <Typography variant="caption" color="text.secondary">
-                El historial de pedidos estará disponible cuando se implemente el módulo de ventas.
+              <Typography variant="body2">
+                {customer.order_count > 0
+                  ? `Este cliente tiene ${customer.order_count} pedido(s). Ver el historial completo para más detalles.`
+                  : 'Este cliente aún no ha realizado compras.'}
               </Typography>
             </Alert>
           </Paper>
