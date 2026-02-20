@@ -1,4 +1,4 @@
-# GesTrack
+# GesTrack (En desarrollo)
 
 Sistema de gestión de inventario y pedidos para pequeñas y medianas empresas. GesTrack ofrece seguimiento de stock en tiempo real, gestión de clientes y procesamiento de pedidos a través de una API REST en el backend y un frontend moderno en React.
 
