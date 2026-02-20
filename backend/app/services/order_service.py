@@ -126,6 +126,7 @@ class OrderService:
             db.session.flush()  # Populates order.id before referencing it in status_history
 
             # 7. CA-10: Reducir stock y registrar movimientos de inventario
+            # US-INV-008 CA-1: Usar tipo 'order_reservation' y actualizar reserved_stock
             # Se hace directamente (sin StockService) para mantener atomicidad
             for item in items_data:
                 product = products_map[item['product_id']]
@@ -134,22 +135,24 @@ class OrderService:
                 previous_stock = product.stock_quantity
                 new_stock = previous_stock - qty
 
-                # Actualizar stock del producto
+                # Actualizar stock disponible y stock reservado (CA-1)
                 product.stock_quantity = new_stock
+                product.reserved_stock = product.reserved_stock + qty  # CA-1: Registrar como reservado
                 product.stock_last_updated = datetime.utcnow()
                 product.last_updated_by_id = user_id
                 product.version += 1
 
-                # Crear movimiento de inventario
+                # CA-8: Crear movimiento tipo 'order_reservation' vinculado al pedido
                 movement = InventoryMovement(
                     product_id=product.id,
                     user_id=user_id,
-                    movement_type='Venta',
+                    movement_type='order_reservation',
                     quantity=-qty,
                     previous_stock=previous_stock,
                     new_stock=new_stock,
-                    reason=f'Venta - Pedido {order_number}',
+                    reason=f'Reserva de stock - Pedido {order_number}',
                     reference=order_number,
+                    related_order_id=order.id,
                 )
                 db.session.add(movement)
 
@@ -171,6 +174,191 @@ class OrderService:
         except Exception as e:
             db.session.rollback()
             raise StockUpdateError(f'Error al crear pedido: {str(e)}')
+
+    @staticmethod
+    def cancel_order(order_id, user_id, notes=None):
+        """
+        US-INV-008 CA-3: Cancela un pedido en estado Pendiente y restaura el stock.
+
+        Args:
+            order_id: ID del pedido a cancelar
+            user_id: ID del usuario que cancela
+            notes: Motivo de cancelación (opcional)
+
+        Returns:
+            Order: Pedido cancelado
+
+        Raises:
+            ValueError: Si el pedido no existe o no está en estado Pendiente
+            StockUpdateError: Error al restaurar stock
+        """
+        try:
+            # 1. Obtener pedido
+            order = Order.query.get(order_id)
+            if not order:
+                raise ValueError('Pedido no encontrado')
+            if order.status != 'Pendiente':
+                raise ValueError(
+                    f'Solo se pueden cancelar pedidos en estado Pendiente. '
+                    f'Estado actual: {order.status}'
+                )
+
+            # 2. Obtener los items con lock pesimista sobre los productos (CA-5)
+            product_ids = [item.product_id for item in order.items]
+            products = Product.query.filter(
+                Product.id.in_(product_ids)
+            ).with_for_update().all()
+            products_map = {p.id: p for p in products}
+
+            # 3. Restaurar stock y crear movimientos de cancelación (CA-3, CA-8)
+            order_number = order.order_number
+            for item in order.items:
+                product = products_map.get(item.product_id)
+                if not product:
+                    continue
+
+                qty = item.quantity
+                previous_stock = product.stock_quantity
+                new_stock = previous_stock + qty
+
+                # Restaurar stock disponible y reducir reservado
+                product.stock_quantity = new_stock
+                product.reserved_stock = max(0, product.reserved_stock - qty)
+                product.stock_last_updated = datetime.utcnow()
+                product.last_updated_by_id = user_id
+                product.version += 1
+
+                # CA-8: Movimiento tipo 'order_cancellation'
+                movement = InventoryMovement(
+                    product_id=product.id,
+                    user_id=user_id,
+                    movement_type='order_cancellation',
+                    quantity=qty,
+                    previous_stock=previous_stock,
+                    new_stock=new_stock,
+                    reason=f'Cancelación de pedido {order_number}',
+                    reference=order_number,
+                    related_order_id=order.id,
+                )
+                db.session.add(movement)
+
+            # 4. Actualizar estado del pedido
+            order.status = 'Cancelado'
+
+            # 5. Registrar en historial de estados
+            status_entry = OrderStatusHistory(
+                order_id=order.id,
+                changed_by_id=user_id,
+                status='Cancelado',
+                notes=notes or 'Pedido cancelado por el usuario',
+            )
+            db.session.add(status_entry)
+
+            db.session.commit()
+            return order
+
+        except ValueError:
+            db.session.rollback()
+            raise
+        except Exception as e:
+            db.session.rollback()
+            raise StockUpdateError(f'Error al cancelar pedido: {str(e)}')
+
+    @staticmethod
+    def update_order_status(order_id, new_status, user_id, notes=None):
+        """
+        US-INV-008 CA-4: Actualiza el estado de un pedido.
+
+        Para el estado 'Entregado': solo reduce reserved_stock, no modifica stock_quantity
+        (el stock ya fue reducido al crear el pedido).
+
+        Transiciones válidas:
+            Pendiente -> Confirmado, Cancelado
+            Confirmado -> Procesando, Cancelado
+            Procesando -> Enviado, Cancelado
+            Enviado -> Entregado, Cancelado
+            Entregado -> (ninguna)
+            Cancelado -> (ninguna)
+
+        Args:
+            order_id: ID del pedido
+            new_status: Nuevo estado
+            user_id: ID del usuario que actualiza
+            notes: Notas del cambio de estado (opcional)
+
+        Returns:
+            Order: Pedido actualizado
+
+        Raises:
+            ValueError: Si la transición no es válida
+            StockUpdateError: Error al actualizar stock
+        """
+        # Transiciones válidas por estado
+        VALID_TRANSITIONS = {
+            'Pendiente': ['Confirmado', 'Cancelado'],
+            'Confirmado': ['Procesando', 'Cancelado'],
+            'Procesando': ['Enviado', 'Cancelado'],
+            'Enviado': ['Entregado', 'Cancelado'],
+            'Entregado': [],
+            'Cancelado': [],
+        }
+
+        try:
+            order = Order.query.get(order_id)
+            if not order:
+                raise ValueError('Pedido no encontrado')
+
+            current_status = order.status
+            allowed = VALID_TRANSITIONS.get(current_status, [])
+
+            if new_status not in allowed:
+                raise ValueError(
+                    f'Transición inválida de "{current_status}" a "{new_status}". '
+                    f'Transiciones permitidas: {allowed or "ninguna"}'
+                )
+
+            # Si se cancela, usar cancel_order para manejar el stock
+            if new_status == 'Cancelado':
+                return OrderService.cancel_order(order_id, user_id, notes)
+
+            # CA-4: Para 'Entregado', reducir reserved_stock (stock ya fue reducido al crear)
+            if new_status == 'Entregado':
+                product_ids = [item.product_id for item in order.items]
+                products = Product.query.filter(
+                    Product.id.in_(product_ids)
+                ).with_for_update().all()
+                products_map = {p.id: p for p in products}
+
+                for item in order.items:
+                    product = products_map.get(item.product_id)
+                    if product:
+                        # CA-4: El stock ya fue reducido al crear el pedido.
+                        # Solo se actualiza reserved_stock: la reserva se convierte en definitiva
+                        product.reserved_stock = max(0, product.reserved_stock - item.quantity)
+                        product.stock_last_updated = datetime.utcnow()
+                        product.last_updated_by_id = user_id
+
+            # Actualizar estado del pedido
+            order.status = new_status
+
+            # Registrar en historial
+            status_entry = OrderStatusHistory(
+                order_id=order.id,
+                changed_by_id=user_id,
+                status=new_status,
+                notes=notes or f'Estado actualizado a {new_status}',
+            )
+            db.session.add(status_entry)
+
+            db.session.commit()
+            return order
+
+        except ValueError:
+            db.session.rollback()
+            raise
+        except Exception as e:
+            db.session.rollback()
+            raise StockUpdateError(f'Error al actualizar estado del pedido: {str(e)}')
 
     @staticmethod
     def validate_stock_availability(items):

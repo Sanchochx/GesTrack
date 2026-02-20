@@ -28,6 +28,7 @@ class Product(db.Model):
     stock_quantity = db.Column(db.Integer, nullable=False, default=0)
     min_stock_level = db.Column(db.Integer, nullable=False, default=10)
     reorder_point = db.Column(db.Integer, nullable=False, default=10)  # US-PROD-008 CA-1: Punto de reorden
+    reserved_stock = db.Column(db.Integer, nullable=False, default=0)  # US-INV-008 CA-1: Stock reservado para pedidos pendientes
 
     # Foreign Keys
     category_id = db.Column(db.String(36), db.ForeignKey('categories.id'), nullable=False)
@@ -69,6 +70,10 @@ class Product(db.Model):
             'stock_quantity': self.stock_quantity,
             'min_stock_level': self.min_stock_level,
             'reorder_point': self.reorder_point,  # US-PROD-008 CA-1
+            # US-INV-008 CA-6: Desglose de stock (disponible vs reservado)
+            'reserved_stock': self.reserved_stock,
+            'stock_total': self.stock_quantity + self.reserved_stock,
+            'stock_disponible': self.stock_quantity,
             'category_id': self.category_id,
             'image_url': self.image_url,
             'is_active': self.is_active,

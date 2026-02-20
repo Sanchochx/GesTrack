@@ -1,6 +1,7 @@
 """
 Rutas API para gestión de Pedidos
 US-ORD-001: Crear Pedido
+US-INV-008: Cancelar pedido y actualizar estado (reserva de stock)
 """
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
@@ -148,6 +149,133 @@ def validate_stock():
             'error': {
                 'code': 'SERVER_ERROR',
                 'message': 'Error al validar stock',
+                'details': str(e)
+            }
+        }), 500
+
+
+@orders_bp.route('/<string:order_id>/cancel', methods=['POST'])
+@jwt_required()
+@require_role(['Admin', 'Personal de Ventas', 'Gerente de Almacén'])
+def cancel_order(order_id):
+    """
+    POST /api/orders/:id/cancel
+    US-INV-008 CA-3: Cancela un pedido en estado Pendiente y restaura el stock.
+
+    Body (opcional):
+        - notes: Motivo de cancelación
+    """
+    try:
+        current_user_id = get_jwt_identity()
+        data = request.get_json() or {}
+        notes = data.get('notes')
+
+        order = OrderService.cancel_order(order_id, current_user_id, notes)
+
+        return jsonify({
+            'success': True,
+            'data': order.to_dict(),
+            'message': f'Pedido {order.order_number} cancelado. Stock restaurado para todos los productos.'
+        }), 200
+
+    except ValueError as e:
+        return jsonify({
+            'success': False,
+            'error': {
+                'code': 'VALIDATION_ERROR',
+                'message': str(e)
+            }
+        }), 400
+
+    except StockUpdateError as e:
+        return jsonify({
+            'success': False,
+            'error': {
+                'code': 'STOCK_ERROR',
+                'message': str(e)
+            }
+        }), 500
+
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': {
+                'code': 'SERVER_ERROR',
+                'message': 'Error al cancelar pedido',
+                'details': str(e)
+            }
+        }), 500
+
+
+@orders_bp.route('/<string:order_id>/status', methods=['PATCH'])
+@jwt_required()
+@require_role(['Admin', 'Personal de Ventas', 'Gerente de Almacén'])
+def update_order_status(order_id):
+    """
+    PATCH /api/orders/:id/status
+    US-INV-008 CA-4: Actualiza el estado de un pedido con manejo correcto de stock.
+
+    Body:
+        - status: Nuevo estado del pedido (requerido)
+        - notes: Notas del cambio (opcional)
+    """
+    try:
+        current_user_id = get_jwt_identity()
+        data = request.get_json() or {}
+
+        new_status = data.get('status')
+        if not new_status:
+            return jsonify({
+                'success': False,
+                'error': {
+                    'code': 'VALIDATION_ERROR',
+                    'message': 'Se requiere el campo "status"'
+                }
+            }), 400
+
+        valid_statuses = ['Pendiente', 'Confirmado', 'Procesando', 'Enviado', 'Entregado', 'Cancelado']
+        if new_status not in valid_statuses:
+            return jsonify({
+                'success': False,
+                'error': {
+                    'code': 'VALIDATION_ERROR',
+                    'message': f'Estado inválido. Valores permitidos: {", ".join(valid_statuses)}'
+                }
+            }), 400
+
+        notes = data.get('notes')
+        order = OrderService.update_order_status(order_id, new_status, current_user_id, notes)
+
+        return jsonify({
+            'success': True,
+            'data': order.to_dict(),
+            'message': f'Estado del pedido {order.order_number} actualizado a "{new_status}"'
+        }), 200
+
+    except ValueError as e:
+        return jsonify({
+            'success': False,
+            'error': {
+                'code': 'VALIDATION_ERROR',
+                'message': str(e)
+            }
+        }), 400
+
+    except StockUpdateError as e:
+        return jsonify({
+            'success': False,
+            'error': {
+                'code': 'STOCK_ERROR',
+                'message': str(e)
+            }
+        }), 500
+
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': {
+                'code': 'SERVER_ERROR',
+                'message': 'Error al actualizar estado del pedido',
                 'details': str(e)
             }
         }), 500

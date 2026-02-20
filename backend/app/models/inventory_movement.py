@@ -39,6 +39,9 @@ class InventoryMovement(db.Model):
     reference = db.Column(db.String(100), nullable=True)  # Referencia (ej: número de factura)
     notes = db.Column(db.Text, nullable=True)  # Notas adicionales
 
+    # US-INV-008 CA-8: Vinculación a pedido (para trazabilidad de reservas)
+    related_order_id = db.Column(db.String(36), db.ForeignKey('orders.id'), nullable=True)
+
     # Timestamps
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
 
@@ -62,6 +65,7 @@ class InventoryMovement(db.Model):
             'reason': self.reason,
             'reference': self.reference,
             'notes': self.notes,
+            'related_order_id': self.related_order_id,
             'created_at': self.created_at.isoformat() if self.created_at else None
         }
 
