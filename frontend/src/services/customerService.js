@@ -223,6 +223,60 @@ const customerService = {
   },
 
   /**
+   * US-CUST-009 CA-1 & CA-2: Crear una nota sobre un cliente
+   * @param {string} customerId - ID del cliente
+   * @param {Object} noteData - { content, is_important }
+   * @returns {Promise} - Nota creada
+   */
+  async createCustomerNote(customerId, noteData) {
+    try {
+      const response = await api.post(`/customers/${customerId}/notes`, noteData);
+      return response.data;
+    } catch (error) {
+      if (error.response && error.response.data) {
+        throw error.response.data;
+      }
+      throw { success: false, error: { message: 'Error de conexión con el servidor' } };
+    }
+  },
+
+  /**
+   * US-CUST-009 CA-3: Obtener notas de un cliente
+   * @param {string} customerId - ID del cliente
+   * @returns {Promise} - Lista de notas ordenadas por importancia y fecha
+   */
+  async getCustomerNotes(customerId) {
+    try {
+      const response = await api.get(`/customers/${customerId}/notes`);
+      return response.data;
+    } catch (error) {
+      if (error.response && error.response.data) {
+        throw error.response.data;
+      }
+      throw { success: false, error: { message: 'Error de conexión con el servidor' } };
+    }
+  },
+
+  /**
+   * US-CUST-009 CA-4 & CA-5: Actualizar una nota del cliente
+   * @param {string} customerId - ID del cliente
+   * @param {string} noteId - ID de la nota
+   * @param {Object} noteData - { content?, is_important? }
+   * @returns {Promise} - Nota actualizada
+   */
+  async updateCustomerNote(customerId, noteId, noteData) {
+    try {
+      const response = await api.put(`/customers/${customerId}/notes/${noteId}`, noteData);
+      return response.data;
+    } catch (error) {
+      if (error.response && error.response.data) {
+        throw error.response.data;
+      }
+      throw { success: false, error: { message: 'Error de conexión con el servidor' } };
+    }
+  },
+
+  /**
    * US-CUST-007 CA-10: Exportar historial de compras del cliente
    * @param {string} customerId - ID del cliente
    * @param {Object} params - { format: 'csv'|'excel', date_from, date_to, status, payment_status }

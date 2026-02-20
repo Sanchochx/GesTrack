@@ -25,6 +25,14 @@ import {
   Collapse,
   useMediaQuery,
   useTheme,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  TextField,
+  Avatar,
+  CircularProgress,
+  InputAdornment,
 } from '@mui/material';
 import {
   ArrowBack as ArrowBackIcon,
@@ -53,6 +61,9 @@ import {
   Inventory as InventoryIcon,
   Badge as BadgeIcon,
   AccountBalance as FiscalIcon,
+  StarBorder as StarBorderIcon,
+  Search as SearchIcon,
+  EditOutlined as EditOutlinedIcon,
 } from '@mui/icons-material';
 import customerService from '../../services/customerService';
 import authService from '../../services/authService';
@@ -125,6 +136,18 @@ export default function CustomerDetail() {
   const [statusDialogOpen, setStatusDialogOpen] = useState(false);
   const [statusDialogMode, setStatusDialogMode] = useState('deactivate');
 
+  // US-CUST-009: Notes state
+  const [notes, setNotes] = useState([]);
+  const [notesLoading, setNotesLoading] = useState(false);
+  const [noteModalOpen, setNoteModalOpen] = useState(false);
+  const [noteModalMode, setNoteModalMode] = useState('create');
+  const [editingNote, setEditingNote] = useState(null);
+  const [noteContent, setNoteContent] = useState('');
+  const [noteImportant, setNoteImportant] = useState(false);
+  const [noteSaving, setNoteSaving] = useState(false);
+  const [noteError, setNoteError] = useState('');
+  const [noteSearch, setNoteSearch] = useState('');
+
   const loadCustomer = useCallback(async () => {
     setLoading(true);
     setError(null);
@@ -142,9 +165,90 @@ export default function CustomerDetail() {
     }
   }, [id]);
 
+  const loadNotes = useCallback(async () => {
+    setNotesLoading(true);
+    try {
+      const response = await customerService.getCustomerNotes(id);
+      if (response.success) {
+        setNotes(response.data);
+      }
+    } catch {
+      // silently fail — notes section shows empty state
+    } finally {
+      setNotesLoading(false);
+    }
+  }, [id]);
+
   useEffect(() => {
     loadCustomer();
-  }, [loadCustomer]);
+    loadNotes();
+  }, [loadCustomer, loadNotes]);
+
+  // US-CUST-009: Note handlers
+  const openCreateNoteModal = () => {
+    setNoteModalMode('create');
+    setEditingNote(null);
+    setNoteContent('');
+    setNoteImportant(false);
+    setNoteError('');
+    setNoteModalOpen(true);
+  };
+
+  const openEditNoteModal = (note) => {
+    setNoteModalMode('edit');
+    setEditingNote(note);
+    setNoteContent(note.content);
+    setNoteImportant(note.is_important);
+    setNoteError('');
+    setNoteModalOpen(true);
+  };
+
+  const closeNoteModal = () => {
+    setNoteModalOpen(false);
+    setNoteError('');
+  };
+
+  const handleSaveNote = async () => {
+    if (!noteContent.trim()) {
+      setNoteError('El contenido de la nota es requerido');
+      return;
+    }
+    if (noteContent.length > 500) {
+      setNoteError('La nota no puede exceder 500 caracteres');
+      return;
+    }
+    setNoteSaving(true);
+    setNoteError('');
+    try {
+      let response;
+      if (noteModalMode === 'edit') {
+        response = await customerService.updateCustomerNote(id, editingNote.id, {
+          content: noteContent.trim(),
+          is_important: noteImportant,
+        });
+      } else {
+        response = await customerService.createCustomerNote(id, {
+          content: noteContent.trim(),
+          is_important: noteImportant,
+        });
+      }
+      if (response.success) {
+        closeNoteModal();
+        await loadNotes();
+        setSnackbar({
+          open: true,
+          message: noteModalMode === 'edit' ? 'Nota actualizada correctamente' : 'Nota agregada correctamente',
+          severity: 'success',
+        });
+      } else {
+        setNoteError(response.error?.message || 'Error al guardar la nota');
+      }
+    } catch (err) {
+      setNoteError(err.error?.message || 'Error al guardar la nota');
+    } finally {
+      setNoteSaving(false);
+    }
+  };
 
   const openStatusDialog = () => {
     setStatusDialogMode(customer.is_active ? 'deactivate' : 'activate');
@@ -504,25 +608,110 @@ export default function CustomerDetail() {
             </Box>
           </Paper>
 
-          {/* Notas */}
+          {/* Notas (US-CUST-009) */}
           <Paper sx={{ p: 3, mb: 3 }}>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
               <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <NoteIcon color="primary" />
                 Notas
               </Typography>
-              <Button size="small" startIcon={<AddIcon />} disabled>
+              <Button size="small" startIcon={<AddIcon />} onClick={openCreateNoteModal}>
                 Agregar nota
               </Button>
             </Box>
             <Divider sx={{ mb: 2 }} />
-            {customer.notes ? (
-              <Typography variant="body1" sx={{ whiteSpace: 'pre-wrap' }}>{customer.notes}</Typography>
-            ) : (
-              <Typography variant="body2" color="text.secondary" fontStyle="italic">
-                No hay notas sobre este cliente
-              </Typography>
+
+            {/* Search — only when more than 2 notes */}
+            {notes.length > 2 && (
+              <TextField
+                size="small"
+                fullWidth
+                placeholder="Buscar en notas..."
+                value={noteSearch}
+                onChange={(e) => setNoteSearch(e.target.value)}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <SearchIcon fontSize="small" />
+                    </InputAdornment>
+                  ),
+                }}
+                sx={{ mb: 2 }}
+              />
             )}
+
+            {/* Notes list */}
+            {notesLoading ? (
+              <Box sx={{ display: 'flex', justifyContent: 'center', py: 2 }}>
+                <CircularProgress size={24} />
+              </Box>
+            ) : (() => {
+              const filteredNotes = noteSearch
+                ? notes.filter((n) => n.content.toLowerCase().includes(noteSearch.toLowerCase()))
+                : notes;
+              if (filteredNotes.length === 0) {
+                return (
+                  <Typography variant="body2" color="text.secondary" fontStyle="italic">
+                    {noteSearch
+                      ? 'No se encontraron notas que coincidan con la búsqueda'
+                      : 'No hay notas sobre este cliente'}
+                  </Typography>
+                );
+              }
+              return (
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                  {filteredNotes.map((note) => (
+                    <Box
+                      key={note.id}
+                      sx={{
+                        p: 2,
+                        borderRadius: 1,
+                        border: '1px solid',
+                        borderColor: note.is_important ? 'warning.light' : 'divider',
+                        bgcolor: note.is_important ? 'warning.lighter' : 'background.paper',
+                      }}
+                    >
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1 }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <Avatar sx={{ width: 28, height: 28, fontSize: '0.72rem', bgcolor: 'primary.main' }}>
+                            {note.creator_initials}
+                          </Avatar>
+                          <Box>
+                            <Typography variant="body2" fontWeight="medium">
+                              {note.creator_name || 'Usuario desconocido'}
+                              {note.is_important && (
+                                <StarIcon fontSize="small" color="warning" sx={{ ml: 0.5, verticalAlign: 'middle' }} />
+                              )}
+                            </Typography>
+                            <Tooltip title={formatDate(note.created_at)}>
+                              <Typography variant="caption" color="text.secondary">
+                                {formatRelativeDate(note.created_at)}
+                              </Typography>
+                            </Tooltip>
+                          </Box>
+                        </Box>
+                        {(note.can_edit || isAdmin) && (
+                          <Tooltip title="Editar nota">
+                            <IconButton size="small" onClick={() => openEditNoteModal(note)}>
+                              <EditOutlinedIcon fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
+                        )}
+                      </Box>
+                      <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap' }}>
+                        {note.content}
+                      </Typography>
+                      {note.was_edited && (
+                        <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: 'block' }}>
+                          Editado el {formatDate(note.updated_at)}
+                          {note.editor_name ? ` por ${note.editor_name}` : ''}
+                        </Typography>
+                      )}
+                    </Box>
+                  ))}
+                </Box>
+              );
+            })()}
           </Paper>
         </Grid>
 
@@ -685,6 +874,61 @@ export default function CustomerDetail() {
           )}
         </Grid>
       </Grid>
+
+      {/* Note Modal (US-CUST-009) */}
+      <Dialog open={noteModalOpen} onClose={closeNoteModal} maxWidth="sm" fullWidth>
+        <DialogTitle>
+          {noteModalMode === 'edit'
+            ? 'Editar nota'
+            : `Nueva nota sobre ${customer?.nombre_razon_social || ''}`}
+        </DialogTitle>
+        <DialogContent>
+          <Box sx={{ pt: 1 }}>
+            {noteError && (
+              <Alert severity="error" sx={{ mb: 2 }}>{noteError}</Alert>
+            )}
+            <TextField
+              multiline
+              rows={4}
+              fullWidth
+              placeholder="Ej: Prefiere entregas por la tarde, alérgico al látex, etc."
+              value={noteContent}
+              onChange={(e) => setNoteContent(e.target.value.slice(0, 500))}
+              helperText={`${noteContent.length}/500`}
+              error={noteContent.length > 500}
+              sx={{ mb: 2 }}
+            />
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+              <IconButton
+                onClick={() => setNoteImportant(!noteImportant)}
+                color={noteImportant ? 'warning' : 'default'}
+                size="small"
+              >
+                {noteImportant ? <StarIcon /> : <StarBorderIcon />}
+              </IconButton>
+              <Typography variant="body2" color="text.secondary">
+                {noteImportant ? 'Nota importante' : 'Marcar como importante'}
+              </Typography>
+            </Box>
+            <Alert severity="info" icon={false}>
+              Las notas no se pueden eliminar. Si ya no aplica, edita y agrega [YA NO APLICA].
+            </Alert>
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={closeNoteModal} disabled={noteSaving}>
+            Cancelar
+          </Button>
+          <Button
+            variant="contained"
+            onClick={handleSaveNote}
+            disabled={noteSaving || !noteContent.trim()}
+            startIcon={noteSaving ? <CircularProgress size={16} color="inherit" /> : null}
+          >
+            {noteModalMode === 'edit' ? 'Guardar cambios' : 'Guardar nota'}
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       {/* Snackbar */}
       <Snackbar
