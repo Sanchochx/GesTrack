@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import gesTrackLogo from './assets/gestrack-logo.png';
 import { BrowserRouter, Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import {
   ThemeProvider,
@@ -210,9 +211,9 @@ function Navigation() {
   return (
     <AppBar position="static">
       <Toolbar>
-        <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-          GesTrack
-        </Typography>
+        <Box sx={{ flexGrow: 1 }}>
+          <img src={gesTrackLogo} alt="GesTrack" style={{ height: 40, display: 'block' }} />
+        </Box>
 
         {!isAuthenticated ? (
           // No autenticado: botones de login/registro
@@ -237,7 +238,7 @@ function Navigation() {
                 <Drawer anchor="left" open={drawerOpen} onClose={() => setDrawerOpen(false)}>
                   <Box sx={{ width: 280, bgcolor: '#2e7d32', minHeight: '100%', color: 'white' }}>
                     <Box sx={{ p: 2 }}>
-                      <Typography variant="h6">GesTrack</Typography>
+                      <img src={gesTrackLogo} alt="GesTrack" style={{ height: 36, display: 'block' }} />
                     </Box>
                     <Divider sx={{ bgcolor: 'rgba(255,255,255,0.2)' }} />
 
