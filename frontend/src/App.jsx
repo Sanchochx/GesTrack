@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import {
   ThemeProvider,
@@ -13,12 +13,24 @@ import {
   Menu,
   MenuItem,
   Divider,
-  ListItemIcon
+  ListItemIcon,
+  Drawer,
+  List,
+  ListItem,
+  ListItemButton,
+  ListItemText,
+  Accordion,
+  AccordionSummary,
+  AccordionDetails,
+  useTheme,
+  useMediaQuery,
 } from '@mui/material';
 import LogoutIcon from '@mui/icons-material/Logout';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import PersonIcon from '@mui/icons-material/Person';
 import HomeIcon from '@mui/icons-material/Home';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import MenuIcon from '@mui/icons-material/Menu';
 import Login from './pages/Auth/Login';
 import Register from './pages/Auth/Register';
 import UserList from './pages/Auth/UserList';
@@ -84,7 +96,7 @@ function DashboardRedirect() {
 }
 
 /**
- * Componente de Navegación
+ * Componente de Navegación con dropdowns en cascada
  * US-AUTH-003: CA-1 - Botón de Cierre de Sesión
  * US-AUTH-004: CA-1 - Dropdown menu con acceso al perfil
  * US-AUTH-005: CA-5 - Menú dinámico según rol
@@ -92,9 +104,16 @@ function DashboardRedirect() {
 function Navigation() {
   const navigate = useNavigate();
   const location = useLocation();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+
   const [isAuthenticated, setIsAuthenticated] = useState(authService.isAuthenticated());
   const [currentUser, setCurrentUser] = useState(null);
-  const [anchorEl, setAnchorEl] = useState(null);
+  const [dropdownAnchors, setDropdownAnchors] = useState({});
+  const [userMenuAnchor, setUserMenuAnchor] = useState(null);
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [expandedAccordion, setExpandedAccordion] = useState(null);
+  const closeTimers = useRef({});
 
   // Actualizar estado de autenticación cuando cambie la ruta
   useEffect(() => {
@@ -104,48 +123,110 @@ function Navigation() {
     }
   }, [location.pathname]);
 
-  /**
-   * US-AUTH-004: CA-1 - Abrir menú de usuario
-   */
-  const handleMenuOpen = (event) => {
-    setAnchorEl(event.currentTarget);
+  // Limpiar timers al desmontar
+  useEffect(() => {
+    const timers = closeTimers.current;
+    return () => Object.values(timers).forEach(clearTimeout);
+  }, []);
+
+  // --- Handlers para dropdowns con soporte hover ---
+  const openDropdown = (id, event) => {
+    clearTimeout(closeTimers.current[id]);
+    setDropdownAnchors(prev => ({ ...prev, [id]: event.currentTarget }));
   };
 
-  /**
-   * US-AUTH-004: CA-1 - Cerrar menú de usuario
-   */
-  const handleMenuClose = () => {
-    setAnchorEl(null);
+  const scheduleCloseDropdown = (id) => {
+    closeTimers.current[id] = setTimeout(() => {
+      setDropdownAnchors(prev => ({ ...prev, [id]: null }));
+    }, 150);
   };
 
-  /**
-   * US-AUTH-004: CA-1 - Navegar al perfil
-   */
+  const cancelCloseDropdown = (id) => {
+    clearTimeout(closeTimers.current[id]);
+  };
+
+  const navigateTo = (path, closeId) => {
+    setDropdownAnchors(prev => ({ ...prev, [closeId]: null }));
+    navigate(path);
+  };
+
+  // --- Handlers para menú de usuario ---
+  const handleUserMenuOpen = (event) => setUserMenuAnchor(event.currentTarget);
+  const handleUserMenuClose = () => setUserMenuAnchor(null);
+
   const handleProfileClick = () => {
-    handleMenuClose();
+    handleUserMenuClose();
     navigate('/profile');
   };
 
   /**
    * US-AUTH-003: CA-1, CA-2, CA-3 - Función de logout
-   * Cierra la sesión del usuario y redirige al login
    */
   const handleLogout = () => {
-    handleMenuClose();
-
-    // CA-2: Invalidar sesión y limpiar token
+    handleUserMenuClose();
     authService.logout();
-
-    // CA-3: Redirigir a login
-    navigate('/login', {
-      replace: true,
-      state: { message: 'Has cerrado sesión correctamente' }
-    });
-
-    // Actualizar estado local
+    navigate('/login', { replace: true, state: { message: 'Has cerrado sesión correctamente' } });
     setIsAuthenticated(false);
     setCurrentUser(null);
   };
+
+  // Verifica si alguna ruta del grupo está activa
+  const isGroupActive = (paths) =>
+    paths.some(p => location.pathname === p || location.pathname.startsWith(p + '/'));
+
+  // --- Configuración de grupos de navegación ---
+  const NAV_GROUPS = [
+    {
+      id: 'inventario',
+      label: 'Inventario',
+      roles: ['Admin', 'Gerente de Almacén'],
+      paths: ['/products', '/categories', '/inventory/out-of-stock', '/inventory/by-category'],
+      items: [
+        { label: 'Productos', path: '/products' },
+        { label: 'Categorías', path: '/categories' },
+        { label: 'Stock Bajo', path: '/products/low-stock', sx: { color: 'warning.main' } },
+        { label: 'Sin Stock', path: '/inventory/out-of-stock', sx: { color: 'error.main' } },
+        { label: 'Por Categoría', path: '/inventory/by-category' },
+      ],
+    },
+    {
+      id: 'movimientos',
+      label: 'Movimientos',
+      roles: ['Admin', 'Gerente de Almacén'],
+      paths: ['/inventory/adjustments', '/inventory/history'],
+      items: [
+        { label: 'Ajustes', path: '/inventory/adjustments' },
+        { label: 'Historial', path: '/inventory/history' },
+      ],
+    },
+    {
+      id: 'ventas',
+      label: 'Ventas',
+      roles: ['Admin', 'Personal de Ventas', 'Gerente de Almacén'],
+      paths: ['/customers', '/orders'],
+      items: [
+        { label: 'Clientes', path: '/customers' },
+        { label: 'Nuevo Pedido', path: '/orders/new' },
+      ],
+    },
+    {
+      id: 'administracion',
+      label: 'Administración',
+      roles: ['Admin'],
+      paths: ['/users'],
+      items: [
+        { label: 'Usuarios', path: '/users' },
+      ],
+    },
+  ];
+
+  const visibleGroups = NAV_GROUPS.filter(
+    g => currentUser && g.roles.includes(currentUser.role)
+  );
+
+  // Estilos para botón activo / inactivo en desktop
+  const activeBtnSx = { borderBottom: '2px solid white', borderRadius: 0, pb: '4px' };
+  const inactiveBtnSx = { borderBottom: '2px solid transparent', borderRadius: 0, pb: '4px' };
 
   return (
     <AppBar position="static">
@@ -155,195 +236,197 @@ function Navigation() {
         </Typography>
 
         {!isAuthenticated ? (
-          // Mostrar botones de login/registro cuando NO está autenticado
+          // No autenticado: botones de login/registro
           <>
-            <Button
-              color="inherit"
-              href="/login"
-              sx={{
-                '&:hover': {
-                  color: '#a5d6a7', // Verde claro en hover
-                }
-              }}
-            >
+            <Button color="inherit" href="/login" sx={{ '&:hover': { color: '#a5d6a7' } }}>
               Iniciar Sesión
             </Button>
-            <Button
-              color="inherit"
-              href="/register"
-              sx={{
-                '&:hover': {
-                  color: '#a5d6a7', // Verde claro en hover
-                }
-              }}
-            >
+            <Button color="inherit" href="/register" sx={{ '&:hover': { color: '#a5d6a7' } }}>
               Nuevo Usuario
             </Button>
           </>
         ) : (
-          // Mostrar navegación y menú de usuario cuando está autenticado
-          // US-AUTH-005: CA-5 - Menú dinámico según rol
+          // Autenticado: navegación completa
           <>
-            {/* Home button - visible to all authenticated users */}
-            <Button
-              color="inherit"
-              href="/dashboard"
-              startIcon={<HomeIcon />}
-              sx={{
-                '&:hover': {
-                  color: '#a5d6a7', // Verde claro en hover
-                }
-              }}
-            >
-              Inicio
-            </Button>
-
-            {/* US-AUTH-005: CA-2, CA-5 - Ocultar opciones según rol */}
-            {currentUser?.role === 'Admin' && (
-              <Button
-                color="inherit"
-                href="/users"
-                sx={{
-                  '&:hover': {
-                    color: '#a5d6a7', // Verde claro en hover
-                  }
-                }}
-              >
-                Usuarios
-              </Button>
-            )}
-
-            {/* US-PROD: Product and Category Management Navigation */}
-            {(currentUser?.role === 'Admin' || currentUser?.role === 'Gerente de Almacén') && (
+            {/* ── MOBILE: icono hamburguesa + drawer lateral ── */}
+            {isMobile && (
               <>
-                {/* US-INV-010: Dashboard de Inventario */}
-                <Button
-                  color="inherit"
-                  href="/inventory/dashboard"
-                  sx={{
-                    '&:hover': {
-                      color: '#a5d6a7',
-                    }
-                  }}
-                >
-                  Inventario
-                </Button>
-                <Button
-                  color="inherit"
-                  href="/products"
-                  sx={{
-                    '&:hover': {
-                      color: '#a5d6a7', // Verde claro en hover
-                    }
-                  }}
-                >
-                  Productos
-                </Button>
-                <Button
-                  color="inherit"
-                  href="/products/low-stock"
-                  sx={{
-                    color: 'warning.light',
-                    '&:hover': {
-                      color: '#ffcc80', // Naranja claro para stock bajo
-                    }
-                  }}
-                >
-                  Stock Bajo
-                </Button>
-                <Button
-                  color="inherit"
-                  href="/inventory/out-of-stock"
-                  sx={{
-                    color: 'error.light',
-                    '&:hover': {
-                      color: '#ef9a9a', // Rojo claro para sin stock
-                    }
-                  }}
-                >
-                  Sin Stock
-                </Button>
-                <Button
-                  color="inherit"
-                  href="/inventory/adjustments"
-                  sx={{
-                    '&:hover': {
-                      color: '#a5d6a7', // Verde claro en hover
-                    }
-                  }}
-                >
-                  Ajustes
-                </Button>
-                <Button
-                  color="inherit"
-                  href="/inventory/history"
-                  sx={{
-                    '&:hover': {
-                      color: '#a5d6a7', // Verde claro en hover
-                    }
-                  }}
-                >
-                  Historial
-                </Button>
-                <Button
-                  color="inherit"
-                  href="/inventory/by-category"
-                  sx={{
-                    '&:hover': {
-                      color: '#a5d6a7', // Verde claro en hover
-                    }
-                  }}
-                >
-                  Por Categoría
-                </Button>
-                <Button
-                  color="inherit"
-                  href="/categories"
-                  sx={{
-                    '&:hover': {
-                      color: '#a5d6a7', // Verde claro en hover
-                    }
-                  }}
-                >
-                  Categorías
-                </Button>
+                <IconButton color="inherit" onClick={() => setDrawerOpen(true)} aria-label="abrir menú">
+                  <MenuIcon />
+                </IconButton>
+
+                <Drawer anchor="left" open={drawerOpen} onClose={() => setDrawerOpen(false)}>
+                  <Box sx={{ width: 280, bgcolor: '#2e7d32', minHeight: '100%', color: 'white' }}>
+                    <Box sx={{ p: 2 }}>
+                      <Typography variant="h6">GesTrack</Typography>
+                    </Box>
+                    <Divider sx={{ bgcolor: 'rgba(255,255,255,0.2)' }} />
+
+                    {/* Inicio */}
+                    <List disablePadding>
+                      <ListItem disablePadding>
+                        <ListItemButton
+                          onClick={() => { navigate('/dashboard'); setDrawerOpen(false); }}
+                          selected={location.pathname.startsWith('/dashboard')}
+                          sx={{
+                            color: 'white',
+                            '&:hover': { bgcolor: 'rgba(255,255,255,0.1)' },
+                            '&.Mui-selected': { bgcolor: 'rgba(255,255,255,0.2)' },
+                          }}
+                        >
+                          <ListItemIcon sx={{ color: 'white', minWidth: 40 }}>
+                            <HomeIcon />
+                          </ListItemIcon>
+                          <ListItemText primary="Inicio" />
+                        </ListItemButton>
+                      </ListItem>
+                    </List>
+
+                    {/* Grupos de navegación como acordeones */}
+                    {visibleGroups.map(group => (
+                      <Accordion
+                        key={group.id}
+                        expanded={expandedAccordion === group.id}
+                        onChange={(_, expanded) =>
+                          setExpandedAccordion(expanded ? group.id : null)
+                        }
+                        disableGutters
+                        elevation={0}
+                        sx={{
+                          bgcolor: 'transparent',
+                          color: 'white',
+                          '&:before': { display: 'none' },
+                        }}
+                      >
+                        <AccordionSummary
+                          expandIcon={<ExpandMoreIcon sx={{ color: 'white' }} />}
+                          sx={{
+                            bgcolor: isGroupActive(group.paths)
+                              ? 'rgba(255,255,255,0.15)'
+                              : 'transparent',
+                            '&:hover': { bgcolor: 'rgba(255,255,255,0.1)' },
+                            color: 'white',
+                          }}
+                        >
+                          <Typography>{group.label}</Typography>
+                        </AccordionSummary>
+                        <AccordionDetails sx={{ p: 0 }}>
+                          <List disablePadding>
+                            {group.items.map(item => (
+                              <ListItem key={item.path} disablePadding>
+                                <ListItemButton
+                                  onClick={() => { navigate(item.path); setDrawerOpen(false); }}
+                                  selected={
+                                    location.pathname === item.path ||
+                                    location.pathname.startsWith(item.path + '/')
+                                  }
+                                  sx={{
+                                    pl: 4,
+                                    color: 'white',
+                                    '&:hover': { bgcolor: 'rgba(255,255,255,0.1)' },
+                                    '&.Mui-selected': { bgcolor: 'rgba(255,255,255,0.2)' },
+                                    ...item.sx,
+                                  }}
+                                >
+                                  <ListItemText primary={item.label} />
+                                </ListItemButton>
+                              </ListItem>
+                            ))}
+                          </List>
+                        </AccordionDetails>
+                      </Accordion>
+                    ))}
+                  </Box>
+                </Drawer>
               </>
             )}
 
-            {/* US-CUST-001: Customer Management Navigation */}
-            {(currentUser?.role === 'Admin' || currentUser?.role === 'Personal de Ventas' || currentUser?.role === 'Gerente de Almacén') && (
-              <Button
-                color="inherit"
-                href="/customers"
-                sx={{
-                  '&:hover': {
-                    color: '#a5d6a7',
-                  }
-                }}
-              >
-                Clientes
-              </Button>
+            {/* ── DESKTOP: botones inline con dropdowns ── */}
+            {!isMobile && (
+              <>
+                {/* Inicio – link directo */}
+                <Button
+                  color="inherit"
+                  startIcon={<HomeIcon />}
+                  onClick={() => navigate('/dashboard')}
+                  sx={{
+                    '&:hover': { color: '#a5d6a7' },
+                    ...(location.pathname.startsWith('/dashboard') ? activeBtnSx : inactiveBtnSx),
+                  }}
+                >
+                  Inicio
+                </Button>
+
+                {/* Grupos con dropdown */}
+                {visibleGroups.map(group => (
+                  <Box
+                    key={group.id}
+                    sx={{ display: 'inline-flex' }}
+                    onMouseEnter={(e) => openDropdown(group.id, e)}
+                    onMouseLeave={() => scheduleCloseDropdown(group.id)}
+                  >
+                    <Button
+                      color="inherit"
+                      endIcon={
+                        <ExpandMoreIcon
+                          sx={{
+                            transform: Boolean(dropdownAnchors[group.id])
+                              ? 'rotate(180deg)'
+                              : 'rotate(0deg)',
+                            transition: 'transform 0.2s',
+                          }}
+                        />
+                      }
+                      onClick={() => {
+                        if (Boolean(dropdownAnchors[group.id])) {
+                          setDropdownAnchors(prev => ({ ...prev, [group.id]: null }));
+                        }
+                      }}
+                      sx={{
+                        '&:hover': { color: '#a5d6a7' },
+                        ...(isGroupActive(group.paths) ? activeBtnSx : inactiveBtnSx),
+                      }}
+                    >
+                      {group.label}
+                    </Button>
+                    <Menu
+                      anchorEl={dropdownAnchors[group.id]}
+                      open={Boolean(dropdownAnchors[group.id])}
+                      onClose={() =>
+                        setDropdownAnchors(prev => ({ ...prev, [group.id]: null }))
+                      }
+                      MenuListProps={{
+                        onMouseEnter: () => cancelCloseDropdown(group.id),
+                        onMouseLeave: () => scheduleCloseDropdown(group.id),
+                      }}
+                      anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
+                      transformOrigin={{ vertical: 'top', horizontal: 'left' }}
+                      disableAutoFocusItem
+                      disableScrollLock
+                    >
+                      {group.items.map(item => (
+                        <MenuItem
+                          key={item.path}
+                          onClick={() => navigateTo(item.path, group.id)}
+                          selected={
+                            location.pathname === item.path ||
+                            location.pathname.startsWith(item.path + '/')
+                          }
+                          sx={item.sx}
+                        >
+                          {item.label}
+                        </MenuItem>
+                      ))}
+                    </Menu>
+                  </Box>
+                ))}
+              </>
             )}
 
-            {/* US-ORD-001: Orders Navigation */}
-            {(currentUser?.role === 'Admin' || currentUser?.role === 'Personal de Ventas' || currentUser?.role === 'Gerente de Almacén') && (
-              <Button
-                color="inherit"
-                href="/orders/new"
-                sx={{
-                  '&:hover': {
-                    color: '#a5d6a7',
-                  }
-                }}
-              >
-                Nuevo Pedido
-              </Button>
-            )}
-
-            {/* US-AUTH-004: CA-1 - Menú de usuario con dropdown */}
+            {/* US-AUTH-004: CA-1 - Icono de cuenta (desktop y mobile) */}
             <IconButton
               color="inherit"
-              onClick={handleMenuOpen}
+              onClick={handleUserMenuOpen}
               size="large"
               aria-label="menú de usuario"
               aria-controls="user-menu"
@@ -353,17 +436,12 @@ function Navigation() {
             </IconButton>
             <Menu
               id="user-menu"
-              anchorEl={anchorEl}
-              open={Boolean(anchorEl)}
-              onClose={handleMenuClose}
-              anchorOrigin={{
-                vertical: 'bottom',
-                horizontal: 'right',
-              }}
-              transformOrigin={{
-                vertical: 'top',
-                horizontal: 'right',
-              }}
+              anchorEl={userMenuAnchor}
+              open={Boolean(userMenuAnchor)}
+              onClose={handleUserMenuClose}
+              anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+              transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+              disableScrollLock
             >
               {currentUser && (
                 <MenuItem disabled sx={{ opacity: '1 !important' }}>

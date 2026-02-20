@@ -502,6 +502,50 @@ const ProductDetail = () => {
                 />
               </Box>
 
+              {/* US-INV-008 CA-6: Desglose de stock (Disponible vs Reservado) */}
+              {(product.reserved_stock > 0 || product.stock_total > 0) && (
+                <>
+                  <Divider sx={{ my: 2 }} />
+                  <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1, fontWeight: 'bold' }}>
+                    Desglose de Stock
+                  </Typography>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+                    <Tooltip title="Cantidad física total en bodega">
+                      <Typography variant="body2" color="text.secondary" sx={{ cursor: 'help' }}>
+                        Stock Total:
+                      </Typography>
+                    </Tooltip>
+                    <Chip label={`${product.stock_total ?? (product.stock_quantity + (product.reserved_stock || 0))} uds`} size="small" variant="outlined" />
+                  </Box>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+                    <Tooltip title="Stock asignado a pedidos pendientes de entrega">
+                      <Typography variant="body2" color="text.secondary" sx={{ cursor: 'help' }}>
+                        Stock Reservado:
+                      </Typography>
+                    </Tooltip>
+                    <Chip
+                      label={`${product.reserved_stock || 0} uds`}
+                      size="small"
+                      color={product.reserved_stock > 0 ? 'warning' : 'default'}
+                      variant="outlined"
+                    />
+                  </Box>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+                    <Tooltip title="Disponible = Total - Reservado">
+                      <Typography variant="body2" color="text.secondary" sx={{ cursor: 'help' }}>
+                        Stock Disponible:
+                      </Typography>
+                    </Tooltip>
+                    <Chip
+                      label={`${product.stock_disponible ?? product.stock_quantity} uds`}
+                      size="small"
+                      color={product.stock_quantity > 0 ? 'success' : 'error'}
+                      variant="outlined"
+                    />
+                  </Box>
+                </>
+              )}
+
               <Divider sx={{ my: 2 }} />
 
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
