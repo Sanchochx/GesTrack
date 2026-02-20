@@ -12,12 +12,12 @@
 │  PROGRESO GLOBAL DEL PROYECTO                               │
 ├─────────────────────────────────────────────────────────────┤
 │  Total Historias de Usuario:     82                         │
-│  ✅ Completadas:                   33                        │
+│  ✅ Completadas:                   34                        │
 │  🔄 Parcialmente Completadas:     0                         │
 │  ⏳ En Progreso:                   0                         │
-│  ⏸️  Pendientes:                   49                        │
+│  ⏸️  Pendientes:                   48                        │
 │                                                             │
-│  Progreso: [████████░░░░░░░░░░░░] 40% (33/82)              │
+│  Progreso: [████████░░░░░░░░░░░░] 41% (34/82)              │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -29,7 +29,7 @@
 |------|--------|----------|-------------|-------------|------------|----------|
 | 01 | Foundation | 6 | 6 | 0 | 0 | [██████████] 100% |
 | 02 | Core Data | 10 | 10 | 0 | 0 | [██████████] 100% |
-| 03 | Stock Management | 10 | 9 | 0 | 1 | [█████████░] 90% |
+| 03 | Stock Management | 10 | 10 | 0 | 0 | [██████████] 100% |
 | 04 | Sales | 26 | 7 | 0 | 19 | [██░░░░░░░░] 27% |
 | 05 | Supply Chain | 15 | 0 | 0 | 15 | [░░░░░░░░░░] 0% |
 | 06 | Analytics | 15 | 0 | 0 | 15 | [░░░░░░░░░░] 0% |
@@ -356,14 +356,14 @@
 **Objetivo:** Implementar funcionalidades principales de negocio
 **Épicas:** 03 Stock Management, 04 Sales
 **Total US:** 36
-**Progreso:** [████░░░░░░] 42% (15/36 completadas) 🔄 EN PROGRESO
+**Progreso:** [████░░░░░░] 44% (16/36 completadas) 🔄 EN PROGRESO
 
 ---
 
 ## Epic 03: Stock Management - Gestión de Inventario
 
 **Prioridad:** ⭐⭐⭐ ALTA
-**Progreso:** [█████████░] 90% (9/10 completadas)
+**Progreso:** [██████████] 100% (10/10 completadas) ✅ COMPLETADA
 **Carpeta:** `context/user_stories/epic_03_stock_management/`
 
 ### ✅ Historias de Usuario
@@ -572,12 +572,32 @@
   - Frontend: `components/inventory/OutOfStockAlertWidget.jsx`, `pages/Inventory/OutOfStockProducts.jsx`
 - **Fecha de completación:** 2026-02-04
 
-#### [ ] US-INV-008: Reserva de Stock para Pedidos Pendientes
+#### [x] US-INV-008: Reserva de Stock para Pedidos Pendientes
 - **Archivo:** `context/user_stories/epic_03_stock_management/US-INV-008_stock_reservation_pending_orders.md`
 - **Prioridad:** ALTA
 - **Estimación:** 8 pts
-- **Estado:** ⏸️ Pendiente
-- **Criterios de Aceptación:** 7
+- **Estado:** ✅ COMPLETADA
+- **Criterios de Aceptación:** 8 ✅ (tests y CA-7 parcialmente diferidos)
+- **Progreso Backend:** ✅ 100% - Todos los CA core implementados
+  - CA-1: Campo reserved_stock en Product, tipo 'order_reservation' al crear pedido ✅
+  - CA-2: Validación de stock ya implementada en US-ORD-001 ✅
+  - CA-3: OrderService.cancel_order() + POST /api/orders/:id/cancel ✅
+  - CA-4: OrderService.update_order_status() + PATCH /api/orders/:id/status ✅
+  - CA-5: Locks pesimistas (with_for_update) ya implementados ✅
+  - CA-8: related_order_id en InventoryMovement, tipos 'order_reservation'/'order_cancellation' ✅
+- **Progreso Frontend:** ✅ 100% - Todos los CA core implementados
+  - CA-2: Validación en formulario ya implementada ✅
+  - CA-6: Desglose de stock (Total, Reservado, Disponible) en ProductDetail ✅
+  - CA-3: cancelOrder() y updateOrderStatus() en orderService.js ✅
+- **Archivos Creados:**
+  - Backend: `migrations/versions/b4e7f2a1d09c_us_inv_008_...py`
+- **Archivos Modificados:**
+  - Backend: `models/product.py` (reserved_stock), `models/inventory_movement.py` (related_order_id), `services/order_service.py` (cancel_order, update_order_status), `routes/orders.py` (cancel + status endpoints)
+  - Frontend: `services/orderService.js` (cancelOrder, updateOrderStatus), `pages/Products/ProductDetail.jsx` (stock breakdown)
+- **CA Diferidos:**
+  - CA-7: Vista de reservas en lista de pedidos (depende de US-ORD-005)
+  - Tests: Diferidos para v1.0 según workflow
+- **Fecha de completación:** 2026-02-19
 
 #### [x] US-INV-009: Exportar Datos de Inventario
 - **Archivo:** `context/user_stories/epic_03_stock_management/US-INV-009_export_inventory_data.md`
