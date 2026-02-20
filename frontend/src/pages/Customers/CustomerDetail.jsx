@@ -17,7 +17,6 @@ import {
   Tooltip,
   Breadcrumbs,
   Link,
-  CircularProgress,
   Alert,
   Snackbar,
   Card,
@@ -58,6 +57,7 @@ import {
 import customerService from '../../services/customerService';
 import authService from '../../services/authService';
 import DeleteCustomerDialog from '../../components/customers/DeleteCustomerDialog';
+import InactivateCustomerDialog from '../../components/customers/InactivateCustomerDialog';
 
 const formatDate = (dateString) => {
   if (!dateString) return 'N/A';
@@ -121,8 +121,9 @@ export default function CustomerDetail() {
   const [error, setError] = useState(null);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
   const [activityExpanded, setActivityExpanded] = useState(false);
-  const [toggling, setToggling] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [statusDialogOpen, setStatusDialogOpen] = useState(false);
+  const [statusDialogMode, setStatusDialogMode] = useState('deactivate');
 
   const loadCustomer = useCallback(async () => {
     setLoading(true);
@@ -145,27 +146,19 @@ export default function CustomerDetail() {
     loadCustomer();
   }, [loadCustomer]);
 
-  const handleToggleActive = async () => {
-    setToggling(true);
-    try {
-      const response = await customerService.toggleActive(id);
-      if (response.success) {
-        setCustomer(response.data);
-        setSnackbar({
-          open: true,
-          message: response.message || `Cliente ${response.data.is_active ? 'activado' : 'inactivado'} correctamente`,
-          severity: 'success',
-        });
-      }
-    } catch (err) {
-      setSnackbar({
-        open: true,
-        message: err.error?.message || 'Error al cambiar estado',
-        severity: 'error',
-      });
-    } finally {
-      setToggling(false);
-    }
+  const openStatusDialog = () => {
+    setStatusDialogMode(customer.is_active ? 'deactivate' : 'activate');
+    setStatusDialogOpen(true);
+  };
+
+  const handleStatusChangeSuccess = (response) => {
+    setStatusDialogOpen(false);
+    setCustomer(response.data);
+    setSnackbar({
+      open: true,
+      message: response.message || `Estado del cliente actualizado correctamente`,
+      severity: 'success',
+    });
   };
 
   const handleCopyAddress = () => {
@@ -207,9 +200,10 @@ export default function CustomerDetail() {
     }, 1500);
   };
 
-  const handleInactivateFromDialog = async () => {
+  const handleInactivateFromDialog = () => {
     setDeleteDialogOpen(false);
-    await handleToggleActive();
+    setStatusDialogMode('deactivate');
+    setStatusDialogOpen(true);
   };
 
   if (loading) {
@@ -281,6 +275,17 @@ export default function CustomerDetail() {
         </Box>
       </Box>
 
+      {/* CA-5: Banner de cliente inactivo */}
+      {!customer.is_active && (
+        <Alert severity="warning" sx={{ mb: 2 }}>
+          Este cliente está inactivo
+          {customer.inactivated_at
+            ? ` desde el ${formatDate(customer.inactivated_at)}`
+            : ''}
+          . No aparecerá en búsquedas por defecto y no puede recibir nuevos pedidos.
+        </Alert>
+      )}
+
       {/* Header */}
       <Paper sx={{ p: 3, mb: 3 }}>
         <Grid container spacing={2} alignItems="center">
@@ -336,9 +341,8 @@ export default function CustomerDetail() {
               <Button
                 variant="outlined"
                 color={customer.is_active ? 'warning' : 'success'}
-                startIcon={toggling ? <CircularProgress size={16} /> : (customer.is_active ? <PersonOffIcon /> : <PersonAddIcon />)}
-                onClick={handleToggleActive}
-                disabled={toggling}
+                startIcon={customer.is_active ? <PersonOffIcon /> : <PersonAddIcon />}
+                onClick={openStatusDialog}
               >
                 {customer.is_active ? 'Inactivar' : 'Activar'}
               </Button>
@@ -641,15 +645,41 @@ export default function CustomerDetail() {
                   <Typography variant="body2">
                     <strong>Última actualización:</strong> {formatDate(customer.updated_at)}
                   </Typography>
-                  {!customer.is_active && (
-                    <Typography variant="body2" color="warning.main">
-                      <strong>Estado:</strong> Inactivo
-                    </Typography>
+                  {customer.inactivated_at && (
+                    <Box sx={{ mt: 1, p: 1.5, bgcolor: 'warning.lighter', borderRadius: 1, border: '1px solid', borderColor: 'warning.light' }}>
+                      <Typography variant="body2" color="warning.dark">
+                        <strong>Inactivado el:</strong> {formatDate(customer.inactivated_at)}
+                      </Typography>
+                      {customer.inactivated_by_name && (
+                        <Typography variant="body2" color="warning.dark">
+                          <strong>Por:</strong> {customer.inactivated_by_name}
+                        </Typography>
+                      )}
+                      {customer.inactivation_reason && (
+                        <Typography variant="body2" color="warning.dark">
+                          <strong>Motivo:</strong> {customer.inactivation_reason}
+                        </Typography>
+                      )}
+                    </Box>
+                  )}
+                  {customer.reactivated_at && (
+                    <Box sx={{ mt: 1, p: 1.5, bgcolor: 'success.lighter', borderRadius: 1, border: '1px solid', borderColor: 'success.light' }}>
+                      <Typography variant="body2" color="success.dark">
+                        <strong>Reactivado el:</strong> {formatDate(customer.reactivated_at)}
+                      </Typography>
+                      {customer.reactivated_by_name && (
+                        <Typography variant="body2" color="success.dark">
+                          <strong>Por:</strong> {customer.reactivated_by_name}
+                        </Typography>
+                      )}
+                      {customer.reactivation_reason && (
+                        <Typography variant="body2" color="success.dark">
+                          <strong>Motivo:</strong> {customer.reactivation_reason}
+                        </Typography>
+                      )}
+                    </Box>
                   )}
                 </Box>
-                <Typography variant="caption" color="text.secondary" sx={{ mt: 2, display: 'block' }}>
-                  El historial detallado con información de usuarios estará disponible en futuras versiones.
-                </Typography>
               </Collapse>
             </Paper>
           )}
@@ -675,6 +705,15 @@ export default function CustomerDetail() {
         customer={customer}
         onDeleted={handleCustomerDeleted}
         onInactivate={handleInactivateFromDialog}
+      />
+
+      {/* Status Dialog (Inactivar / Reactivar) */}
+      <InactivateCustomerDialog
+        open={statusDialogOpen}
+        onClose={() => setStatusDialogOpen(false)}
+        customer={customer}
+        onSuccess={handleStatusChangeSuccess}
+        mode={statusDialogMode}
       />
     </Container>
   );

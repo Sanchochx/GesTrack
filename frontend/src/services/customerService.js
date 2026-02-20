@@ -80,13 +80,49 @@ const customerService = {
   },
 
   /**
-   * US-CUST-002 CA-8: Activar/Inactivar cliente
+   * US-CUST-002 CA-8: Activar/Inactivar cliente (legacy, sin tracking)
    * @param {string} customerId - ID del cliente
    * @returns {Promise} - Respuesta del servidor
    */
   async toggleActive(customerId) {
     try {
       const response = await api.patch(`/customers/${customerId}/toggle-active`);
+      return response.data;
+    } catch (error) {
+      if (error.response && error.response.data) {
+        throw error.response.data;
+      }
+      throw { success: false, error: { message: 'Error de conexión con el servidor' } };
+    }
+  },
+
+  /**
+   * US-CUST-008 CA-3: Inactivar cliente con tracking
+   * @param {string} customerId - ID del cliente
+   * @param {string|null} reason - Motivo de inactivación (opcional)
+   * @returns {Promise} - Respuesta del servidor
+   */
+  async deactivateCustomer(customerId, reason = null) {
+    try {
+      const response = await api.patch(`/customers/${customerId}/deactivate`, reason ? { reason } : {});
+      return response.data;
+    } catch (error) {
+      if (error.response && error.response.data) {
+        throw error.response.data;
+      }
+      throw { success: false, error: { message: 'Error de conexión con el servidor' } };
+    }
+  },
+
+  /**
+   * US-CUST-008 CA-6: Reactivar cliente con tracking
+   * @param {string} customerId - ID del cliente
+   * @param {string|null} reason - Motivo de reactivación (opcional)
+   * @returns {Promise} - Respuesta del servidor
+   */
+  async activateCustomer(customerId, reason = null) {
+    try {
+      const response = await api.patch(`/customers/${customerId}/activate`, reason ? { reason } : {});
       return response.data;
     } catch (error) {
       if (error.response && error.response.data) {
