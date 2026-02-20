@@ -46,7 +46,9 @@
       "Bash(\"C:/Users/santi/AppData/Local/Programs/Python/Python312/python.exe\" -c \"\nfrom app import create_app\napp = create_app\\(\\)\nprint\\(''App created successfully''\\)\nprint\\(''Order routes:''\\)\nfor rule in app.url_map.iter_rules\\(\\):\n    if ''order'' in str\\(rule\\).lower\\(\\):\n        print\\(f''  {rule.methods} {rule}''\\)\n\")",
       "Bash(del \"C:\\\\Users\\\\santi\\\\OneDrive\\\\Documents\\\\dev\\\\personal projects\\\\GesTrack\\\\backend\\\\instance\\\\gestrack.db\")",
       "Bash(/c/Users/santi/AppData/Local/Programs/Python/Python312/Scripts/flask db upgrade)",
-      "Bash(/c/Users/santi/AppData/Local/Programs/Python/Python312/Scripts/flask db current)"
+      "Bash(/c/Users/santi/AppData/Local/Programs/Python/Python312/Scripts/flask db current)",
+      "Bash(git rm:*)",
+      "Bash(flask db:*)"
     ],
     "deny": [],
     "ask": []
