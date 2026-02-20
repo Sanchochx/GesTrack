@@ -12,12 +12,12 @@
 │  PROGRESO GLOBAL DEL PROYECTO                               │
 ├─────────────────────────────────────────────────────────────┤
 │  Total Historias de Usuario:     82                         │
-│  ✅ Completadas:                   35                        │
+│  ✅ Completadas:                   36                        │
 │  🔄 Parcialmente Completadas:     0                         │
 │  ⏳ En Progreso:                   0                         │
-│  ⏸️  Pendientes:                   47                        │
+│  ⏸️  Pendientes:                   46                        │
 │                                                             │
-│  Progreso: [████████░░░░░░░░░░░░] 43% (35/82)              │
+│  Progreso: [████████░░░░░░░░░░░░] 44% (36/82)              │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -30,7 +30,7 @@
 | 01 | Foundation | 6 | 6 | 0 | 0 | [██████████] 100% |
 | 02 | Core Data | 10 | 10 | 0 | 0 | [██████████] 100% |
 | 03 | Stock Management | 10 | 10 | 0 | 0 | [██████████] 100% |
-| 04 | Sales | 26 | 8 | 0 | 18 | [███░░░░░░░] 31% |
+| 04 | Sales | 26 | 9 | 0 | 17 | [███░░░░░░░] 35% |
 | 05 | Supply Chain | 15 | 0 | 0 | 15 | [░░░░░░░░░░] 0% |
 | 06 | Analytics | 15 | 0 | 0 | 15 | [░░░░░░░░░░] 0% |
 
@@ -356,7 +356,7 @@
 **Objetivo:** Implementar funcionalidades principales de negocio
 **Épicas:** 03 Stock Management, 04 Sales
 **Total US:** 36
-**Progreso:** [████░░░░░░] 47% (17/36 completadas) 🔄 EN PROGRESO
+**Progreso:** [████░░░░░░] 53% (19/36 completadas) 🔄 EN PROGRESO
 
 ---
 
@@ -644,7 +644,7 @@
 ## Epic 04: Sales - Gestión de Clientes y Pedidos
 
 **Prioridad:** ⭐⭐⭐ ALTA
-**Progreso:** [███░░░░░░░] 31% (8/26)
+**Progreso:** [███░░░░░░░] 35% (9/26)
 **Carpeta:** `context/user_stories/epic_04_sales/`
 
 ### 📋 Módulo: Clientes
@@ -840,12 +840,34 @@
   - Frontend: `App.jsx` (ruta /customers/:id/orders)
 - **Fecha de completación:** 2026-02-19
 
-#### [ ] US-CUST-008: Inactivar/Activar Cliente
+#### [x] US-CUST-008: Inactivar/Activar Cliente
 - **Archivo:** `context/user_stories/epic_04_sales/US-CUST-008_inactivar_cliente.md`
 - **Prioridad:** MEDIA
 - **Estimación:** 3 pts
-- **Estado:** ⏸️ Pendiente
-- **Criterios de Aceptación:** 5
+- **Estado:** ✅ COMPLETADA
+- **Criterios de Aceptación:** 10 ✅
+- **Progreso Backend:** ✅ 100% - Todos los CA implementados
+  - CA-3: 6 campos de tracking (inactivated_at/by/reason, reactivated_at/by/reason) + migración f5a2c9d3b8e1 ✅
+  - CA-3: PATCH /api/customers/:id/deactivate con validación de estado y tracking ✅
+  - CA-6: PATCH /api/customers/:id/activate con validación de estado y tracking ✅
+  - CA-4: Validación de cliente activo en order_service.py (ya existía) ✅
+  - to_dict() actualizado con 6 nuevos campos + inactivated_by_name/reactivated_by_name ✅
+- **Progreso Frontend:** ✅ 100% - Todos los CA implementados
+  - CA-10: deactivateCustomer() y activateCustomer() en customerService.js ✅
+  - CA-1: Botón Inactivar/Activar en CustomerDetail abre InactivateCustomerDialog ✅
+  - CA-2: InactivateCustomerDialog con campo motivo opcional (max 200 chars) ✅
+  - CA-5: Banner Alert severity="warning" cuando cliente está inactivo con fecha ✅
+  - CA-6: Modo reactivación en InactivateCustomerDialog ✅
+  - CA-7: Historial de actividad muestra inactivación/reactivación con fecha, usuario y motivo ✅
+  - CA-8: Pedidos existentes permanecen en BD (sin cambios necesarios) ✅
+  - CA-9: Toggle "Mostrar inactivos" en CustomerList (ya existía desde US-CUST-002) ✅
+- **Archivos Creados:**
+  - Backend: `migrations/versions/f5a2c9d3b8e1_us_cust_008_add_customer_status_tracking.py`
+  - Frontend: `components/customers/InactivateCustomerDialog.jsx`
+- **Archivos Modificados:**
+  - Backend: `models/customer.py` (6 nuevos campos + to_dict()), `routes/customers.py` (2 nuevos endpoints)
+  - Frontend: `services/customerService.js` (2 nuevos métodos), `pages/Customers/CustomerDetail.jsx` (dialog + banner + historial)
+- **Fecha de completación:** 2026-02-20
 
 #### [ ] US-CUST-009: Notas sobre el Cliente
 - **Archivo:** `context/user_stories/epic_04_sales/US-CUST-009_notas_cliente.md`
