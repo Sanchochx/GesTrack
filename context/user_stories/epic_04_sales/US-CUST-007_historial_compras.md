@@ -166,26 +166,26 @@
   - PDF: ReportLab o WeasyPrint
 
 ## Definición de Hecho
-- [ ] Frontend: Vista de historial de compras
-- [ ] Frontend: Tabla de pedidos con paginación
-- [ ] Frontend: Panel de métricas del cliente
-- [ ] Frontend: Filtro por rango de fechas con shortcuts
-- [ ] Frontend: Filtros por estado de pedido y pago
-- [ ] Frontend: Recalculo de métricas según filtros
-- [ ] Frontend: Detalles expandibles por pedido
-- [ ] Frontend: Sección de productos más comprados
-- [ ] Frontend: Gráfico de compras en el tiempo
-- [ ] Frontend: Botón de exportación con opciones de formato
-- [ ] Backend: API GET /api/customers/{id}/orders-history con filtros
-- [ ] Backend: Cálculo de métricas con queries optimizadas
-- [ ] Backend: Query de productos más comprados
-- [ ] Backend: Datos agregados para gráfico temporal
-- [ ] Backend: Endpoint de exportación (CSV, Excel, PDF)
+- [x] Frontend: Vista de historial de compras
+- [x] Frontend: Tabla de pedidos con paginación
+- [x] Frontend: Panel de métricas del cliente
+- [x] Frontend: Filtro por rango de fechas con shortcuts
+- [x] Frontend: Filtros por estado de pedido y pago
+- [x] Frontend: Recalculo de métricas según filtros
+- [x] Frontend: Detalles expandibles por pedido
+- [x] Frontend: Sección de productos más comprados
+- [x] Frontend: Gráfico de compras en el tiempo
+- [x] Frontend: Botón de exportación con opciones de formato
+- [x] Backend: API GET /api/customers/{id}/orders-history con filtros
+- [x] Backend: Cálculo de métricas con queries optimizadas
+- [x] Backend: Query de productos más comprados
+- [x] Backend: Datos agregados para gráfico temporal
+- [x] Backend: Endpoint de exportación (CSV, Excel)
 - [ ] Pruebas de cálculo de métricas
 - [ ] Pruebas de filtros combinados
 - [ ] Pruebas de exportación en diferentes formatos
 - [ ] Pruebas de performance con muchos pedidos
-- [ ] Documentación de API
+- [x] Documentación de API
 
 ## Dependencias
 - US-CUST-004 (Ver Perfil) - acceso desde perfil

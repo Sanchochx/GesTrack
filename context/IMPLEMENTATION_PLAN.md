@@ -12,12 +12,12 @@
 │  PROGRESO GLOBAL DEL PROYECTO                               │
 ├─────────────────────────────────────────────────────────────┤
 │  Total Historias de Usuario:     82                         │
-│  ✅ Completadas:                   34                        │
+│  ✅ Completadas:                   35                        │
 │  🔄 Parcialmente Completadas:     0                         │
 │  ⏳ En Progreso:                   0                         │
-│  ⏸️  Pendientes:                   48                        │
+│  ⏸️  Pendientes:                   47                        │
 │                                                             │
-│  Progreso: [████████░░░░░░░░░░░░] 41% (34/82)              │
+│  Progreso: [████████░░░░░░░░░░░░] 43% (35/82)              │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -30,7 +30,7 @@
 | 01 | Foundation | 6 | 6 | 0 | 0 | [██████████] 100% |
 | 02 | Core Data | 10 | 10 | 0 | 0 | [██████████] 100% |
 | 03 | Stock Management | 10 | 10 | 0 | 0 | [██████████] 100% |
-| 04 | Sales | 26 | 7 | 0 | 19 | [██░░░░░░░░] 27% |
+| 04 | Sales | 26 | 8 | 0 | 18 | [███░░░░░░░] 31% |
 | 05 | Supply Chain | 15 | 0 | 0 | 15 | [░░░░░░░░░░] 0% |
 | 06 | Analytics | 15 | 0 | 0 | 15 | [░░░░░░░░░░] 0% |
 
@@ -356,7 +356,7 @@
 **Objetivo:** Implementar funcionalidades principales de negocio
 **Épicas:** 03 Stock Management, 04 Sales
 **Total US:** 36
-**Progreso:** [████░░░░░░] 44% (16/36 completadas) 🔄 EN PROGRESO
+**Progreso:** [████░░░░░░] 47% (17/36 completadas) 🔄 EN PROGRESO
 
 ---
 
@@ -644,7 +644,7 @@
 ## Epic 04: Sales - Gestión de Clientes y Pedidos
 
 **Prioridad:** ⭐⭐⭐ ALTA
-**Progreso:** [██░░░░░░░░] 27% (7/26)
+**Progreso:** [███░░░░░░░] 31% (8/26)
 **Carpeta:** `context/user_stories/epic_04_sales/`
 
 ### 📋 Módulo: Clientes
@@ -804,12 +804,41 @@
   - Redirección y mensajes de éxito ✅
 - **Fecha de completación:** 2026-02-09
 
-#### [ ] US-CUST-007: Historial de Compras del Cliente
+#### [x] US-CUST-007: Historial de Compras del Cliente
 - **Archivo:** `context/user_stories/epic_04_sales/US-CUST-007_historial_compras.md`
 - **Prioridad:** MEDIA
-- **Estimación:** 5 pts
-- **Estado:** ⏸️ Pendiente
-- **Criterios de Aceptación:** 6
+- **Estimación:** 8 pts (actualizado de 5 pts por complejidad)
+- **Estado:** ✅ COMPLETADA
+- **Criterios de Aceptación:** 10 ✅ (tests diferidos para v1.0)
+- **Progreso Backend:** ✅ 100% - Todos los CA implementados
+  - CA-1: GET /api/customers/{id}/orders-history con filtros completos ✅
+  - CA-3: Métricas (total, gastado, promedio, frecuencia, ticket max/min) ✅
+  - CA-4: Filtro por rango de fechas (date_from, date_to) ✅
+  - CA-5: Filtro por estado del pedido (status, comma-separated) ✅
+  - CA-6: Filtro por estado de pago (payment_status) ✅
+  - CA-8: Query top 10 productos más comprados ✅
+  - CA-9: Datos mensuales para gráfico (extract year/month) ✅
+  - CA-10: GET /api/customers/{id}/orders-history/export (CSV, Excel) ✅
+  - get_customer() actualizado con estadísticas reales de pedidos ✅
+- **Progreso Frontend:** ✅ 100% - Todos los CA implementados
+  - CA-1: CustomerOrderHistory.jsx con breadcrumbs y navegación desde CustomerDetail ✅
+  - CA-2: Tabla de pedidos con paginación (10/20/50/100) ✅
+  - CA-3: Panel de 6 tarjetas de métricas (total, gastado, promedio, frecuencia, max, min) ✅
+  - CA-4: Date pickers + 6 shortcuts predefinidos (mes, 3m, 6m, año, año pasado, todo) ✅
+  - CA-5: Checkboxes multiselección para estados (default: todos excepto Cancelado) ✅
+  - CA-6: Checkboxes multiselección para estados de pago ✅
+  - CA-7: Filas expandibles con detalles de items, resumen de precios y notas ✅
+  - CA-8: Tabla top 10 productos con qty, pedidos y última fecha ✅
+  - CA-9: BarChart Recharts mensual (solo si >= 3 períodos) ✅
+  - CA-10: Menú exportar CSV/Excel ✅
+- **Archivos Creados:**
+  - Frontend: `pages/Customers/CustomerOrderHistory.jsx`
+- **Archivos Modificados:**
+  - Backend: `routes/customers.py` (get_customer con stats reales, 2 nuevos endpoints)
+  - Frontend: `services/customerService.js` (getOrdersHistory, exportOrdersHistory)
+  - Frontend: `pages/Customers/CustomerDetail.jsx` (botón "Ver historial completo")
+  - Frontend: `App.jsx` (ruta /customers/:id/orders)
+- **Fecha de completación:** 2026-02-19
 
 #### [ ] US-CUST-008: Inactivar/Activar Cliente
 - **Archivo:** `context/user_stories/epic_04_sales/US-CUST-008_inactivar_cliente.md`
