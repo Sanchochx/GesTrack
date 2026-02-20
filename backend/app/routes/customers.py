@@ -3,6 +3,7 @@ Rutas API para gestión de Clientes - Facturación Electrónica Colombia (DIAN)
 US-CUST-001: Registrar Nuevo Cliente
 US-CUST-002: Listar Clientes
 US-CUST-006: Eliminar Cliente
+US-CUST-007: Historial de Compras del Cliente
 """
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
@@ -17,7 +18,7 @@ from app.schemas.customer_schema import (
 from app.utils.decorators import require_role
 from marshmallow import ValidationError
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy import func, case
+from sqlalchemy import func, case, extract
 from datetime import datetime
 
 ALLOWED_SORT_FIELDS = ['nombre_razon_social', 'correo', 'numero_documento', 'municipio_ciudad', 'created_at']
@@ -334,9 +335,11 @@ def get_customers():
 def get_customer(customer_id):
     """
     GET /api/customers/:id
-    Obtiene un cliente específico por ID
+    Obtiene un cliente específico por ID con estadísticas reales de pedidos
     """
     try:
+        from app.models.order import Order
+
         customer = Customer.query.get(customer_id)
 
         if not customer:
@@ -348,9 +351,39 @@ def get_customer(customer_id):
                 }
             }), 404
 
+        customer_dict = customer.to_dict()
+
+        # Calcular estadísticas reales de pedidos
+        all_orders_count = Order.query.filter(Order.customer_id == customer_id).count()
+        non_cancelled = Order.query.filter(
+            Order.customer_id == customer_id,
+            Order.status != 'Cancelado'
+        )
+        stats = non_cancelled.with_entities(
+            func.count(Order.id).label('count'),
+            func.sum(Order.total).label('total_spent'),
+            func.max(Order.created_at).label('last_purchase'),
+        ).first()
+
+        total_spent = float(stats.total_spent or 0) if stats else 0.0
+        customer_dict['order_count'] = all_orders_count
+        customer_dict['total_purchases'] = total_spent
+        customer_dict['last_purchase_date'] = (
+            stats.last_purchase.isoformat() if stats and stats.last_purchase else None
+        )
+
+        # Categoría de cliente basada en historial
+        if all_orders_count >= 10 or total_spent >= 10000000:
+            category = 'VIP'
+        elif all_orders_count >= 3:
+            category = 'Frecuente'
+        else:
+            category = 'Regular'
+        customer_dict['customer_category'] = category
+
         return jsonify({
             'success': True,
-            'data': customer.to_dict()
+            'data': customer_dict
         }), 200
 
     except Exception as e:
@@ -359,6 +392,328 @@ def get_customer(customer_id):
             'error': {
                 'code': 'SERVER_ERROR',
                 'message': 'Error al obtener cliente',
+                'details': str(e)
+            }
+        }), 500
+
+
+@customers_bp.route('/<customer_id>/orders-history', methods=['GET'])
+@jwt_required()
+@require_role(['Admin', 'Personal de Ventas', 'Gerente de Almacén'])
+def get_customer_orders_history(customer_id):
+    """
+    GET /api/customers/:id/orders-history
+    US-CUST-007: Historial de compras del cliente con filtros y métricas
+
+    Query params:
+        - page: Página (default 1)
+        - limit: Resultados por página (default 20, max 100)
+        - date_from: Fecha inicio (ISO date string YYYY-MM-DD)
+        - date_to: Fecha fin (ISO date string YYYY-MM-DD)
+        - status: Estados separados por coma
+        - payment_status: Estados de pago separados por coma
+
+    Response incluye:
+        - orders: Lista paginada de pedidos con items
+        - metrics: Estadísticas calculadas (total, gastado, promedio, etc.)
+        - top_products: Top 10 productos más comprados
+        - chart_data: Datos mensuales para gráfico
+    """
+    try:
+        from app.models.order import Order, OrderItem
+        from app.models.product import Product
+
+        customer = Customer.query.get(customer_id)
+        if not customer:
+            return jsonify({
+                'success': False,
+                'error': {'code': 'NOT_FOUND', 'message': 'Cliente no encontrado'}
+            }), 404
+
+        page = request.args.get('page', 1, type=int)
+        limit = min(request.args.get('limit', 20, type=int), 100)
+        date_from = request.args.get('date_from', '').strip()
+        date_to = request.args.get('date_to', '').strip()
+        status_filter = request.args.get('status', '').strip()
+        payment_filter = request.args.get('payment_status', '').strip()
+
+        # Base query
+        query = Order.query.filter(Order.customer_id == customer_id)
+
+        # CA-4: Filtro por rango de fechas
+        if date_from:
+            try:
+                from_dt = datetime.fromisoformat(date_from)
+                query = query.filter(Order.created_at >= from_dt)
+            except ValueError:
+                pass
+
+        if date_to:
+            try:
+                to_dt = datetime.fromisoformat(date_to + 'T23:59:59')
+                query = query.filter(Order.created_at <= to_dt)
+            except ValueError:
+                pass
+
+        # CA-5: Filtro por estado del pedido
+        if status_filter:
+            statuses = [s.strip() for s in status_filter.split(',') if s.strip()]
+            if statuses:
+                query = query.filter(Order.status.in_(statuses))
+
+        # CA-6: Filtro por estado de pago
+        if payment_filter:
+            payment_statuses = [s.strip() for s in payment_filter.split(',') if s.strip()]
+            if payment_statuses:
+                query = query.filter(Order.payment_status.in_(payment_statuses))
+
+        # CA-3: Métricas - calcular sobre pedidos no cancelados
+        total_orders_count = query.count()
+        metrics_query = query.filter(Order.status != 'Cancelado')
+        metrics = metrics_query.with_entities(
+            func.count(Order.id).label('non_cancelled_count'),
+            func.sum(Order.total).label('total_spent'),
+            func.avg(Order.total).label('average_order'),
+            func.max(Order.total).label('highest_ticket'),
+            func.min(Order.total).label('lowest_ticket'),
+            func.min(Order.created_at).label('first_order_date'),
+            func.max(Order.created_at).label('last_order_date'),
+        ).first()
+
+        # Calcular frecuencia (pedidos por mes)
+        freq_per_month = 0.0
+        if metrics and metrics.first_order_date and metrics.last_order_date and int(metrics.non_cancelled_count or 0) > 0:
+            first_dt = metrics.first_order_date
+            last_dt = metrics.last_order_date
+            months_diff = ((last_dt.year - first_dt.year) * 12 + (last_dt.month - first_dt.month)) or 1
+            freq_per_month = round(float(metrics.non_cancelled_count) / months_diff, 2)
+
+        # CA-2: Ordenar y paginar
+        ordered_query = query.order_by(Order.created_at.desc())
+        pagination = ordered_query.paginate(page=page, per_page=limit, error_out=False)
+
+        orders_data = []
+        for order in pagination.items:
+            orders_data.append({
+                'id': order.id,
+                'order_number': order.order_number,
+                'created_at': order.created_at.isoformat() if order.created_at else None,
+                'status': order.status,
+                'payment_status': order.payment_status,
+                'items_count': len(order.items),
+                'items': [item.to_dict() for item in order.items],
+                'subtotal': float(order.subtotal or 0),
+                'tax_percentage': float(order.tax_percentage or 0),
+                'tax_amount': float(order.tax_amount or 0),
+                'shipping_cost': float(order.shipping_cost or 0),
+                'discount_amount': float(order.discount_amount or 0),
+                'total': float(order.total or 0),
+                'notes': order.notes,
+            })
+
+        # CA-8: Top 10 productos más comprados (sin filtros de fecha/estado)
+        top_products_query = db.session.query(
+            Product.id,
+            Product.name,
+            Product.sku,
+            Product.image_url,
+            func.sum(OrderItem.quantity).label('total_qty'),
+            func.count(func.distinct(Order.id)).label('times_ordered'),
+            func.max(Order.created_at).label('last_ordered'),
+        ).join(OrderItem, OrderItem.product_id == Product.id)\
+         .join(Order, Order.id == OrderItem.order_id)\
+         .filter(
+             Order.customer_id == customer_id,
+             Order.status != 'Cancelado'
+         )\
+         .group_by(Product.id, Product.name, Product.sku, Product.image_url)\
+         .order_by(func.sum(OrderItem.quantity).desc())\
+         .limit(10).all()
+
+        top_products = [{
+            'id': p.id,
+            'name': p.name,
+            'sku': p.sku,
+            'image_url': p.image_url,
+            'total_qty': int(p.total_qty or 0),
+            'times_ordered': int(p.times_ordered or 0),
+            'last_ordered': p.last_ordered.isoformat() if p.last_ordered else None,
+        } for p in top_products_query]
+
+        # CA-9: Datos para gráfico mensual
+        year_col = extract('year', Order.created_at)
+        month_col = extract('month', Order.created_at)
+        chart_query = db.session.query(
+            year_col.label('year'),
+            month_col.label('month'),
+            func.sum(Order.total).label('total'),
+            func.count(Order.id).label('count'),
+        ).filter(Order.customer_id == customer_id)\
+         .group_by(year_col, month_col)\
+         .order_by(year_col, month_col).all()
+
+        MONTHS_ES = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun',
+                     'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic']
+        chart_data = []
+        for row in chart_query:
+            month_idx = int(row.month) - 1
+            chart_data.append({
+                'period': f"{MONTHS_ES[month_idx]} {int(row.year)}",
+                'year': int(row.year),
+                'month': int(row.month),
+                'total': float(row.total or 0),
+                'count': int(row.count or 0),
+            })
+
+        return jsonify({
+            'success': True,
+            'data': {
+                'customer': {
+                    'id': customer.id,
+                    'nombre_razon_social': customer.nombre_razon_social,
+                },
+                'orders': orders_data,
+                'metrics': {
+                    'total_orders': total_orders_count,
+                    'non_cancelled_count': int(metrics.non_cancelled_count or 0) if metrics else 0,
+                    'total_spent': float(metrics.total_spent or 0) if metrics else 0.0,
+                    'average_order': float(metrics.average_order or 0) if metrics else 0.0,
+                    'highest_ticket': float(metrics.highest_ticket or 0) if metrics else 0.0,
+                    'lowest_ticket': float(metrics.lowest_ticket or 0) if metrics else 0.0,
+                    'frequency_per_month': freq_per_month,
+                },
+                'top_products': top_products,
+                'chart_data': chart_data,
+            },
+            'pagination': {
+                'page': pagination.page,
+                'per_page': pagination.per_page,
+                'total': pagination.total,
+                'pages': pagination.pages,
+            }
+        }), 200
+
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': {
+                'code': 'SERVER_ERROR',
+                'message': 'Error al obtener historial de compras',
+                'details': str(e)
+            }
+        }), 500
+
+
+@customers_bp.route('/<customer_id>/orders-history/export', methods=['GET'])
+@jwt_required()
+@require_role(['Admin', 'Personal de Ventas', 'Gerente de Almacén'])
+def export_customer_orders_history(customer_id):
+    """
+    GET /api/customers/:id/orders-history/export
+    US-CUST-007 CA-10: Exportar historial de compras en CSV o Excel
+
+    Query params:
+        - format: 'csv' o 'excel' (default 'csv')
+        - date_from, date_to, status, payment_status (mismos filtros que el historial)
+    """
+    try:
+        from app.models.order import Order
+        from app.utils.export_helper import ExportHelper
+
+        customer = Customer.query.get(customer_id)
+        if not customer:
+            return jsonify({
+                'success': False,
+                'error': {'code': 'NOT_FOUND', 'message': 'Cliente no encontrado'}
+            }), 404
+
+        format_type = request.args.get('format', 'csv').lower()
+        date_from = request.args.get('date_from', '').strip()
+        date_to = request.args.get('date_to', '').strip()
+        status_filter = request.args.get('status', '').strip()
+        payment_filter = request.args.get('payment_status', '').strip()
+
+        query = Order.query.filter(Order.customer_id == customer_id)
+
+        if date_from:
+            try:
+                query = query.filter(Order.created_at >= datetime.fromisoformat(date_from))
+            except ValueError:
+                pass
+
+        if date_to:
+            try:
+                query = query.filter(Order.created_at <= datetime.fromisoformat(date_to + 'T23:59:59'))
+            except ValueError:
+                pass
+
+        if status_filter:
+            statuses = [s.strip() for s in status_filter.split(',') if s.strip()]
+            if statuses:
+                query = query.filter(Order.status.in_(statuses))
+
+        if payment_filter:
+            payment_statuses = [s.strip() for s in payment_filter.split(',') if s.strip()]
+            if payment_statuses:
+                query = query.filter(Order.payment_status.in_(payment_statuses))
+
+        orders = query.order_by(Order.created_at.desc()).limit(10000).all()
+
+        export_data = []
+        for order in orders:
+            products_summary = ', '.join(
+                f"{item.product_name} x{item.quantity}" for item in order.items
+            )
+            export_data.append({
+                'order_number': order.order_number,
+                'created_at': order.created_at.strftime('%Y-%m-%d %H:%M') if order.created_at else '',
+                'products': products_summary,
+                'subtotal': float(order.subtotal or 0),
+                'tax_amount': float(order.tax_amount or 0),
+                'shipping_cost': float(order.shipping_cost or 0),
+                'discount_amount': float(order.discount_amount or 0),
+                'total': float(order.total or 0),
+                'status': order.status,
+                'payment_status': order.payment_status,
+            })
+
+        columns = [
+            ('order_number', 'Número de Pedido'),
+            ('created_at', 'Fecha'),
+            ('products', 'Productos'),
+            ('subtotal', 'Subtotal'),
+            ('tax_amount', 'Impuestos'),
+            ('shipping_cost', 'Envío'),
+            ('discount_amount', 'Descuento'),
+            ('total', 'Total'),
+            ('status', 'Estado'),
+            ('payment_status', 'Estado de Pago'),
+        ]
+
+        customer_name = ''.join(c for c in customer.nombre_razon_social if c.isalnum() or c in ' _-')
+        customer_name = customer_name.replace(' ', '_')[:50]
+        filename_prefix = f'Historial_{customer_name}'
+
+        if format_type == 'excel':
+            return ExportHelper.export_to_excel(
+                data=export_data,
+                columns=columns,
+                filename_prefix=filename_prefix,
+                sheet_name='Historial de Compras'
+            )
+        else:
+            return ExportHelper.export_to_csv(
+                data=export_data,
+                columns=columns,
+                filename_prefix=filename_prefix
+            )
+
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': {
+                'code': 'SERVER_ERROR',
+                'message': 'Error al exportar historial de compras',
                 'details': str(e)
             }
         }), 500
