@@ -39,7 +39,15 @@ class Customer(db.Model):
     notes = db.Column(db.Text, nullable=True)
 
     # Estado
-    is_active = db.Column(db.Boolean, default=True, nullable=False)
+    is_active = db.Column(db.Boolean, default=True, nullable=False, index=True)
+
+    # Tracking de inactivación/reactivación (US-CUST-008)
+    inactivated_at = db.Column(db.DateTime, nullable=True)
+    inactivated_by = db.Column(db.String(36), nullable=True)
+    inactivation_reason = db.Column(db.Text, nullable=True)
+    reactivated_at = db.Column(db.DateTime, nullable=True)
+    reactivated_by = db.Column(db.String(36), nullable=True)
+    reactivation_reason = db.Column(db.Text, nullable=True)
 
     # Timestamps
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
@@ -50,6 +58,25 @@ class Customer(db.Model):
 
     def to_dict(self):
         """Convertir cliente a diccionario"""
+        # Resolver nombre del usuario que inactivó
+        inactivated_by_name = None
+        if self.inactivated_by:
+            try:
+                from app.models.user import User
+                user = User.query.get(self.inactivated_by)
+                inactivated_by_name = user.full_name if user else None
+            except Exception:
+                pass
+
+        reactivated_by_name = None
+        if self.reactivated_by:
+            try:
+                from app.models.user import User
+                user = User.query.get(self.reactivated_by)
+                reactivated_by_name = user.full_name if user else None
+            except Exception:
+                pass
+
         return {
             'id': self.id,
             'tipo_documento': self.tipo_documento,
@@ -66,6 +93,14 @@ class Customer(db.Model):
             'correo': self.correo,
             'notes': self.notes,
             'is_active': self.is_active,
+            'inactivated_at': self.inactivated_at.isoformat() if self.inactivated_at else None,
+            'inactivated_by': self.inactivated_by,
+            'inactivated_by_name': inactivated_by_name,
+            'inactivation_reason': self.inactivation_reason,
+            'reactivated_at': self.reactivated_at.isoformat() if self.reactivated_at else None,
+            'reactivated_by': self.reactivated_by,
+            'reactivated_by_name': reactivated_by_name,
+            'reactivation_reason': self.reactivation_reason,
             'created_at': self.created_at.isoformat() if self.created_at else None,
             'updated_at': self.updated_at.isoformat() if self.updated_at else None,
             # Placeholder purchase fields (will be computed from Orders in Epic 04)

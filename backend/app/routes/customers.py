@@ -839,7 +839,7 @@ def update_customer(customer_id):
 def toggle_active(customer_id):
     """
     PATCH /api/customers/:id/toggle-active
-    US-CUST-002 CA-8: Activar/Inactivar cliente
+    US-CUST-002 CA-8: Activar/Inactivar cliente (legacy, sin tracking)
     """
     try:
         customer = Customer.query.get(customer_id)
@@ -871,6 +871,135 @@ def toggle_active(customer_id):
             'error': {
                 'code': 'SERVER_ERROR',
                 'message': 'Error al cambiar estado del cliente',
+                'details': str(e)
+            }
+        }), 500
+
+
+@customers_bp.route('/<customer_id>/deactivate', methods=['PATCH'])
+@jwt_required()
+@require_role(['Admin', 'Personal de Ventas'])
+def deactivate_customer(customer_id):
+    """
+    PATCH /api/customers/:id/deactivate
+    US-CUST-008 CA-3: Inactivar cliente con tracking de razón y usuario
+
+    Body (opcional):
+        - reason: Motivo de inactivación (string, max 200 chars)
+    """
+    try:
+        current_user_id = get_jwt_identity()
+        customer = Customer.query.get(customer_id)
+
+        if not customer:
+            return jsonify({
+                'success': False,
+                'error': {
+                    'code': 'NOT_FOUND',
+                    'message': 'Cliente no encontrado'
+                }
+            }), 404
+
+        if not customer.is_active:
+            return jsonify({
+                'success': False,
+                'error': {
+                    'code': 'ALREADY_INACTIVE',
+                    'message': 'El cliente ya está inactivo'
+                }
+            }), 409
+
+        data = request.get_json(silent=True) or {}
+        reason = data.get('reason', '').strip()[:200] if data.get('reason') else None
+
+        now = datetime.utcnow()
+        customer.is_active = False
+        customer.inactivated_at = now
+        customer.inactivated_by = current_user_id
+        customer.inactivation_reason = reason
+        customer.reactivated_at = None
+        customer.reactivated_by = None
+        customer.reactivation_reason = None
+        customer.updated_at = now
+
+        db.session.commit()
+
+        return jsonify({
+            'success': True,
+            'data': customer.to_dict(),
+            'message': f'Cliente {customer.nombre_razon_social} inactivado correctamente'
+        }), 200
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({
+            'success': False,
+            'error': {
+                'code': 'SERVER_ERROR',
+                'message': 'Error al inactivar cliente',
+                'details': str(e)
+            }
+        }), 500
+
+
+@customers_bp.route('/<customer_id>/activate', methods=['PATCH'])
+@jwt_required()
+@require_role(['Admin', 'Personal de Ventas'])
+def activate_customer(customer_id):
+    """
+    PATCH /api/customers/:id/activate
+    US-CUST-008 CA-6: Reactivar cliente con tracking de razón y usuario
+
+    Body (opcional):
+        - reason: Motivo de reactivación (string, max 200 chars)
+    """
+    try:
+        current_user_id = get_jwt_identity()
+        customer = Customer.query.get(customer_id)
+
+        if not customer:
+            return jsonify({
+                'success': False,
+                'error': {
+                    'code': 'NOT_FOUND',
+                    'message': 'Cliente no encontrado'
+                }
+            }), 404
+
+        if customer.is_active:
+            return jsonify({
+                'success': False,
+                'error': {
+                    'code': 'ALREADY_ACTIVE',
+                    'message': 'El cliente ya está activo'
+                }
+            }), 409
+
+        data = request.get_json(silent=True) or {}
+        reason = data.get('reason', '').strip()[:200] if data.get('reason') else None
+
+        now = datetime.utcnow()
+        customer.is_active = True
+        customer.reactivated_at = now
+        customer.reactivated_by = current_user_id
+        customer.reactivation_reason = reason
+        customer.updated_at = now
+
+        db.session.commit()
+
+        return jsonify({
+            'success': True,
+            'data': customer.to_dict(),
+            'message': f'Cliente {customer.nombre_razon_social} reactivado correctamente'
+        }), 200
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({
+            'success': False,
+            'error': {
+                'code': 'SERVER_ERROR',
+                'message': 'Error al reactivar cliente',
                 'details': str(e)
             }
         }), 500
