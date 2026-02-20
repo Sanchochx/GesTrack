@@ -73,3 +73,14 @@ def require_role(allowed_roles):
         return wrapper
     return decorator
 
+
+def admin_required(fn):
+    return require_role(['Admin'])(fn)
+
+
+def warehouse_manager_or_admin(fn):
+    return require_role(['Admin', 'Gerente de Almacén'])(fn)
+
+
+def sales_staff_or_admin(fn):
+    return require_role(['Admin', 'Personal de Ventas'])(fn)
