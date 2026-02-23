@@ -48,7 +48,13 @@
       "Bash(/c/Users/santi/AppData/Local/Programs/Python/Python312/Scripts/flask db upgrade)",
       "Bash(/c/Users/santi/AppData/Local/Programs/Python/Python312/Scripts/flask db current)",
       "Bash(git rm:*)",
-      "Bash(flask db:*)"
+      "Bash(flask db:*)",
+      "Bash(flask:*)",
+      "Bash(/c/Users/santi/AppData/Local/Programs/Python/Python312/python.exe -c \":*)",
+      "Bash(/c/Users/santi/AppData/Local/Programs/Python/Python312/python.exe:*)",
+      "Bash(node -e:*)",
+      "Bash(venvScriptspython.exe -c \"import openpyxl; print\\(''openpyxl OK:'', openpyxl.__version__\\)\")",
+      "Bash(pip show:*)"
     ],
     "deny": [],
     "ask": []
