@@ -203,25 +203,27 @@
   - Enviar email con link de descarga cuando esté listo
 
 ## Definición de Hecho
-- [ ] Frontend: Botón "Exportar"
-- [ ] Frontend: Dropdown con opciones CSV y Excel
-- [ ] Frontend: Indicador de progreso durante exportación
-- [ ] Frontend: Aplicación de filtros actuales a exportación
-- [ ] Frontend: Descarga automática del archivo
-- [ ] Frontend: Manejo de errores
-- [ ] Backend: API GET /api/customers/export/csv
-- [ ] Backend: API GET /api/customers/export/xlsx
-- [ ] Backend: Aplicación de filtros en query
-- [ ] Backend: Generación de CSV con csv module
-- [ ] Backend: Generación de Excel con openpyxl
-- [ ] Backend: Headers apropiados para descarga
-- [ ] Backend: Nombre de archivo con timestamp
-- [ ] Backend: Formato UTF-8 para caracteres especiales
-- [ ] Pruebas de exportación CSV
-- [ ] Pruebas de exportación Excel
-- [ ] Pruebas con filtros aplicados
-- [ ] Pruebas con caracteres especiales
-- [ ] Pruebas con volumen grande (performance)
+- [x] Frontend: Botón "Exportar" (junto a "Nuevo Cliente")
+- [x] Frontend: Dropdown con opciones CSV y Excel (MUI Menu)
+- [x] Frontend: Indicador de progreso durante exportación (CircularProgress en botón)
+- [x] Frontend: Aplicación de filtros actuales a exportación (search, is_active, category)
+- [x] Frontend: Descarga automática del archivo (blob + anchor click)
+- [x] Frontend: Manejo de errores (setError en catch)
+- [x] Frontend: Tooltip con conteo de clientes a exportar (CA-4 confirmación)
+- [x] Backend: API GET /api/customers/export (parámetro format=csv|excel)
+- [x] Backend: Aplicación de filtros en query (mismos que GET /api/customers)
+- [x] Backend: Generación de CSV con csv module (via ExportHelper)
+- [x] Backend: Generación de Excel con openpyxl (via ExportHelper)
+- [x] Backend: Headers apropiados para descarga (Content-Disposition)
+- [x] Backend: Nombre de archivo con timestamp (clientes_YYYYMMDD_HHMMSS.csv/xlsx)
+- [x] Backend: Formato UTF-8 para caracteres especiales
+- [x] Backend: Estadísticas de pedidos por cliente en exportación (join con Order)
+- [x] Backend: Límite de 10 000 clientes por exportación (CA-9)
+- [ ] Pruebas de exportación CSV (diferidas v1.0)
+- [ ] Pruebas de exportación Excel (diferidas v1.0)
+- [ ] Pruebas con filtros aplicados (diferidas v1.0)
+- [ ] Pruebas con caracteres especiales (diferidas v1.0)
+- [ ] Pruebas con volumen grande (diferidas v1.0)
 - [ ] Documentación de formato de exportación
 
 ## Dependencias

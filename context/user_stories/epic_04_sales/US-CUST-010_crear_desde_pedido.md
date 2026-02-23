@@ -129,21 +129,21 @@
 - El flujo completo: Crear Pedido → Crear Cliente → Volver a Pedido → Finalizar Pedido
 
 ## Definición de Hecho
-- [ ] Frontend: Botón "+ Nuevo Cliente" en formulario de pedido
-- [ ] Frontend: Modal de creación de cliente
-- [ ] Frontend: Formulario con todos los campos requeridos
-- [ ] Frontend: Validaciones en tiempo real
-- [ ] Frontend: Guardado del cliente
-- [ ] Frontend: Selección automática del cliente creado
-- [ ] Frontend: Persistencia de datos del pedido durante creación de cliente
-- [ ] Frontend: Confirmación de cancelación si hay datos
-- [ ] Frontend: Manejo de errores sin perder contexto
-- [ ] Backend: Usar mismo endpoint POST /api/customers
-- [ ] Pruebas de creación de cliente desde pedido
-- [ ] Pruebas de selección automática
-- [ ] Pruebas de persistencia de datos del pedido
-- [ ] Pruebas de validaciones (email duplicado, etc.)
-- [ ] UX testing del flujo completo
+- [x] Frontend: Botón "+ Nuevo Cliente" en formulario de pedido
+- [x] Frontend: Modal de creación de cliente
+- [x] Frontend: Formulario con todos los campos requeridos
+- [x] Frontend: Validaciones en tiempo real
+- [x] Frontend: Guardado del cliente
+- [x] Frontend: Selección automática del cliente creado
+- [x] Frontend: Persistencia de datos del pedido durante creación de cliente
+- [x] Frontend: Confirmación de cancelación si hay datos
+- [x] Frontend: Manejo de errores sin perder contexto
+- [x] Backend: Usar mismo endpoint POST /api/customers
+- [ ] Pruebas de creación de cliente desde pedido (diferido v1.0)
+- [ ] Pruebas de selección automática (diferido v1.0)
+- [ ] Pruebas de persistencia de datos del pedido (diferido v1.0)
+- [ ] Pruebas de validaciones (email duplicado, etc.) (diferido v1.0)
+- [ ] UX testing del flujo completo (diferido v1.0)
 
 ## Dependencias
 - US-CUST-001 (Registrar Cliente) - reutilizar lógica

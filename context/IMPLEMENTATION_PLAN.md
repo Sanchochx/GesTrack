@@ -1,6 +1,6 @@
 # 🚀 GesTrack - Plan de Implementación
 
-**Última actualización:** 2026-02-16
+**Última actualización:** 2026-02-23
 **Versión:** 1.0
 
 ---
@@ -12,12 +12,12 @@
 │  PROGRESO GLOBAL DEL PROYECTO                               │
 ├─────────────────────────────────────────────────────────────┤
 │  Total Historias de Usuario:     82                         │
-│  ✅ Completadas:                   36                        │
+│  ✅ Completadas:                   39                        │
 │  🔄 Parcialmente Completadas:     0                         │
 │  ⏳ En Progreso:                   0                         │
-│  ⏸️  Pendientes:                   46                        │
+│  ⏸️  Pendientes:                   43                        │
 │                                                             │
-│  Progreso: [████████░░░░░░░░░░░░] 44% (36/82)              │
+│  Progreso: [█████████░░░░░░░░░░░] 48% (39/82)              │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -30,7 +30,7 @@
 | 01 | Foundation | 6 | 6 | 0 | 0 | [██████████] 100% |
 | 02 | Core Data | 10 | 10 | 0 | 0 | [██████████] 100% |
 | 03 | Stock Management | 10 | 10 | 0 | 0 | [██████████] 100% |
-| 04 | Sales | 26 | 9 | 0 | 17 | [███░░░░░░░] 35% |
+| 04 | Sales | 26 | 12 | 0 | 14 | [████░░░░░░] 46% |
 | 05 | Supply Chain | 15 | 0 | 0 | 15 | [░░░░░░░░░░] 0% |
 | 06 | Analytics | 15 | 0 | 0 | 15 | [░░░░░░░░░░] 0% |
 
@@ -356,7 +356,7 @@
 **Objetivo:** Implementar funcionalidades principales de negocio
 **Épicas:** 03 Stock Management, 04 Sales
 **Total US:** 36
-**Progreso:** [████░░░░░░] 53% (19/36 completadas) 🔄 EN PROGRESO
+**Progreso:** [██████░░░░] 58% (21/36 completadas) 🔄 EN PROGRESO
 
 ---
 
@@ -644,8 +644,9 @@
 ## Epic 04: Sales - Gestión de Clientes y Pedidos
 
 **Prioridad:** ⭐⭐⭐ ALTA
-**Progreso:** [████░░░░░░] 38% (10/26)
+**Progreso:** [████░░░░░░] 42% (11/26)
 **Carpeta:** `context/user_stories/epic_04_sales/`
+
 
 ### 📋 Módulo: Clientes
 
@@ -896,26 +897,90 @@
   - Frontend: `services/customerService.js` (3 métodos), `pages/Customers/CustomerDetail.jsx` (full notes UI)
 - **Fecha de completación:** 2026-02-20
 
-#### [ ] US-CUST-010: Crear Cliente desde Pedido
+#### [x] US-CUST-010: Crear Cliente desde Pedido
 - **Archivo:** `context/user_stories/epic_04_sales/US-CUST-010_crear_desde_pedido.md`
 - **Prioridad:** MEDIA
 - **Estimación:** 5 pts
-- **Estado:** ⏸️ Pendiente
-- **Criterios de Aceptación:** 6
+- **Estado:** ✅ COMPLETADA
+- **Criterios de Aceptación:** 9 ✅ (tests diferidos v1.0)
+- **Progreso Frontend:** ✅ 100% - Todos los CA core implementados
+  - CA-1: Botón "+ Nuevo Cliente" (PersonAddIcon) junto al Autocomplete de clientes en OrderForm ✅
+  - CA-2: CreateCustomerModal.jsx — Dialog fullWidth maxWidth="lg" con scroll="paper" ✅
+  - CA-3: CustomerForm completo (Identificación, Fiscal, Ubicación, Contacto) reutilizado ✅
+  - CA-4: Validaciones en tiempo real delegadas a CustomerForm (email único, formato, etc.) ✅
+  - CA-5: handleCustomerCreated — selección automática + mensaje de éxito + cierre modal ✅
+  - CA-6: CustomerForm maneja cancelación con confirmación si hay datos ✅
+  - CA-7: Datos del pedido (items, totales, notas) persisten en React state durante el modal ✅
+  - CA-8: setSelectedCustomer(newCustomer) tras creación exitosa ✅
+  - CA-9: CustomerForm maneja errores internamente, modal permanece abierto ✅
+- **Progreso Backend:** ✅ Reutiliza POST /api/customers existente (sin cambios)
+- **Archivos Creados:**
+  - Frontend: `components/customers/CreateCustomerModal.jsx`
+- **Archivos Modificados:**
+  - Frontend: `components/forms/OrderForm.jsx` (modal state, button, handler, modal render)
+- **Fecha de completación:** 2026-02-20
 
-#### [ ] US-CUST-011: Segmentación de Clientes
+#### [x] US-CUST-011: Segmentación de Clientes
 - **Archivo:** `context/user_stories/epic_04_sales/US-CUST-011_segmentacion.md`
 - **Prioridad:** BAJA
 - **Estimación:** 5 pts
-- **Estado:** ⏸️ Pendiente
-- **Criterios de Aceptación:** 6
+- **Estado:** ✅ COMPLETADA
+- **Criterios de Aceptación:** 9 ✅ (CA-2 auto-trigger diferido a US-ORD-003, CA-9 solo visual, CA-10 diferido a US-CUST-012, tests diferidos)
+- **Progreso Backend:** ✅ 100%
+  - customer_category campo en DB + índice ✅
+  - CustomerSegmentationConfig model + tabla ✅
+  - CustomerCategoryHistory model + tabla (CA-8) ✅
+  - CustomerSegmentationService (calculate_and_update_category, recalculate_all_categories, get_segmentation_stats) ✅
+  - GET /api/customers/segmentation (dashboard) ✅
+  - GET/PUT /api/customers/segmentation/config (CA-7) ✅
+  - POST /api/customers/segmentation/recalculate (CA-7) ✅
+  - Category filter en GET /api/customers (CA-5) ✅
+  - Stats con counts por categoría en GET /api/customers ✅
+- **Progreso Frontend:** ✅ 100%
+  - Badge con tooltip en CustomerDetail (CA-3) ✅
+  - Badge con tooltip en CustomerTable (CA-4) ✅
+  - ToggleButtonGroup de categorías en CustomerFilters (CA-5) ✅
+  - Contador por categoría en CustomerStats (VIP count real) ✅
+  - CustomerSegmentation.jsx — dashboard completo (CA-6) ✅
+  - Panel de config de rangos Admin en modal (CA-7) ✅
+  - Botón Recalcular todos Admin (CA-7) ✅
+  - Ruta /customers/segmentation + navegación ✅
+  - Servicios en customerService.js ✅
+- **Archivos Creados:**
+  - Backend: `models/customer_segmentation_config.py`, `models/customer_category_history.py`, `services/customer_segmentation_service.py`, `migrations/versions/3e2b1a4c9d8f_us_cust_011_customer_segmentation.py`
+  - Frontend: `pages/Customers/CustomerSegmentation.jsx`
+- **Archivos Modificados:**
+  - Backend: `models/customer.py` (campo customer_category), `models/__init__.py`, `routes/customers.py` (filter + endpoints)
+  - Frontend: `components/customers/CustomerFilters.jsx`, `components/customers/CustomerTable.jsx`, `components/customers/CustomerStats.jsx`, `pages/Customers/CustomerDetail.jsx`, `pages/Customers/CustomerList.jsx`, `services/customerService.js`, `App.jsx`
+- **Fecha de completación:** 2026-02-23
 
-#### [ ] US-CUST-012: Exportar Lista de Clientes
+#### [x] US-CUST-012: Exportar Lista de Clientes
 - **Archivo:** `context/user_stories/epic_04_sales/US-CUST-012_exportar_clientes.md`
 - **Prioridad:** BAJA
 - **Estimación:** 3 pts
-- **Estado:** ⏸️ Pendiente
-- **Criterios de Aceptación:** 5
+- **Estado:** ✅ COMPLETADA
+- **Criterios de Aceptación:** 9 ✅ (CA-10 omitido por simplicidad UX, tests diferidos)
+- **Progreso Backend:** ✅ 100%
+  - GET /api/customers/export con param format=csv|excel ✅
+  - Respeta mismos filtros que GET /api/customers (search, is_active, category) ✅
+  - Join con Order para estadísticas (total_spent, order_count, última_compra) ✅
+  - Columnas CA-3: nombre, correo, teléfono, dirección, ciudad, dept, país, tipo_doc, num_doc, tipo_contribuyente, fecha_registro, estado, categoría, total_compras, num_pedidos, última_compra ✅
+  - Generación CSV via ExportHelper (csv module, UTF-8) ✅
+  - Generación Excel via ExportHelper (openpyxl, header con estilo) ✅
+  - Nombre de archivo con timestamp: clientes_YYYYMMDD_HHMMSS.csv/xlsx ✅
+  - Límite 10 000 clientes por exportación ✅
+- **Progreso Frontend:** ✅ 100%
+  - Botón "Exportar" con icono GetApp junto a "Nuevo Cliente" ✅
+  - Dropdown MUI Menu con opciones CSV y Excel ✅
+  - CircularProgress en botón durante exportación ✅
+  - Tooltip con conteo de clientes a exportar y filtros activos ✅
+  - Descarga automática via blob + anchor click ✅
+  - Manejo de errores con setError ✅
+  - Filtros actuales (search, is_active, category) enviados al endpoint ✅
+- **Archivos modificados:**
+  - Backend: `routes/customers.py`
+  - Frontend: `pages/Customers/CustomerList.jsx`, `services/customerService.js`
+- **Fecha de completación:** 2026-02-23
 
 ### 📋 Módulo: Pedidos
 

@@ -144,26 +144,26 @@
   - `POST /api/admin/recalculate-categories` - recalcular todas las categorías
 
 ## Definición de Hecho
-- [ ] Frontend: Badge de categoría en perfil del cliente
-- [ ] Frontend: Badge en lista de clientes
-- [ ] Frontend: Filtro por categoría
-- [ ] Frontend: Dashboard de segmentación con gráficos
-- [ ] Frontend: Panel de configuración de rangos (Admin)
-- [ ] Frontend: Contador de clientes por categoría
-- [ ] Backend: Campo customer_category en tabla customers
-- [ ] Backend: Tabla de configuración de rangos
-- [ ] Backend: Función de cálculo de categoría
-- [ ] Backend: Trigger/lógica de recálculo automático
-- [ ] Backend: API de dashboard de segmentación
-- [ ] Backend: API de configuración de rangos
-- [ ] Backend: API de recálculo manual de categorías
-- [ ] Backend: Registro de cambios de categoría
-- [ ] Base de datos: Campos y tablas creadas
-- [ ] Base de datos: Índices en customer_category
-- [ ] Pruebas de cálculo de categoría
-- [ ] Pruebas de recálculo automático
-- [ ] Pruebas de cambio de configuración
-- [ ] Pruebas de filtros por categoría
+- [x] Frontend: Badge de categoría en perfil del cliente
+- [x] Frontend: Badge en lista de clientes
+- [x] Frontend: Filtro por categoría
+- [x] Frontend: Dashboard de segmentación con gráficos
+- [x] Frontend: Panel de configuración de rangos (Admin)
+- [x] Frontend: Contador de clientes por categoría
+- [x] Backend: Campo customer_category en tabla customers
+- [x] Backend: Tabla de configuración de rangos
+- [x] Backend: Función de cálculo de categoría
+- [x] Backend: Trigger/lógica de recálculo automático (calculado al ver perfil; auto-trigger diferido a US-ORD-003)
+- [x] Backend: API de dashboard de segmentación
+- [x] Backend: API de configuración de rangos
+- [x] Backend: API de recálculo manual de categorías
+- [x] Backend: Registro de cambios de categoría (CustomerCategoryHistory)
+- [x] Base de datos: Campos y tablas creadas
+- [x] Base de datos: Índices en customer_category
+- [ ] Pruebas de cálculo de categoría (diferidas v1.0)
+- [ ] Pruebas de recálculo automático (diferidas v1.0)
+- [ ] Pruebas de cambio de configuración (diferidas v1.0)
+- [ ] Pruebas de filtros por categoría (diferidas v1.0)
 - [ ] Documentación de lógica de segmentación
 
 ## Dependencias
