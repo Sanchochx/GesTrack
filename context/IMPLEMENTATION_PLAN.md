@@ -1,6 +1,6 @@
 # 🚀 GesTrack - Plan de Implementación
 
-**Última actualización:** 2026-02-23
+**Última actualización:** 2026-02-23 (US-ORD-002 completada)
 **Versión:** 1.0
 
 ---
@@ -12,12 +12,12 @@
 │  PROGRESO GLOBAL DEL PROYECTO                               │
 ├─────────────────────────────────────────────────────────────┤
 │  Total Historias de Usuario:     82                         │
-│  ✅ Completadas:                   39                        │
+│  ✅ Completadas:                   40                        │
 │  🔄 Parcialmente Completadas:     0                         │
 │  ⏳ En Progreso:                   0                         │
-│  ⏸️  Pendientes:                   43                        │
+│  ⏸️  Pendientes:                   42                        │
 │                                                             │
-│  Progreso: [█████████░░░░░░░░░░░] 48% (39/82)              │
+│  Progreso: [█████████░░░░░░░░░░░] 49% (40/82)              │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -30,7 +30,7 @@
 | 01 | Foundation | 6 | 6 | 0 | 0 | [██████████] 100% |
 | 02 | Core Data | 10 | 10 | 0 | 0 | [██████████] 100% |
 | 03 | Stock Management | 10 | 10 | 0 | 0 | [██████████] 100% |
-| 04 | Sales | 26 | 12 | 0 | 14 | [████░░░░░░] 46% |
+| 04 | Sales | 26 | 13 | 0 | 13 | [█████░░░░░] 50% |
 | 05 | Supply Chain | 15 | 0 | 0 | 15 | [░░░░░░░░░░] 0% |
 | 06 | Analytics | 15 | 0 | 0 | 15 | [░░░░░░░░░░] 0% |
 
@@ -644,7 +644,7 @@
 ## Epic 04: Sales - Gestión de Clientes y Pedidos
 
 **Prioridad:** ⭐⭐⭐ ALTA
-**Progreso:** [████░░░░░░] 42% (11/26)
+**Progreso:** [█████░░░░░] 50% (13/26)
 **Carpeta:** `context/user_stories/epic_04_sales/`
 
 
@@ -1021,12 +1021,22 @@
   - CA-9: localStorage persistence (diferido, menor impacto)
 - **Fecha de completación:** 2026-02-17
 
-#### [ ] US-ORD-002: Cálculo Automático de Totales
+#### [x] US-ORD-002: Cálculo Automático de Totales
 - **Archivo:** `context/user_stories/epic_04_sales/US-ORD-002_calculo_totales.md`
 - **Prioridad:** ALTA
 - **Estimación:** 5 pts
-- **Estado:** ⏸️ Pendiente
-- **Criterios de Aceptación:** 6
+- **Estado:** ✅ Completada
+- **Criterios de Aceptación:** 10 ✅
+- **Cambios:**
+  - CA-7: `formatCOP` con 2 decimales mínimos
+  - CA-4: Toggle "Monto fijo / Porcentaje" + `actualDiscount` derivado
+  - CA-2/CA-9: Validaciones tax > 100% y descuento porcentual > 100%
+  - CA-5: Total en verde cuando `actualDiscount > 0`
+  - CA-6: Desglose en orden Subtotal → Descuento → Subtotal neto → Impuesto → Envío → TOTAL
+  - CA-10: Backend recibe `actualDiscount` (monto real, no input crudo)
+- **Archivos Modificados:**
+  - Frontend: `components/forms/OrderForm.jsx`
+- **Fecha de completación:** 2026-02-23
 
 #### [ ] US-ORD-003: Gestión de Estados del Pedido
 - **Archivo:** `context/user_stories/epic_04_sales/US-ORD-003_estados_pedido.md`

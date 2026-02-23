@@ -106,19 +106,19 @@
   - Posición del símbolo de moneda
 
 ## Definición de Hecho
-- [ ] Frontend: Implementación de cálculo de subtotal
-- [ ] Frontend: Campo de porcentaje de impuesto con cálculo
-- [ ] Frontend: Campo de costo de envío
-- [ ] Frontend: Campos de descuento (monto y porcentaje)
-- [ ] Frontend: Cálculo de total combinado
-- [ ] Frontend: Panel de desglose de totales
-- [ ] Frontend: Formateo correcto de montos (2 decimales, separadores)
-- [ ] Frontend: Actualización en tiempo real con debounce
-- [ ] Frontend: Validaciones de campos numéricos
-- [ ] Backend: Función de cálculo de totales
-- [ ] Backend: Validación de valores recibidos
-- [ ] Backend: Recálculo de totales antes de guardar
-- [ ] Base de datos: Campos para almacenar componentes del total
+- [x] Frontend: Implementación de cálculo de subtotal
+- [x] Frontend: Campo de porcentaje de impuesto con cálculo
+- [x] Frontend: Campo de costo de envío
+- [x] Frontend: Campos de descuento (monto y porcentaje)
+- [x] Frontend: Cálculo de total combinado
+- [x] Frontend: Panel de desglose de totales
+- [x] Frontend: Formateo correcto de montos (2 decimales, separadores)
+- [x] Frontend: Actualización en tiempo real con debounce
+- [x] Frontend: Validaciones de campos numéricos
+- [x] Backend: Función de cálculo de totales
+- [x] Backend: Validación de valores recibidos
+- [x] Backend: Recálculo de totales antes de guardar
+- [x] Base de datos: Campos para almacenar componentes del total
 - [ ] Pruebas unitarias de función de cálculo
 - [ ] Pruebas de casos edge (valores extremos, decimales)
 - [ ] Pruebas de precisión decimal
