@@ -8,6 +8,8 @@ import {
   Switch,
   Chip,
   Typography,
+  ToggleButtonGroup,
+  ToggleButton,
 } from '@mui/material';
 import { Search as SearchIcon, Clear as ClearIcon } from '@mui/icons-material';
 
@@ -15,12 +17,16 @@ import { Search as SearchIcon, Clear as ClearIcon } from '@mui/icons-material';
  * CustomerFilters Component
  * US-CUST-002 CA-2/CA-4: Search + "Mostrar inactivos" toggle
  * US-CUST-003: Enhanced search functionality
+ * US-CUST-011 CA-5: Filter by customer category
  */
 const CustomerFilters = ({
   searchTerm,
   onSearchChange,
   showInactive,
   onShowInactiveChange,
+  selectedCategories = [],
+  onCategoriesChange,
+  statistics = {},
 }) => {
   const [localSearchTerm, setLocalSearchTerm] = useState(searchTerm);
   const searchInputRef = useRef(null);
@@ -46,6 +52,7 @@ const CustomerFilters = ({
   const handleClearFilters = () => {
     setLocalSearchTerm('');
     onShowInactiveChange(false);
+    onCategoriesChange?.([]);
   };
 
   // US-CUST-003 CA-8: Escape key to clear search
@@ -56,9 +63,21 @@ const CustomerFilters = ({
     }
   };
 
+  // US-CUST-011 CA-5: Toggle category selection
+  const handleCategoryToggle = (event, newCategories) => {
+    onCategoriesChange?.(newCategories);
+  };
+
   const activeFiltersCount =
     (searchTerm ? 1 : 0) +
-    (showInactive ? 1 : 0);
+    (showInactive ? 1 : 0) +
+    (selectedCategories.length > 0 ? 1 : 0);
+
+  const CATEGORIES = [
+    { value: 'VIP', label: `VIP${statistics.vip !== undefined ? ` (${statistics.vip})` : ''}`, color: '#f9a825' },
+    { value: 'Frecuente', label: `Frecuente${statistics.frecuente !== undefined ? ` (${statistics.frecuente})` : ''}`, color: '#1565c0' },
+    { value: 'Regular', label: `Regular${statistics.regular !== undefined ? ` (${statistics.regular})` : ''}`, color: '#757575' },
+  ];
 
   return (
     <Box sx={{ mb: 3 }}>
@@ -102,6 +121,33 @@ const CustomerFilters = ({
             ),
           }}
         />
+
+        {/* US-CUST-011 CA-5: Category filter buttons */}
+        <ToggleButtonGroup
+          value={selectedCategories}
+          onChange={handleCategoryToggle}
+          size="small"
+          aria-label="filtro por categoría"
+        >
+          {CATEGORIES.map((cat) => (
+            <ToggleButton
+              key={cat.value}
+              value={cat.value}
+              aria-label={cat.value}
+              sx={{
+                fontSize: '0.72rem',
+                px: 1,
+                '&.Mui-selected': {
+                  color: cat.color,
+                  borderColor: cat.color,
+                  backgroundColor: `${cat.color}18`,
+                },
+              }}
+            >
+              {cat.label}
+            </ToggleButton>
+          ))}
+        </ToggleButtonGroup>
 
         {/* Show Inactive Toggle */}
         <FormControlLabel
@@ -157,6 +203,16 @@ const CustomerFilters = ({
               label="Mostrando inactivos"
               size="small"
               onDelete={() => onShowInactiveChange(false)}
+              color="primary"
+              variant="outlined"
+            />
+          )}
+
+          {selectedCategories.length > 0 && (
+            <Chip
+              label={`Categoría: ${selectedCategories.join(', ')}`}
+              size="small"
+              onDelete={() => onCategoriesChange?.([])}
               color="primary"
               variant="outlined"
             />

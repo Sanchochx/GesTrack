@@ -9,6 +9,7 @@ import {
 /**
  * CustomerStats Component
  * US-CUST-002 CA-7: Customer statistics cards
+ * US-CUST-011 CA-5: Show VIP count from real DB data
  */
 const CustomerStats = ({ statistics = {} }) => {
   const {

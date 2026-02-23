@@ -15,7 +15,11 @@ import {
   Home as HomeIcon,
   People as CustomersIcon,
   PersonAdd as AddIcon,
+  GetApp as ExportIcon,
 } from '@mui/icons-material';
+import Menu from '@mui/material/Menu';
+import MenuItem from '@mui/material/MenuItem';
+import Tooltip from '@mui/material/Tooltip';
 import customerService from '../../services/customerService';
 import CustomerStats from '../../components/customers/CustomerStats';
 import CustomerFilters from '../../components/customers/CustomerFilters';
@@ -63,6 +67,7 @@ const CustomerList = () => {
   // Filter state
   const [searchTerm, setSearchTerm] = useState(getInitialSearch());
   const [showInactive, setShowInactive] = useState(getInitialShowInactive());
+  const [selectedCategories, setSelectedCategories] = useState([]); // US-CUST-011 CA-5
 
   // Sort state
   const [sortField, setSortField] = useState('nombre_razon_social');
@@ -70,6 +75,10 @@ const CustomerList = () => {
 
   // UI state
   const [successMessage, setSuccessMessage] = useState(null);
+
+  // US-CUST-012: Export state
+  const [exporting, setExporting] = useState(false);
+  const [exportMenuAnchor, setExportMenuAnchor] = useState(null);
 
   // US-CUST-006: Delete dialog state
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -87,7 +96,7 @@ const CustomerList = () => {
   // Load customers when filters/pagination/sort changes
   useEffect(() => {
     loadCustomers();
-  }, [page, itemsPerPage, searchTerm, showInactive, sortField, sortOrder]);
+  }, [page, itemsPerPage, searchTerm, showInactive, selectedCategories, sortField, sortOrder]);
 
   // Show success message from navigation state (e.g. after creating customer)
   useEffect(() => {
@@ -116,6 +125,11 @@ const CustomerList = () => {
       // Only show active by default; show all when toggle is on
       if (!showInactive) {
         params.is_active = 'true';
+      }
+
+      // US-CUST-011 CA-5: Filter by category
+      if (selectedCategories.length > 0) {
+        params.category = selectedCategories.join(',');
       }
 
       const response = await customerService.getCustomers(params);
@@ -174,11 +188,42 @@ const CustomerList = () => {
   const handleClearAllFilters = () => {
     setSearchTerm('');
     setShowInactive(false);
+    setSelectedCategories([]);
+    setPage(1);
+  };
+
+  const handleCategoriesChange = (cats) => {
+    setSelectedCategories(cats);
     setPage(1);
   };
 
   const handleCloseSnackbar = () => {
     setSuccessMessage(null);
+  };
+
+  // US-CUST-012: Export handlers
+  const handleExportClick = (event) => {
+    setExportMenuAnchor(event.currentTarget);
+  };
+
+  const handleExportClose = () => {
+    setExportMenuAnchor(null);
+  };
+
+  const handleExport = async (format) => {
+    handleExportClose();
+    setExporting(true);
+    try {
+      const params = {};
+      if (searchTerm) params.search = searchTerm;
+      if (!showInactive) params.is_active = 'true';
+      if (selectedCategories.length > 0) params.category = selectedCategories.join(',');
+      await customerService.exportCustomers(params, format);
+    } catch (err) {
+      setError(err.error?.message || 'Error al exportar clientes');
+    } finally {
+      setExporting(false);
+    }
   };
 
   // US-CUST-006: Delete handlers
@@ -205,7 +250,7 @@ const CustomerList = () => {
     }
   };
 
-  const hasActiveFilters = searchTerm || showInactive;
+  const hasActiveFilters = searchTerm || showInactive || selectedCategories.length > 0;
 
   return (
     <Container maxWidth="xl" sx={{ p: 3, mt: 4, mb: 4 }}>
@@ -246,14 +291,42 @@ const CustomerList = () => {
             Gestión de clientes
           </Typography>
         </Box>
-        <Button
-          variant="contained"
-          color="primary"
-          startIcon={<AddIcon />}
-          onClick={() => navigate('/customers/new')}
-        >
-          Nuevo Cliente
-        </Button>
+        <Box sx={{ display: 'flex', gap: 1 }}>
+          {/* US-CUST-012 CA-1 & CA-2: Export button with format dropdown */}
+          <Tooltip title={`Exportar ${loading ? '' : totalCustomers} clientes${hasActiveFilters ? ' (con filtros aplicados)' : ''}`}>
+            <span>
+              <Button
+                variant="outlined"
+                startIcon={exporting ? <CircularProgress size={16} /> : <ExportIcon />}
+                onClick={handleExportClick}
+                disabled={exporting || loading}
+              >
+                Exportar
+              </Button>
+            </span>
+          </Tooltip>
+          <Menu
+            anchorEl={exportMenuAnchor}
+            open={Boolean(exportMenuAnchor)}
+            onClose={handleExportClose}
+          >
+            <MenuItem onClick={() => handleExport('csv')}>
+              Exportar como CSV
+            </MenuItem>
+            <MenuItem onClick={() => handleExport('excel')}>
+              Exportar como Excel (.xlsx)
+            </MenuItem>
+          </Menu>
+
+          <Button
+            variant="contained"
+            color="primary"
+            startIcon={<AddIcon />}
+            onClick={() => navigate('/customers/new')}
+          >
+            Nuevo Cliente
+          </Button>
+        </Box>
       </Box>
 
       {/* Error Alert */}
@@ -272,6 +345,9 @@ const CustomerList = () => {
         onSearchChange={handleSearchChange}
         showInactive={showInactive}
         onShowInactiveChange={handleShowInactiveChange}
+        selectedCategories={selectedCategories}
+        onCategoriesChange={handleCategoriesChange}
+        statistics={statistics}
       />
 
       {/* Results Counter */}

@@ -32,10 +32,12 @@ import {
   Inventory as InventoryIcon,
   Warning as WarningIcon,
   Search as SearchIcon,
+  PersonAdd as PersonAddIcon,
 } from '@mui/icons-material';
 import customerService from '../../services/customerService';
 import productService from '../../services/productService';
 import orderService from '../../services/orderService';
+import CreateCustomerModal from '../customers/CreateCustomerModal';
 
 const formatCOP = (amount) => {
   return new Intl.NumberFormat('es-CO', {
@@ -83,6 +85,10 @@ const OrderForm = ({ onSuccess, onCancel }) => {
   const [submitError, setSubmitError] = useState(null);
   const [submitting, setSubmitting] = useState(false);
 
+  // CA-2: Create customer modal state (US-CUST-010)
+  const [showCreateCustomerModal, setShowCreateCustomerModal] = useState(false);
+  const [customerSuccessMessage, setCustomerSuccessMessage] = useState(null);
+
   // Debounce refs
   const customerDebounceRef = useRef(null);
   const productDebounceRef = useRef(null);
@@ -114,6 +120,17 @@ const OrderForm = ({ onSuccess, onCancel }) => {
     customerDebounceRef.current = setTimeout(() => {
       searchCustomers(value);
     }, 300);
+  };
+
+  // CA-5 & CA-8: Handle new customer created from modal (US-CUST-010)
+  const handleCustomerCreated = (newCustomer) => {
+    setSelectedCustomer(newCustomer);
+    setCustomerSearch(newCustomer.nombre_razon_social || '');
+    setShowCreateCustomerModal(false);
+    setCustomerSuccessMessage(`Cliente ${newCustomer.nombre_razon_social} creado correctamente`);
+    if (errors.customer) {
+      setErrors((prev) => { const { customer, ...rest } = prev; return rest; });
+    }
   };
 
   // --- CA-2: Product Search ---
@@ -394,6 +411,20 @@ const OrderForm = ({ onSuccess, onCancel }) => {
           <Typography variant="h6">Cliente</Typography>
         </Box>
 
+        {/* CA-5: Success message after customer creation */}
+        {customerSuccessMessage && (
+          <Alert
+            severity="success"
+            sx={{ mb: 2 }}
+            onClose={() => setCustomerSuccessMessage(null)}
+          >
+            {customerSuccessMessage}
+          </Alert>
+        )}
+
+        {/* CA-1: Search + new customer button */}
+        <Box sx={{ display: 'flex', gap: 1, alignItems: 'flex-start' }}>
+          <Box sx={{ flex: 1 }}>
         <Autocomplete
           options={customerOptions}
           getOptionLabel={(option) =>
@@ -455,6 +486,20 @@ const OrderForm = ({ onSuccess, onCancel }) => {
             />
           )}
         />
+          </Box>
+
+          {/* CA-1: "+ Nuevo Cliente" button */}
+          <Tooltip title="Crear nuevo cliente">
+            <Button
+              variant="outlined"
+              startIcon={<PersonAddIcon />}
+              onClick={() => setShowCreateCustomerModal(true)}
+              sx={{ height: 56, whiteSpace: 'nowrap' }}
+            >
+              Nuevo Cliente
+            </Button>
+          </Tooltip>
+        </Box>
 
         {/* Selected customer info */}
         {selectedCustomer && (
@@ -836,6 +881,13 @@ const OrderForm = ({ onSuccess, onCancel }) => {
           {submitting ? 'Guardando...' : 'Guardar Pedido'}
         </Button>
       </Box>
+
+      {/* CA-2: Create Customer Modal (US-CUST-010) */}
+      <CreateCustomerModal
+        open={showCreateCustomerModal}
+        onClose={() => setShowCreateCustomerModal(false)}
+        onCustomerCreated={handleCustomerCreated}
+      />
     </Box>
   );
 };

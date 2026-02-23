@@ -130,24 +130,32 @@ const CustomerTable = ({
     }).format(price);
   };
 
-  const getCategoryChip = (category) => {
+  const getCategoryChip = (category, totalPurchases) => {
     const config = {
       VIP: { color: '#f9a825', bgColor: '#fff8e1' },
       Frecuente: { color: '#1565c0', bgColor: '#e3f2fd' },
       Regular: { color: '#757575', bgColor: '#f5f5f5' },
     };
     const style = config[category] || config.Regular;
+    const formattedSpent = new Intl.NumberFormat('es-CO', {
+      style: 'currency',
+      currency: 'COP',
+      minimumFractionDigits: 0,
+    }).format(totalPurchases || 0);
     return (
-      <Chip
-        label={category}
-        size="small"
-        sx={{
-          color: style.color,
-          backgroundColor: style.bgColor,
-          fontWeight: 600,
-          fontSize: '0.7rem',
-        }}
-      />
+      /* US-CUST-011 CA-3/CA-4: Tooltip con monto gastado */
+      <Tooltip title={`Cliente ${category || 'Regular'} - Ha gastado ${formattedSpent}`}>
+        <Chip
+          label={category || 'Regular'}
+          size="small"
+          sx={{
+            color: style.color,
+            backgroundColor: style.bgColor,
+            fontWeight: 600,
+            fontSize: '0.7rem',
+          }}
+        />
+      </Tooltip>
     );
   };
 
@@ -262,7 +270,7 @@ const CustomerTable = ({
                             {customer.numero_documento}
                           </Typography>
                         </Box>
-                        {getCategoryChip(customer.customer_category)}
+                        {getCategoryChip(customer.customer_category, customer.total_purchases)}
                       </Box>
                     </TableCell>
 

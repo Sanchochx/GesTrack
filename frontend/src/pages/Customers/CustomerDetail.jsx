@@ -399,12 +399,15 @@ export default function CustomerDetail() {
             </Typography>
 
             <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mb: 2 }}>
-              <Chip
-                icon={getCategoryIcon(customer.customer_category)}
-                label={customer.customer_category || 'Regular'}
-                color={getCategoryColor(customer.customer_category)}
-                size="small"
-              />
+              {/* US-CUST-011 CA-3: Badge de categoría con tooltip que muestra gasto total */}
+              <Tooltip title={`Cliente ${customer.customer_category || 'Regular'} - Ha gastado ${formatCurrency(customer.total_purchases)}`}>
+                <Chip
+                  icon={getCategoryIcon(customer.customer_category)}
+                  label={customer.customer_category || 'Regular'}
+                  color={getCategoryColor(customer.customer_category)}
+                  size="small"
+                />
+              </Tooltip>
               <Chip
                 label={customer.is_active ? 'Activo' : 'Inactivo'}
                 color={customer.is_active ? 'success' : 'default'}

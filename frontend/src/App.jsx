@@ -58,6 +58,7 @@ import CreateCustomer from './pages/Customers/CreateCustomer';  // US-CUST-001
 import CustomerDetail from './pages/Customers/CustomerDetail';  // US-CUST-004
 import EditCustomer from './pages/Customers/EditCustomer';  // US-CUST-005
 import CustomerOrderHistory from './pages/Customers/CustomerOrderHistory';  // US-CUST-007
+import CustomerSegmentation from './pages/Customers/CustomerSegmentation';  // US-CUST-011
 import CreateOrder from './pages/Orders/CreateOrder';  // US-ORD-001
 import ProtectedRoute from './components/common/ProtectedRoute';
 import authService from './services/authService';
@@ -186,6 +187,7 @@ function Navigation() {
       paths: ['/customers', '/orders'],
       items: [
         { label: 'Clientes', path: '/customers' },
+        { label: 'Segmentación', path: '/customers/segmentation' },  // US-CUST-011
         { label: 'Nuevo Pedido', path: '/orders/new' },
       ],
     },
@@ -648,6 +650,15 @@ function App() {
                 element={
                   <ProtectedRoute allowedRoles={['Admin', 'Personal de Ventas', 'Gerente de Almacén']}>
                     <EditCustomer />
+                  </ProtectedRoute>
+                }
+              />
+              {/* US-CUST-011: Customer Segmentation Dashboard (before /:id to avoid param clash) */}
+              <Route
+                path="/customers/segmentation"
+                element={
+                  <ProtectedRoute allowedRoles={['Admin', 'Personal de Ventas', 'Gerente de Almacén']}>
+                    <CustomerSegmentation />
                   </ProtectedRoute>
                 }
               />

@@ -277,6 +277,114 @@ const customerService = {
   },
 
   /**
+   * US-CUST-012: Exportar lista de clientes a CSV o Excel con filtros actuales
+   * @param {Object} filters - Mismos filtros que getCustomers: { search, is_active, category }
+   * @param {string} format - 'csv' o 'excel'
+   * @returns {Promise} - Descarga automática del archivo
+   */
+  async exportCustomers(filters = {}, format = 'csv') {
+    try {
+      const response = await api.get('/customers/export', {
+        params: { ...filters, format },
+        responseType: 'blob',
+      });
+
+      const ext = format === 'excel' ? 'xlsx' : 'csv';
+      const now = new Date();
+      const date = now.toISOString().slice(0, 10);
+      const time = now.toTimeString().slice(0, 8).replace(/:/g, '');
+      let filename = `clientes_${date}_${time}.${ext}`;
+
+      const contentDisposition = response.headers['content-disposition'];
+      if (contentDisposition) {
+        const match = contentDisposition.match(/filename=([^;]+)/);
+        if (match) filename = match[1].trim();
+      }
+
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', filename);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+
+      return { success: true };
+    } catch (error) {
+      if (error.response && error.response.data) {
+        throw error.response.data;
+      }
+      throw { success: false, error: { message: 'Error al exportar clientes' } };
+    }
+  },
+
+  /**
+   * US-CUST-011 CA-6: Obtener datos del dashboard de segmentación
+   * @returns {Promise} - { distribution, metrics, top_vip, total_customers, config }
+   */
+  async getSegmentationDashboard() {
+    try {
+      const response = await api.get('/customers/segmentation');
+      return response.data;
+    } catch (error) {
+      if (error.response && error.response.data) {
+        throw error.response.data;
+      }
+      throw { success: false, error: { message: 'Error al obtener datos de segmentación' } };
+    }
+  },
+
+  /**
+   * US-CUST-011 CA-7: Obtener configuración de rangos de segmentación
+   * @returns {Promise} - { vip_threshold, frequent_threshold, updated_at }
+   */
+  async getSegmentationConfig() {
+    try {
+      const response = await api.get('/customers/segmentation/config');
+      return response.data;
+    } catch (error) {
+      if (error.response && error.response.data) {
+        throw error.response.data;
+      }
+      throw { success: false, error: { message: 'Error al obtener configuración' } };
+    }
+  },
+
+  /**
+   * US-CUST-011 CA-7: Actualizar umbrales de segmentación (Admin)
+   * @param {{ vip_threshold: number, frequent_threshold: number }} configData
+   * @returns {Promise}
+   */
+  async updateSegmentationConfig(configData) {
+    try {
+      const response = await api.put('/customers/segmentation/config', configData);
+      return response.data;
+    } catch (error) {
+      if (error.response && error.response.data) {
+        throw error.response.data;
+      }
+      throw { success: false, error: { message: 'Error al actualizar configuración' } };
+    }
+  },
+
+  /**
+   * US-CUST-011 CA-7: Recalcular categorías de todos los clientes (Admin)
+   * @returns {Promise} - { updated: int, changed: int }
+   */
+  async recalculateCategories() {
+    try {
+      const response = await api.post('/customers/segmentation/recalculate');
+      return response.data;
+    } catch (error) {
+      if (error.response && error.response.data) {
+        throw error.response.data;
+      }
+      throw { success: false, error: { message: 'Error al recalcular categorías' } };
+    }
+  },
+
+  /**
    * US-CUST-007 CA-10: Exportar historial de compras del cliente
    * @param {string} customerId - ID del cliente
    * @param {Object} params - { format: 'csv'|'excel', date_from, date_to, status, payment_status }
