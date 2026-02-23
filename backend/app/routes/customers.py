@@ -267,10 +267,12 @@ def get_customers():
         limit = request.args.get('limit', 20, type=int)
         search = request.args.get('search', '').strip()
         is_active = request.args.get('is_active', None)
+        category_filter = request.args.get('category', '').strip()  # US-CUST-011 CA-5
         sort_by = request.args.get('sort_by', 'nombre_razon_social')
         order = request.args.get('order', 'asc')
 
-        if sort_by not in ALLOWED_SORT_FIELDS:
+        ALLOWED_SORT_FIELDS_WITH_CATEGORY = ALLOWED_SORT_FIELDS + ['customer_category']
+        if sort_by not in ALLOWED_SORT_FIELDS_WITH_CATEGORY:
             sort_by = 'nombre_razon_social'
 
         query = Customer.query
@@ -286,21 +288,35 @@ def get_customers():
                 )
             )
 
+        # Statistics from the full (pre-status) query for accurate global counts
         stats_query = query.with_entities(
             func.count(Customer.id).label('total'),
             func.count(case((Customer.is_active == True, 1))).label('active'),
             func.count(case((Customer.is_active == False, 1))).label('inactive'),
+            func.count(case((Customer.customer_category == 'VIP', 1))).label('vip'),
+            func.count(case((Customer.customer_category == 'Frecuente', 1))).label('frecuente'),
+            func.count(case((Customer.customer_category == 'Regular', 1))).label('regular'),
         ).first()
 
         statistics = {
             'total': stats_query.total if stats_query else 0,
             'active': stats_query.active if stats_query else 0,
             'inactive': stats_query.inactive if stats_query else 0,
-            'vip': 0,
+            'vip': stats_query.vip if stats_query else 0,
+            'frecuente': stats_query.frecuente if stats_query else 0,
+            'regular': stats_query.regular if stats_query else 0,
         }
 
         if is_active is not None:
             query = query.filter(Customer.is_active == (is_active.lower() == 'true'))
+
+        # US-CUST-011 CA-5: Filter by customer category (comma-separated)
+        if category_filter:
+            categories = [c.strip() for c in category_filter.split(',') if c.strip()]
+            valid = ['VIP', 'Frecuente', 'Regular']
+            categories = [c for c in categories if c in valid]
+            if categories:
+                query = query.filter(Customer.customer_category.in_(categories))
 
         sort_column = getattr(Customer, sort_by, Customer.nombre_razon_social)
         if order == 'desc':
@@ -377,14 +393,10 @@ def get_customer(customer_id):
             stats.last_purchase.isoformat() if stats and stats.last_purchase else None
         )
 
-        # Categoría de cliente basada en historial
-        if all_orders_count >= 10 or total_spent >= 10000000:
-            category = 'VIP'
-        elif all_orders_count >= 3:
-            category = 'Frecuente'
-        else:
-            category = 'Regular'
-        customer_dict['customer_category'] = category
+        # Recalcular y persistir categoría según gasto total (US-CUST-011 CA-2)
+        from app.services.customer_segmentation_service import calculate_and_update_category
+        seg_result = calculate_and_update_category(customer_id, commit=True)
+        customer_dict['customer_category'] = seg_result['category'] if seg_result else customer.customer_category
 
         return jsonify({
             'success': True,
@@ -1395,4 +1407,301 @@ def can_delete_customer(customer_id):
                 'message': 'Error al verificar eliminación',
                 'details': str(e)
             }
+        }), 500
+
+
+# ---------------------------------------------------------------------------
+# US-CUST-011: Segmentación de Clientes
+# ---------------------------------------------------------------------------
+
+@customers_bp.route('/segmentation', methods=['GET'])
+@jwt_required()
+@require_role(['Admin', 'Gerente de Almacén', 'Personal de Ventas'])
+def get_segmentation_dashboard():
+    """
+    GET /api/customers/segmentation
+    US-CUST-011 CA-6: Dashboard de segmentación de clientes.
+
+    Returns:
+        - distribution: Lista de categorías con count y porcentaje
+        - metrics: Métricas por categoría (count, total_spent, avg_spent)
+        - top_vip: Top 10 clientes VIP por gasto total
+        - total_customers: Total de clientes
+        - config: Umbrales actuales de segmentación
+    """
+    try:
+        from app.services.customer_segmentation_service import get_segmentation_stats
+        stats = get_segmentation_stats()
+        return jsonify({'success': True, 'data': stats}), 200
+
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': {'code': 'SERVER_ERROR', 'message': 'Error al obtener datos de segmentación', 'details': str(e)}
+        }), 500
+
+
+@customers_bp.route('/segmentation/config', methods=['GET'])
+@jwt_required()
+@require_role(['Admin'])
+def get_segmentation_config():
+    """
+    GET /api/customers/segmentation/config
+    US-CUST-011 CA-7: Obtener configuración actual de rangos de segmentación.
+    """
+    try:
+        from app.models.customer_segmentation_config import CustomerSegmentationConfig
+        config = CustomerSegmentationConfig.get_config()
+        return jsonify({'success': True, 'data': config.to_dict()}), 200
+
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': {'code': 'SERVER_ERROR', 'message': 'Error al obtener configuración', 'details': str(e)}
+        }), 500
+
+
+@customers_bp.route('/segmentation/config', methods=['PUT'])
+@jwt_required()
+@require_role(['Admin'])
+def update_segmentation_config():
+    """
+    PUT /api/customers/segmentation/config
+    US-CUST-011 CA-7: Actualizar umbrales de segmentación (solo Admin).
+
+    Body:
+        - vip_threshold: Monto mínimo para VIP (decimal)
+        - frequent_threshold: Monto mínimo para Frecuente (decimal)
+    """
+    try:
+        current_user_id = get_jwt_identity()
+        from app.models.customer_segmentation_config import CustomerSegmentationConfig
+
+        data = request.get_json(silent=True) or {}
+        vip_threshold = data.get('vip_threshold')
+        frequent_threshold = data.get('frequent_threshold')
+
+        if vip_threshold is None or frequent_threshold is None:
+            return jsonify({
+                'success': False,
+                'error': {'code': 'VALIDATION_ERROR', 'message': 'vip_threshold y frequent_threshold son requeridos'}
+            }), 400
+
+        try:
+            vip_threshold = float(vip_threshold)
+            frequent_threshold = float(frequent_threshold)
+        except (ValueError, TypeError):
+            return jsonify({
+                'success': False,
+                'error': {'code': 'VALIDATION_ERROR', 'message': 'Los umbrales deben ser valores numéricos'}
+            }), 400
+
+        if vip_threshold <= 0 or frequent_threshold <= 0:
+            return jsonify({
+                'success': False,
+                'error': {'code': 'VALIDATION_ERROR', 'message': 'Los umbrales deben ser mayores a 0'}
+            }), 400
+
+        if frequent_threshold >= vip_threshold:
+            return jsonify({
+                'success': False,
+                'error': {'code': 'VALIDATION_ERROR', 'message': 'El umbral VIP debe ser mayor al umbral Frecuente'}
+            }), 400
+
+        config = CustomerSegmentationConfig.get_config()
+        config.vip_threshold = vip_threshold
+        config.frequent_threshold = frequent_threshold
+        config.updated_at = datetime.utcnow()
+        config.updated_by = current_user_id
+        db.session.commit()
+
+        return jsonify({
+            'success': True,
+            'data': config.to_dict(),
+            'message': 'Configuración de segmentación actualizada correctamente'
+        }), 200
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({
+            'success': False,
+            'error': {'code': 'SERVER_ERROR', 'message': 'Error al actualizar configuración', 'details': str(e)}
+        }), 500
+
+
+# ---------------------------------------------------------------------------
+# US-CUST-012: Exportar Lista de Clientes
+# ---------------------------------------------------------------------------
+
+@customers_bp.route('/export', methods=['GET'])
+@jwt_required()
+@require_role(['Admin', 'Personal de Ventas', 'Gerente de Almacén'])
+def export_customers():
+    """
+    GET /api/customers/export
+    US-CUST-012: Exportar lista de clientes filtrada a CSV o Excel.
+
+    Query params:
+        - format: 'csv' o 'excel' (default 'csv')  — CA-2
+        - search: Búsqueda de texto libre               — CA-4
+        - is_active: 'true'/'false'                     — CA-4
+        - category: Categorías separadas por coma       — CA-4
+
+    Respeta los mismos filtros que GET /api/customers.
+    Incluye estadísticas de pedidos por cliente.         — CA-3
+    Máximo 10 000 clientes por exportación.              — CA-9
+    """
+    try:
+        from app.utils.export_helper import ExportHelper
+        from app.models.order import Order
+
+        format_type = request.args.get('format', 'csv').lower()
+        if format_type not in ('csv', 'excel'):
+            format_type = 'csv'
+
+        search = request.args.get('search', '').strip()
+        is_active = request.args.get('is_active', None)
+        category_filter = request.args.get('category', '').strip()
+
+        # Aplicar mismos filtros que get_customers() — CA-4
+        query = Customer.query
+
+        if search:
+            search_filter = f'%{search}%'
+            query = query.filter(
+                db.or_(
+                    Customer.nombre_razon_social.ilike(search_filter),
+                    Customer.correo.ilike(search_filter),
+                    Customer.numero_documento.ilike(search_filter),
+                    Customer.telefono_movil.ilike(search_filter),
+                )
+            )
+
+        if is_active is not None:
+            query = query.filter(Customer.is_active == (is_active.lower() == 'true'))
+
+        if category_filter:
+            categories = [c.strip() for c in category_filter.split(',') if c.strip()]
+            valid_cats = ['VIP', 'Frecuente', 'Regular']
+            categories = [c for c in categories if c in valid_cats]
+            if categories:
+                query = query.filter(Customer.customer_category.in_(categories))
+
+        customers = query.order_by(Customer.nombre_razon_social.asc()).limit(10000).all()
+
+        # Obtener estadísticas de pedidos en lote (una sola query) — CA-3
+        customer_ids = [c.id for c in customers]
+        order_stats = {}
+        if customer_ids:
+            stats_rows = db.session.query(
+                Order.customer_id,
+                func.count(Order.id).label('order_count'),
+                func.sum(Order.total).label('total_spent'),
+                func.max(Order.created_at).label('last_purchase'),
+            ).filter(
+                Order.customer_id.in_(customer_ids),
+                Order.status != 'Cancelado'
+            ).group_by(Order.customer_id).all()
+
+            for row in stats_rows:
+                order_stats[row.customer_id] = {
+                    'order_count': int(row.order_count or 0),
+                    'total_spent': float(row.total_spent or 0),
+                    'last_purchase': (
+                        row.last_purchase.strftime('%Y-%m-%d') if row.last_purchase else ''
+                    ),
+                }
+
+        # Construir datos de exportación — CA-3, CA-6
+        export_data = []
+        for customer in customers:
+            stats = order_stats.get(
+                customer.id, {'order_count': 0, 'total_spent': 0.0, 'last_purchase': ''}
+            )
+            export_data.append({
+                'nombre_razon_social': customer.nombre_razon_social,
+                'correo': customer.correo,
+                'telefono_movil': customer.telefono_movil or '',
+                'direccion': customer.direccion or '',
+                'municipio_ciudad': customer.municipio_ciudad or '',
+                'departamento': customer.departamento or '',
+                'pais': customer.pais or '',
+                'tipo_documento': customer.tipo_documento,
+                'numero_documento': customer.numero_documento,
+                'tipo_contribuyente': customer.tipo_contribuyente,
+                'fecha_registro': (
+                    customer.created_at.strftime('%Y-%m-%d') if customer.created_at else ''
+                ),
+                'estado': 'Activo' if customer.is_active else 'Inactivo',  # CA-6
+                'categoria': customer.customer_category,                     # CA-3 (US-CUST-011)
+                'total_compras': stats['total_spent'],
+                'num_pedidos': stats['order_count'],
+                'ultima_compra': stats['last_purchase'],
+            })
+
+        columns = [
+            ('nombre_razon_social', 'Nombre / Razón Social'),
+            ('correo', 'Correo Electrónico'),
+            ('telefono_movil', 'Teléfono'),
+            ('direccion', 'Dirección'),
+            ('municipio_ciudad', 'Ciudad'),
+            ('departamento', 'Departamento'),
+            ('pais', 'País'),
+            ('tipo_documento', 'Tipo Documento'),
+            ('numero_documento', 'Número Documento'),
+            ('tipo_contribuyente', 'Tipo Contribuyente'),
+            ('fecha_registro', 'Fecha de Registro'),
+            ('estado', 'Estado'),
+            ('categoria', 'Categoría'),
+            ('total_compras', 'Total Compras (COP)'),
+            ('num_pedidos', 'Número de Pedidos'),
+            ('ultima_compra', 'Última Compra'),
+        ]
+
+        if format_type == 'excel':
+            return ExportHelper.export_to_excel(
+                data=export_data,
+                columns=columns,
+                filename_prefix='clientes',
+                sheet_name='Clientes',
+            )
+        else:
+            return ExportHelper.export_to_csv(
+                data=export_data,
+                columns=columns,
+                filename_prefix='clientes',
+            )
+
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': {
+                'code': 'SERVER_ERROR',
+                'message': 'Error al exportar clientes',
+                'details': str(e)
+            }
+        }), 500
+
+
+@customers_bp.route('/segmentation/recalculate', methods=['POST'])
+@jwt_required()
+@require_role(['Admin'])
+def recalculate_all_categories():
+    """
+    POST /api/customers/segmentation/recalculate
+    US-CUST-011 CA-7: Recalcular categorías de todos los clientes (Admin only).
+    """
+    try:
+        from app.services.customer_segmentation_service import recalculate_all_categories
+        result = recalculate_all_categories()
+        return jsonify({
+            'success': True,
+            'data': result,
+            'message': f"Recálculo completado: {result['updated']} clientes procesados, {result['changed']} categorías actualizadas"
+        }), 200
+
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': {'code': 'SERVER_ERROR', 'message': 'Error al recalcular categorías', 'details': str(e)}
         }), 500

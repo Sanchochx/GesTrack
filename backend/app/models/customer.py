@@ -38,6 +38,9 @@ class Customer(db.Model):
     # Información adicional
     notes = db.Column(db.Text, nullable=True)
 
+    # Segmentación (US-CUST-011 CA-1)
+    customer_category = db.Column(db.String(20), nullable=False, default='Regular', index=True)
+
     # Estado
     is_active = db.Column(db.Boolean, default=True, nullable=False, index=True)
 
@@ -111,11 +114,11 @@ class Customer(db.Model):
             'reactivation_reason': self.reactivation_reason,
             'created_at': self.created_at.isoformat() if self.created_at else None,
             'updated_at': self.updated_at.isoformat() if self.updated_at else None,
-            # Placeholder purchase fields (will be computed from Orders in Epic 04)
+            # Placeholder purchase fields (computed from Orders; overridden in get_customer endpoint)
             'total_purchases': 0.0,
             'last_purchase_date': None,
             'order_count': 0,
-            'customer_category': 'Regular',
+            'customer_category': self.customer_category,
         }
 
     @staticmethod
