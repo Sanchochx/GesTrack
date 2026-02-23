@@ -20,6 +20,8 @@ import {
   InputAdornment,
   Tooltip,
   Divider,
+  ToggleButtonGroup,
+  ToggleButton,
 } from '@mui/material';
 import {
   Person as PersonIcon,
@@ -43,7 +45,7 @@ const formatCOP = (amount) => {
   return new Intl.NumberFormat('es-CO', {
     style: 'currency',
     currency: 'COP',
-    minimumFractionDigits: 0,
+    minimumFractionDigits: 2,
   }).format(amount || 0);
 };
 
@@ -77,6 +79,7 @@ const OrderForm = ({ onSuccess, onCancel }) => {
   const [taxPercentage, setTaxPercentage] = useState('0');
   const [shippingCost, setShippingCost] = useState('0');
   const [discountAmount, setDiscountAmount] = useState('0');
+  const [discountType, setDiscountType] = useState('amount'); // 'amount' | 'percentage'
   const [discountJustification, setDiscountJustification] = useState('');
   const [notes, setNotes] = useState('');
 
@@ -270,9 +273,17 @@ const OrderForm = ({ onSuccess, onCancel }) => {
   const taxPct = parseFloat(taxPercentage) || 0;
   const taxAmount = subtotal * (taxPct / 100);
   const shipping = parseFloat(shippingCost) || 0;
-  const discount = parseFloat(discountAmount) || 0;
-  const total = subtotal + taxAmount + shipping - discount;
-  const discountPercentage = subtotal > 0 ? (discount / subtotal) * 100 : 0;
+  const discountInput = parseFloat(discountAmount) || 0;
+  const actualDiscount = discountType === 'percentage'
+    ? subtotal * (discountInput / 100)
+    : discountInput;
+  const netSubtotal = subtotal - actualDiscount;
+  const total = subtotal + taxAmount + shipping - actualDiscount;
+  const discountPercentage = subtotal > 0
+    ? discountType === 'percentage'
+      ? discountInput
+      : (actualDiscount / subtotal) * 100
+    : 0;
 
   // --- CA-7: Validation ---
   const validateForm = () => {
@@ -301,12 +312,20 @@ const OrderForm = ({ onSuccess, onCancel }) => {
       newErrors.tax = 'El impuesto no puede ser negativo';
     }
 
+    if (taxPct > 100) {
+      newErrors.tax = 'El impuesto no puede exceder 100%';
+    }
+
     if (shipping < 0) {
       newErrors.shipping = 'El costo de envío no puede ser negativo';
     }
 
-    if (discount < 0) {
+    if (discountInput < 0) {
       newErrors.discount = 'El descuento no puede ser negativo';
+    }
+
+    if (discountType === 'percentage' && discountInput > 100) {
+      newErrors.discount = 'El descuento no puede exceder 100%';
     }
 
     // CA-7: Discount >20% requires justification
@@ -344,7 +363,7 @@ const OrderForm = ({ onSuccess, onCancel }) => {
         })),
         tax_percentage: taxPct,
         shipping_cost: shipping,
-        discount_amount: discount,
+        discount_amount: actualDiscount,
         discount_justification: discountJustification.trim() || null,
         notes: notes.trim() || null,
       };
@@ -732,23 +751,41 @@ const OrderForm = ({ onSuccess, onCancel }) => {
                 />
               </Grid>
               <Grid item xs={12}>
+                <Box sx={{ mb: 1 }}>
+                  <ToggleButtonGroup
+                    value={discountType}
+                    exclusive
+                    onChange={(e, val) => { if (val) { setDiscountType(val); setDiscountAmount('0'); } }}
+                    size="small"
+                    aria-label="tipo de descuento"
+                  >
+                    <ToggleButton value="amount">Monto fijo</ToggleButton>
+                    <ToggleButton value="percentage">Porcentaje</ToggleButton>
+                  </ToggleButtonGroup>
+                </Box>
                 <TextField
-                  label="Descuento"
+                  label={discountType === 'percentage' ? 'Descuento (%)' : 'Descuento'}
                   type="number"
                   fullWidth
                   size="small"
                   value={discountAmount}
                   onChange={(e) => setDiscountAmount(e.target.value)}
-                  inputProps={{ min: 0, step: 0.01 }}
+                  inputProps={{ min: 0, step: 0.01, ...(discountType === 'percentage' ? { max: 100 } : {}) }}
                   error={!!errors.discount}
                   helperText={
                     errors.discount ||
-                    (discountPercentage > 0
+                    (discountType === 'percentage' && discountInput > 0
+                      ? `= ${formatCOP(actualDiscount)}`
+                      : discountType === 'amount' && discountPercentage > 0
                       ? `${discountPercentage.toFixed(1)}% del subtotal`
                       : '')
                   }
                   InputProps={{
-                    startAdornment: <InputAdornment position="start">COP</InputAdornment>,
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        {discountType === 'percentage' ? '%' : 'COP'}
+                      </InputAdornment>
+                    ),
                   }}
                 />
               </Grid>
@@ -810,10 +847,30 @@ const OrderForm = ({ onSuccess, onCancel }) => {
                 <Typography variant="body2">{formatCOP(subtotal)}</Typography>
               </Box>
 
+              {actualDiscount > 0 && (
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                  <Typography variant="body2" color="error">
+                    Descuento ({discountPercentage.toFixed(1)}%)
+                  </Typography>
+                  <Typography variant="body2" color="error">
+                    - {formatCOP(actualDiscount)}
+                  </Typography>
+                </Box>
+              )}
+
+              {actualDiscount > 0 && (
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                  <Typography variant="body2" color="textSecondary">
+                    Subtotal neto
+                  </Typography>
+                  <Typography variant="body2">{formatCOP(netSubtotal)}</Typography>
+                </Box>
+              )}
+
               {taxPct > 0 && (
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
                   <Typography variant="body2" color="textSecondary">
-                    Impuestos ({taxPct}%)
+                    Impuesto ({taxPct}%)
                   </Typography>
                   <Typography variant="body2">+ {formatCOP(taxAmount)}</Typography>
                 </Box>
@@ -828,24 +885,13 @@ const OrderForm = ({ onSuccess, onCancel }) => {
                 </Box>
               )}
 
-              {discount > 0 && (
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                  <Typography variant="body2" color="error">
-                    Descuento
-                  </Typography>
-                  <Typography variant="body2" color="error">
-                    - {formatCOP(discount)}
-                  </Typography>
-                </Box>
-              )}
-
               <Divider sx={{ my: 2 }} />
 
               <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                <Typography variant="h6">Total</Typography>
+                <Typography variant="h6">TOTAL</Typography>
                 <Typography
                   variant="h6"
-                  color={total < 0 ? 'error' : 'primary'}
+                  color={total < 0 ? 'error' : actualDiscount > 0 ? 'success.main' : 'primary'}
                   fontWeight="bold"
                 >
                   {formatCOP(total)}
