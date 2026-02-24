@@ -2,13 +2,15 @@
 Rutas API para gestión de Pedidos
 US-ORD-001: Crear Pedido
 US-INV-008: Cancelar pedido y actualizar estado (reserva de stock)
+US-ORD-004: Estado de Pago del Pedido
 """
 from flask import Blueprint, request, jsonify
-from flask_jwt_extended import jwt_required, get_jwt_identity
+from flask_jwt_extended import jwt_required, get_jwt_identity, get_jwt
 from app import db
 from app.services.order_service import OrderService
 from app.services.stock_service import InsufficientStockError, StockUpdateError
 from app.schemas.order_schema import order_create_schema
+from app.schemas.payment_schema import payment_create_schema
 from app.utils.decorators import require_role
 from app.models.order import Order, OrderStatusHistory
 from marshmallow import ValidationError
@@ -35,6 +37,7 @@ def list_orders():
         page = int(request.args.get('page', 1))
         per_page = min(int(request.args.get('per_page', 20)), 100)
         status_filter = request.args.get('status')
+        payment_status_filter = request.args.get('payment_status')
         customer_id_filter = request.args.get('customer_id')
         search = request.args.get('search', '').strip()
 
@@ -42,6 +45,10 @@ def list_orders():
 
         if status_filter:
             query = query.filter(Order.status == status_filter)
+
+        # CA-9: Filtro por estado de pago
+        if payment_status_filter:
+            query = query.filter(Order.payment_status == payment_status_filter)
 
         if customer_id_filter:
             query = query.filter(Order.customer_id == customer_id_filter)
@@ -58,8 +65,15 @@ def list_orders():
         query = query.order_by(Order.created_at.desc())
         paginated = query.paginate(page=page, per_page=per_page, error_out=False)
 
+        from decimal import Decimal
         orders_data = []
         for order in paginated.items:
+            # CA-9: Calcular saldo pendiente para el tooltip
+            active_payments = order.payments.filter_by(is_deleted=False).all()
+            amount_paid = sum(Decimal(str(p.amount)) for p in active_payments)
+            total = Decimal(str(order.total)) if order.total else Decimal('0')
+            pending_balance = float(total - amount_paid)
+
             orders_data.append({
                 'id': order.id,
                 'order_number': order.order_number,
@@ -68,6 +82,8 @@ def list_orders():
                 'status': order.status,
                 'payment_status': order.payment_status,
                 'total': float(order.total) if order.total else 0.0,
+                'amount_paid': float(amount_paid),
+                'pending_balance': pending_balance,
                 'items_count': len(order.items),
                 'created_at': order.created_at.isoformat() if order.created_at else None,
             })
@@ -365,7 +381,22 @@ def update_order_status(order_id):
             }), 400
 
         notes = data.get('notes')
-        order = OrderService.update_order_status(order_id, new_status, current_user_id, notes)
+
+        # CA-8: Solo Admin puede forzar entrega con saldo pendiente
+        force_delivery = data.get('force_delivery', False)
+        if force_delivery:
+            claims = get_jwt()
+            user_role = claims.get('role')
+            if user_role != 'Admin':
+                return jsonify({
+                    'success': False,
+                    'error': {
+                        'code': 'FORBIDDEN',
+                        'message': 'Solo un Administrador puede forzar la entrega con saldo pendiente'
+                    }
+                }), 403
+
+        order = OrderService.update_order_status(order_id, new_status, current_user_id, notes, force_delivery=force_delivery)
 
         return jsonify({
             'success': True,
@@ -397,6 +428,63 @@ def update_order_status(order_id):
             'error': {
                 'code': 'SERVER_ERROR',
                 'message': 'Error al actualizar estado del pedido',
+                'details': str(e)
+            }
+        }), 500
+
+
+@orders_bp.route('/<string:order_id>/payments', methods=['POST'])
+@jwt_required()
+@require_role(['Admin', 'Personal de Ventas', 'Gerente de Almacén'])
+def register_payment(order_id):
+    """
+    POST /api/orders/:id/payments
+    US-ORD-004 CA-2/CA-4/CA-6/CA-7: Registra un pago para un pedido.
+
+    Body:
+        - amount: Monto del pago (requerido, > 0)
+        - payment_method: Método de pago (requerido)
+        - payment_date: Fecha del pago (opcional, default hoy)
+        - notes: Notas/referencia (opcional, max 200 chars)
+    """
+    try:
+        current_user_id = get_jwt_identity()
+        data = payment_create_schema.load(request.get_json() or {})
+
+        payment, order = OrderService.register_payment(order_id, data, current_user_id)
+
+        amount = float(payment.amount)
+        return jsonify({
+            'success': True,
+            'data': order.to_dict(),
+            'message': f'Pago de ${amount:,.2f} registrado exitosamente'
+        }), 201
+
+    except ValidationError as e:
+        return jsonify({
+            'success': False,
+            'error': {
+                'code': 'VALIDATION_ERROR',
+                'message': 'Error de validación',
+                'details': e.messages
+            }
+        }), 400
+
+    except ValueError as e:
+        return jsonify({
+            'success': False,
+            'error': {
+                'code': 'VALIDATION_ERROR',
+                'message': str(e)
+            }
+        }), 400
+
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': {
+                'code': 'SERVER_ERROR',
+                'message': 'Error al registrar pago',
                 'details': str(e)
             }
         }), 500

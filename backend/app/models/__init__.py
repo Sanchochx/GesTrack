@@ -13,5 +13,6 @@ from app.models.customer_note import CustomerNote
 from app.models.customer_segmentation_config import CustomerSegmentationConfig
 from app.models.customer_category_history import CustomerCategoryHistory
 from app.models.order import Order, OrderItem, OrderStatusHistory
+from app.models.payment import Payment
 
-__all__ = ['User', 'LoginAttempt', 'PasswordResetToken', 'Category', 'Product', 'InventoryMovement', 'ProductDeletionAudit', 'InventoryAlert', 'InventoryValueHistory', 'Customer', 'CustomerDeletionAudit', 'CustomerNote', 'CustomerSegmentationConfig', 'CustomerCategoryHistory', 'Order', 'OrderItem', 'OrderStatusHistory']
+__all__ = ['User', 'LoginAttempt', 'PasswordResetToken', 'Category', 'Product', 'InventoryMovement', 'ProductDeletionAudit', 'InventoryAlert', 'InventoryValueHistory', 'Customer', 'CustomerDeletionAudit', 'CustomerNote', 'CustomerSegmentationConfig', 'CustomerCategoryHistory', 'Order', 'OrderItem', 'OrderStatusHistory', 'Payment']

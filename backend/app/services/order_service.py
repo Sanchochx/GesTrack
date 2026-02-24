@@ -1,15 +1,17 @@
 """
 Servicio de gestión de pedidos
 US-ORD-001: Crear Pedido
+US-ORD-004: Estado de Pago del Pedido
 """
 from app import db
 from app.models.order import Order, OrderItem, OrderStatusHistory
 from app.models.product import Product
 from app.models.customer import Customer
 from app.models.inventory_movement import InventoryMovement
+from app.models.payment import Payment
 from app.services.stock_service import InsufficientStockError, StockUpdateError
 from decimal import Decimal
-from datetime import datetime
+from datetime import datetime, date
 
 
 class OrderService:
@@ -268,9 +270,80 @@ class OrderService:
             raise StockUpdateError(f'Error al cancelar pedido: {str(e)}')
 
     @staticmethod
-    def update_order_status(order_id, new_status, user_id, notes=None):
+    def register_payment(order_id, data, user_id):
+        """
+        US-ORD-004 CA-2/CA-4/CA-6/CA-7: Registra un pago para un pedido.
+
+        Args:
+            order_id: ID del pedido
+            data: Datos validados del pago (amount, payment_method, payment_date, notes)
+            user_id: ID del usuario que registra el pago
+
+        Returns:
+            tuple: (Payment, Order) — pago creado y pedido actualizado
+
+        Raises:
+            ValueError: Si el pedido no existe, está cancelado, o el monto excede el saldo
+        """
+        try:
+            order = Order.query.get(order_id)
+            if not order:
+                raise ValueError('Pedido no encontrado')
+
+            if order.status == 'Cancelado':
+                raise ValueError('No se puede registrar pago en un pedido cancelado')
+
+            # Calcular saldo pendiente actual
+            active_payments = order.payments.filter_by(is_deleted=False).all()
+            amount_paid = sum(Decimal(str(p.amount)) for p in active_payments)
+            total = Decimal(str(order.total)) if order.total else Decimal('0')
+            pending_balance = total - amount_paid
+
+            new_amount = Decimal(str(data['amount']))
+
+            # CA-7: Validar que el monto no supere el saldo pendiente
+            if new_amount > pending_balance:
+                raise ValueError(
+                    f'El monto excede el saldo pendiente de ${pending_balance:,.2f}. '
+                    f'Solo puede registrar hasta ${pending_balance:,.2f}'
+                )
+
+            # CA-2: Usar fecha de hoy si no se especificó
+            payment_date = data.get('payment_date') or date.today()
+
+            # Crear registro de pago
+            payment = Payment(
+                order_id=order.id,
+                created_by_id=user_id,
+                amount=new_amount,
+                payment_method=data['payment_method'],
+                payment_date=payment_date,
+                notes=data.get('notes'),
+            )
+            db.session.add(payment)
+
+            # CA-6: Actualizar payment_status automáticamente
+            new_total_paid = amount_paid + new_amount
+            if new_total_paid >= total:
+                order.payment_status = 'Pagado'
+            else:
+                order.payment_status = 'Parcialmente Pagado'
+
+            db.session.commit()
+            return payment, order
+
+        except ValueError:
+            db.session.rollback()
+            raise
+        except Exception as e:
+            db.session.rollback()
+            raise StockUpdateError(f'Error al registrar pago: {str(e)}')
+
+    @staticmethod
+    def update_order_status(order_id, new_status, user_id, notes=None, force_delivery=False):
         """
         US-INV-008 CA-4: Actualiza el estado de un pedido.
+        US-ORD-004 CA-8: Restricción por saldo pendiente con override para Admin.
 
         Para el estado 'Entregado': solo reduce reserved_stock, no modifica stock_quantity
         (el stock ya fue reducido al crear el pedido).
@@ -288,6 +361,7 @@ class OrderService:
             new_status: Nuevo estado
             user_id: ID del usuario que actualiza
             notes: Notas del cambio de estado (opcional)
+            force_delivery: Si True, permite marcar como Entregado aunque haya saldo pendiente (solo Admin)
 
         Returns:
             Order: Pedido actualizado
@@ -324,12 +398,19 @@ class OrderService:
             if new_status == 'Cancelado':
                 return OrderService.cancel_order(order_id, user_id, notes)
 
-            # CA-9: No permitir transición a 'Entregado' si el pago está pendiente
-            if new_status == 'Entregado' and order.payment_status == 'Pendiente':
-                raise ValueError(
-                    'No se puede marcar el pedido como Entregado mientras el pago esté Pendiente. '
-                    'Actualice el estado de pago primero.'
-                )
+            # CA-8: No permitir 'Entregado' si hay saldo pendiente (a menos que force_delivery)
+            if new_status == 'Entregado' and order.payment_status != 'Pagado':
+                if not force_delivery:
+                    # Calcular saldo pendiente para el mensaje
+                    active_payments = order.payments.filter_by(is_deleted=False).all()
+                    amount_paid = sum(Decimal(str(p.amount)) for p in active_payments)
+                    total = Decimal(str(order.total)) if order.total else Decimal('0')
+                    pending_balance = total - amount_paid
+                    raise ValueError(
+                        f'No se puede marcar el pedido como Entregado con saldo pendiente de '
+                        f'${pending_balance:,.2f}. '
+                        f'Registre el pago completo o use la opción de forzar entrega (solo Admin).'
+                    )
 
             # CA-4: Para 'Entregado', reducir reserved_stock (stock ya fue reducido al crear)
             if new_status == 'Entregado':

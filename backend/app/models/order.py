@@ -1,10 +1,12 @@
 """
 Modelos de Pedido
 US-ORD-001: Crear Pedido
+US-ORD-004: Estado de Pago del Pedido
 """
 from app import db
 from datetime import datetime, date
 import uuid
+from decimal import Decimal
 
 
 class Order(db.Model):
@@ -47,12 +49,27 @@ class Order(db.Model):
     created_by = db.relationship('User', foreign_keys=[created_by_id])
     items = db.relationship('OrderItem', backref='order', lazy='joined', cascade='all, delete-orphan')
     status_history = db.relationship('OrderStatusHistory', backref='order', lazy='dynamic', cascade='all, delete-orphan')
+    payments = db.relationship('Payment', back_populates='order', lazy='dynamic')
 
     def __repr__(self):
         return f'<Order {self.order_number}>'
 
     def to_dict(self):
         """Convertir pedido a diccionario"""
+        # CA-3/CA-5: Calcular saldo y lista de pagos
+        from app.models.payment import Payment as PaymentModel
+        active_payments = self.payments.filter_by(is_deleted=False).all()
+        amount_paid = sum(Decimal(str(p.amount)) for p in active_payments)
+        total = Decimal(str(self.total)) if self.total else Decimal('0')
+        pending_balance = total - amount_paid
+
+        payments_list = (
+            self.payments
+            .filter_by(is_deleted=False)
+            .order_by(PaymentModel.created_at.desc())
+            .all()
+        )
+
         return {
             'id': self.id,
             'order_number': self.order_number,
@@ -74,9 +91,12 @@ class Order(db.Model):
             'discount_amount': float(self.discount_amount) if self.discount_amount else 0.0,
             'discount_justification': self.discount_justification,
             'total': float(self.total) if self.total else 0.0,
+            'amount_paid': float(amount_paid),
+            'pending_balance': float(pending_balance),
             'notes': self.notes,
             'items': [item.to_dict() for item in self.items],
             'items_count': len(self.items),
+            'payments': [p.to_dict() for p in payments_list],
             'created_at': self.created_at.isoformat() if self.created_at else None,
             'updated_at': self.updated_at.isoformat() if self.updated_at else None,
         }
