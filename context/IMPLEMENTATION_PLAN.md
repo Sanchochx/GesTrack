@@ -1038,12 +1038,13 @@
   - Frontend: `components/forms/OrderForm.jsx`
 - **Fecha de completación:** 2026-02-23
 
-#### [ ] US-ORD-003: Gestión de Estados del Pedido
+#### [x] US-ORD-003: Gestión de Estados del Pedido
 - **Archivo:** `context/user_stories/epic_04_sales/US-ORD-003_estados_pedido.md`
 - **Prioridad:** ALTA
 - **Estimación:** 5 pts
-- **Estado:** ⏸️ Pendiente
-- **Criterios de Aceptación:** 7
+- **Estado:** ✅ COMPLETADA
+- **Criterios de Aceptación:** CA-1 ✅ CA-2 ✅ CA-3 ✅ CA-4 ✅ CA-5 ✅ CA-6 ✅ CA-7 ✅ CA-8 ✅ CA-9 ✅ (CA-10 diferido)
+- **Fecha de completación:** 2026-02-23
 
 #### [ ] US-ORD-004: Estado de Pago del Pedido
 - **Archivo:** `context/user_stories/epic_04_sales/US-ORD-004_estado_pago.md`

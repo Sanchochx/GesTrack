@@ -117,18 +117,23 @@
   - Cancelado: rojo (#F44336)
 
 ## Definición de Hecho
-- [ ] Frontend: Componente de cambio de estado
-- [ ] Frontend: Modal de confirmación con campo de notas
-- [ ] Frontend: Visualización de historial de estados (timeline)
-- [ ] Frontend: Validación de transiciones permitidas
-- [ ] Frontend: Código de colores para estados
-- [ ] Backend: API PATCH /api/orders/{id}/status
-- [ ] Backend: Validación de transiciones de estado (state machine)
-- [ ] Backend: Lógica de actualización de inventario al confirmar
-- [ ] Backend: Lógica de restauración de inventario al cancelar
-- [ ] Backend: Creación de registros en order_status_history
-- [ ] Base de datos: Tabla order_status_history creada
-- [ ] Base de datos: Enum de estados definido
+- [x] Frontend: Componente de cambio de estado (StatusChangeModal.jsx)
+- [x] Frontend: Modal de confirmación con campo de notas (CA-4)
+- [x] Frontend: Visualización de historial de estados (StatusTimeline.jsx – CA-6)
+- [x] Frontend: Validación de transiciones permitidas (CA-2)
+- [x] Frontend: Código de colores para estados (CA-1)
+- [x] Frontend: Página OrderList (/orders) con color chips y filtros
+- [x] Frontend: Página OrderDetail (/orders/:id) con items, totales e historial
+- [x] Backend: API GET /api/orders (listado paginado con filtros)
+- [x] Backend: API GET /api/orders/:id (detalle con items e historial)
+- [x] Backend: API PATCH /api/orders/{id}/status
+- [x] Backend: Validación de transiciones de estado (state machine)
+- [x] Backend: Lógica de actualización de inventario al confirmar
+- [x] Backend: Lógica de restauración de inventario al cancelar (CA-8: desde cualquier estado no terminal)
+- [x] Backend: Creación de registros en order_status_history con previous_status (CA-5)
+- [x] Backend: Restricción de pago antes de Entregado (CA-9)
+- [x] Base de datos: Tabla order_status_history creada
+- [x] Base de datos: Columna previous_status añadida (migración a1b2c3d4e5f6)
 - [ ] Pruebas unitarias de state machine
 - [ ] Pruebas de transacciones de inventario
 - [ ] Pruebas de restricciones de flujo
