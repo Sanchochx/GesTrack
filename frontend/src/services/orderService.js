@@ -3,8 +3,45 @@ import api from './api';
 /**
  * Servicio de pedidos
  * US-ORD-001: Crear Pedido
+ * US-ORD-003: Gestión de Estados del Pedido
  */
 const orderService = {
+  /**
+   * Lista pedidos con paginación y filtros
+   * CA-1/CA-2: Lista con estado y colores
+   * @param {Object} params - { page, per_page, status, customer_id, search }
+   * @returns {Promise} - { data, pagination }
+   */
+  async getOrders(params = {}) {
+    try {
+      const response = await api.get('/orders', { params });
+      return response.data;
+    } catch (error) {
+      if (error.response && error.response.data) {
+        throw error.response.data;
+      }
+      throw { success: false, error: { message: 'Error de conexión con el servidor' } };
+    }
+  },
+
+  /**
+   * Obtiene un pedido por ID con items e historial
+   * CA-3/CA-6: Detalle con historial
+   * @param {string} orderId - ID del pedido
+   * @returns {Promise} - Pedido completo
+   */
+  async getOrderById(orderId) {
+    try {
+      const response = await api.get(`/orders/${orderId}`);
+      return response.data;
+    } catch (error) {
+      if (error.response && error.response.data) {
+        throw error.response.data;
+      }
+      throw { success: false, error: { message: 'Error de conexión con el servidor' } };
+    }
+  },
+
   /**
    * Crea un nuevo pedido
    * CA-8: Guardado y confirmación

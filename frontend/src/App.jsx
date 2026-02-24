@@ -60,6 +60,8 @@ import EditCustomer from './pages/Customers/EditCustomer';  // US-CUST-005
 import CustomerOrderHistory from './pages/Customers/CustomerOrderHistory';  // US-CUST-007
 import CustomerSegmentation from './pages/Customers/CustomerSegmentation';  // US-CUST-011
 import CreateOrder from './pages/Orders/CreateOrder';  // US-ORD-001
+import OrderList from './pages/Orders/OrderList';  // US-ORD-003
+import OrderDetail from './pages/Orders/OrderDetail';  // US-ORD-003
 import ProtectedRoute from './components/common/ProtectedRoute';
 import authService from './services/authService';
 
@@ -188,6 +190,7 @@ function Navigation() {
       items: [
         { label: 'Clientes', path: '/customers' },
         { label: 'Segmentación', path: '/customers/segmentation' },  // US-CUST-011
+        { label: 'Pedidos', path: '/orders' },  // US-ORD-003
         { label: 'Nuevo Pedido', path: '/orders/new' },
       ],
     },
@@ -672,12 +675,28 @@ function App() {
                 }
               />
 
-              {/* US-ORD-001: Order Management Routes */}
+              {/* US-ORD-001/US-ORD-003: Order Management Routes */}
+              <Route
+                path="/orders"
+                element={
+                  <ProtectedRoute allowedRoles={['Admin', 'Personal de Ventas', 'Gerente de Almacén']}>
+                    <OrderList />
+                  </ProtectedRoute>
+                }
+              />
               <Route
                 path="/orders/new"
                 element={
                   <ProtectedRoute allowedRoles={['Admin', 'Personal de Ventas', 'Gerente de Almacén']}>
                     <CreateOrder />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/orders/:id"
+                element={
+                  <ProtectedRoute allowedRoles={['Admin', 'Personal de Ventas', 'Gerente de Almacén']}>
+                    <OrderDetail />
                   </ProtectedRoute>
                 }
               />
