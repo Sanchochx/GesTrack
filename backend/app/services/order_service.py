@@ -160,6 +160,7 @@ class OrderService:
             status_entry = OrderStatusHistory(
                 order_id=order.id,
                 changed_by_id=user_id,
+                previous_status=None,
                 status='Pendiente',
                 notes='Pedido creado',
             )
@@ -178,7 +179,8 @@ class OrderService:
     @staticmethod
     def cancel_order(order_id, user_id, notes=None):
         """
-        US-INV-008 CA-3: Cancela un pedido en estado Pendiente y restaura el stock.
+        CA-8: Cancela un pedido desde cualquier estado excepto Entregado o Cancelado,
+        y restaura el stock.
 
         Args:
             order_id: ID del pedido a cancelar
@@ -189,7 +191,7 @@ class OrderService:
             Order: Pedido cancelado
 
         Raises:
-            ValueError: Si el pedido no existe o no está en estado Pendiente
+            ValueError: Si el pedido no existe o ya está Entregado/Cancelado
             StockUpdateError: Error al restaurar stock
         """
         try:
@@ -197,10 +199,9 @@ class OrderService:
             order = Order.query.get(order_id)
             if not order:
                 raise ValueError('Pedido no encontrado')
-            if order.status != 'Pendiente':
+            if order.status in ('Entregado', 'Cancelado'):
                 raise ValueError(
-                    f'Solo se pueden cancelar pedidos en estado Pendiente. '
-                    f'Estado actual: {order.status}'
+                    f'No se puede cancelar un pedido en estado "{order.status}".'
                 )
 
             # 2. Obtener los items con lock pesimista sobre los productos (CA-5)
@@ -243,12 +244,14 @@ class OrderService:
                 db.session.add(movement)
 
             # 4. Actualizar estado del pedido
+            previous_status = order.status
             order.status = 'Cancelado'
 
             # 5. Registrar en historial de estados
             status_entry = OrderStatusHistory(
                 order_id=order.id,
                 changed_by_id=user_id,
+                previous_status=previous_status,
                 status='Cancelado',
                 notes=notes or 'Pedido cancelado por el usuario',
             )
@@ -321,6 +324,13 @@ class OrderService:
             if new_status == 'Cancelado':
                 return OrderService.cancel_order(order_id, user_id, notes)
 
+            # CA-9: No permitir transición a 'Entregado' si el pago está pendiente
+            if new_status == 'Entregado' and order.payment_status == 'Pendiente':
+                raise ValueError(
+                    'No se puede marcar el pedido como Entregado mientras el pago esté Pendiente. '
+                    'Actualice el estado de pago primero.'
+                )
+
             # CA-4: Para 'Entregado', reducir reserved_stock (stock ya fue reducido al crear)
             if new_status == 'Entregado':
                 product_ids = [item.product_id for item in order.items]
@@ -341,10 +351,11 @@ class OrderService:
             # Actualizar estado del pedido
             order.status = new_status
 
-            # Registrar en historial
+            # Registrar en historial con previous_status (CA-5)
             status_entry = OrderStatusHistory(
                 order_id=order.id,
                 changed_by_id=user_id,
+                previous_status=current_status,
                 status=new_status,
                 notes=notes or f'Estado actualizado a {new_status}',
             )

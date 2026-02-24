@@ -158,6 +158,7 @@ class OrderStatusHistory(db.Model):
     changed_by_id = db.Column(db.String(36), db.ForeignKey('users.id'), nullable=False)
 
     # Datos
+    previous_status = db.Column(db.String(50), nullable=True)
     status = db.Column(db.String(50), nullable=False)
     notes = db.Column(db.Text, nullable=True)
 
@@ -175,6 +176,7 @@ class OrderStatusHistory(db.Model):
         return {
             'id': self.id,
             'order_id': self.order_id,
+            'previous_status': self.previous_status,
             'status': self.status,
             'changed_by_id': self.changed_by_id,
             'changed_by_name': self.changed_by.full_name if self.changed_by else None,

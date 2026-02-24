@@ -5,13 +5,134 @@ US-INV-008: Cancelar pedido y actualizar estado (reserva de stock)
 """
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
+from app import db
 from app.services.order_service import OrderService
 from app.services.stock_service import InsufficientStockError, StockUpdateError
 from app.schemas.order_schema import order_create_schema
 from app.utils.decorators import require_role
+from app.models.order import Order, OrderStatusHistory
 from marshmallow import ValidationError
 
 orders_bp = Blueprint('orders', __name__, url_prefix='/api/orders')
+
+
+@orders_bp.route('', methods=['GET'])
+@jwt_required()
+@require_role(['Admin', 'Personal de Ventas', 'Gerente de Almacén'])
+def list_orders():
+    """
+    GET /api/orders
+    CA-1/CA-2: Lista pedidos con paginación y filtros.
+
+    Query params:
+        - page: Página (default 1)
+        - per_page: Items por página (default 20, max 100)
+        - status: Filtrar por estado
+        - customer_id: Filtrar por cliente
+        - search: Búsqueda por número de pedido o nombre de cliente
+    """
+    try:
+        page = int(request.args.get('page', 1))
+        per_page = min(int(request.args.get('per_page', 20)), 100)
+        status_filter = request.args.get('status')
+        customer_id_filter = request.args.get('customer_id')
+        search = request.args.get('search', '').strip()
+
+        query = Order.query
+
+        if status_filter:
+            query = query.filter(Order.status == status_filter)
+
+        if customer_id_filter:
+            query = query.filter(Order.customer_id == customer_id_filter)
+
+        if search:
+            from app.models.customer import Customer
+            query = query.join(Order.customer).filter(
+                db.or_(
+                    Order.order_number.ilike(f'%{search}%'),
+                    Customer.nombre_razon_social.ilike(f'%{search}%'),
+                )
+            )
+
+        query = query.order_by(Order.created_at.desc())
+        paginated = query.paginate(page=page, per_page=per_page, error_out=False)
+
+        orders_data = []
+        for order in paginated.items:
+            orders_data.append({
+                'id': order.id,
+                'order_number': order.order_number,
+                'customer_id': order.customer_id,
+                'customer_name': order.customer.nombre_razon_social if order.customer else None,
+                'status': order.status,
+                'payment_status': order.payment_status,
+                'total': float(order.total) if order.total else 0.0,
+                'items_count': len(order.items),
+                'created_at': order.created_at.isoformat() if order.created_at else None,
+            })
+
+        return jsonify({
+            'success': True,
+            'data': orders_data,
+            'pagination': {
+                'page': paginated.page,
+                'per_page': paginated.per_page,
+                'total': paginated.total,
+                'pages': paginated.pages,
+            }
+        }), 200
+
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': {
+                'code': 'SERVER_ERROR',
+                'message': 'Error al listar pedidos',
+                'details': str(e)
+            }
+        }), 500
+
+
+@orders_bp.route('/<string:order_id>', methods=['GET'])
+@jwt_required()
+@require_role(['Admin', 'Personal de Ventas', 'Gerente de Almacén'])
+def get_order(order_id):
+    """
+    GET /api/orders/:id
+    CA-3/CA-6: Retorna pedido completo con items e historial de estados.
+    """
+    try:
+        order = Order.query.get(order_id)
+        if not order:
+            return jsonify({
+                'success': False,
+                'error': {
+                    'code': 'NOT_FOUND',
+                    'message': 'Pedido no encontrado'
+                }
+            }), 404
+
+        order_dict = order.to_dict()
+        history = order.status_history.order_by(
+            OrderStatusHistory.created_at.desc()
+        ).all()
+        order_dict['status_history'] = [h.to_dict() for h in history]
+
+        return jsonify({
+            'success': True,
+            'data': order_dict,
+        }), 200
+
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': {
+                'code': 'SERVER_ERROR',
+                'message': 'Error al obtener pedido',
+                'details': str(e)
+            }
+        }), 500
 
 
 @orders_bp.route('', methods=['POST'])
