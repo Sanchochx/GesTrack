@@ -1,6 +1,6 @@
 # 🚀 GesTrack - Plan de Implementación
 
-**Última actualización:** 2026-02-23 (US-ORD-002 completada)
+**Última actualización:** 2026-02-23 (US-ORD-004 completada)
 **Versión:** 1.0
 
 ---
@@ -12,12 +12,12 @@
 │  PROGRESO GLOBAL DEL PROYECTO                               │
 ├─────────────────────────────────────────────────────────────┤
 │  Total Historias de Usuario:     82                         │
-│  ✅ Completadas:                   40                        │
+│  ✅ Completadas:                   41                        │
 │  🔄 Parcialmente Completadas:     0                         │
 │  ⏳ En Progreso:                   0                         │
-│  ⏸️  Pendientes:                   42                        │
+│  ⏸️  Pendientes:                   41                        │
 │                                                             │
-│  Progreso: [█████████░░░░░░░░░░░] 49% (40/82)              │
+│  Progreso: [█████████░░░░░░░░░░░] 50% (41/82)              │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -30,7 +30,7 @@
 | 01 | Foundation | 6 | 6 | 0 | 0 | [██████████] 100% |
 | 02 | Core Data | 10 | 10 | 0 | 0 | [██████████] 100% |
 | 03 | Stock Management | 10 | 10 | 0 | 0 | [██████████] 100% |
-| 04 | Sales | 26 | 13 | 0 | 13 | [█████░░░░░] 50% |
+| 04 | Sales | 26 | 14 | 0 | 12 | [█████░░░░░] 54% |
 | 05 | Supply Chain | 15 | 0 | 0 | 15 | [░░░░░░░░░░] 0% |
 | 06 | Analytics | 15 | 0 | 0 | 15 | [░░░░░░░░░░] 0% |
 
@@ -1046,12 +1046,13 @@
 - **Criterios de Aceptación:** CA-1 ✅ CA-2 ✅ CA-3 ✅ CA-4 ✅ CA-5 ✅ CA-6 ✅ CA-7 ✅ CA-8 ✅ CA-9 ✅ (CA-10 diferido)
 - **Fecha de completación:** 2026-02-23
 
-#### [ ] US-ORD-004: Estado de Pago del Pedido
+#### [x] US-ORD-004: Estado de Pago del Pedido
 - **Archivo:** `context/user_stories/epic_04_sales/US-ORD-004_estado_pago.md`
 - **Prioridad:** ALTA
-- **Estimación:** 5 pts
-- **Estado:** ⏸️ Pendiente
-- **Criterios de Aceptación:** 7
+- **Estimación:** 8 pts
+- **Estado:** ✅ Completada
+- **Criterios de Aceptación:** CA-1 ✅ CA-2 ✅ CA-3 ✅ CA-4 ✅ CA-5 ✅ CA-6 ✅ CA-7 ✅ CA-8 ✅ CA-9 ✅ CA-10 ✅
+- **Fecha de completación:** 2026-02-23
 
 #### [ ] US-ORD-005: Listar Pedidos
 - **Archivo:** `context/user_stories/epic_04_sales/US-ORD-005_listar_pedidos.md`

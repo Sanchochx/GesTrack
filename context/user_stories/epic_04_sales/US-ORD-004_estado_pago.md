@@ -110,20 +110,20 @@
 - Métodos de pago configurables desde admin
 
 ## Definición de Hecho
-- [ ] Frontend: Modal de registro de pago
-- [ ] Frontend: Formulario con validaciones
-- [ ] Frontend: Historial de pagos con tabla
-- [ ] Frontend: Cálculo y visualización de saldo pendiente
-- [ ] Frontend: Badge de estado de pago en lista y detalles
-- [ ] Frontend: Opción "Pagar saldo completo"
-- [ ] Backend: API POST /api/orders/{id}/payments
-- [ ] Backend: Validación de monto vs saldo pendiente
-- [ ] Backend: Cálculo automático de saldo
-- [ ] Backend: Actualización automática de payment_status
-- [ ] Backend: Lógica de restricción por estado de pago
-- [ ] Base de datos: Tabla payments creada
-- [ ] Base de datos: Enum de métodos de pago
-- [ ] Base de datos: Campo payment_status en orders
+- [x] Frontend: Modal de registro de pago
+- [x] Frontend: Formulario con validaciones
+- [x] Frontend: Historial de pagos con tabla
+- [x] Frontend: Cálculo y visualización de saldo pendiente
+- [x] Frontend: Badge de estado de pago en lista y detalles
+- [x] Frontend: Opción "Pagar saldo completo"
+- [x] Backend: API POST /api/orders/{id}/payments
+- [x] Backend: Validación de monto vs saldo pendiente
+- [x] Backend: Cálculo automático de saldo
+- [x] Backend: Actualización automática de payment_status
+- [x] Backend: Lógica de restricción por estado de pago
+- [x] Base de datos: Tabla payments creada
+- [x] Base de datos: Enum de métodos de pago
+- [x] Base de datos: Campo payment_status en orders
 - [ ] Pruebas unitarias de cálculos
 - [ ] Pruebas de múltiples pagos parciales
 - [ ] Pruebas de validaciones de monto
