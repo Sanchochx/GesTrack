@@ -103,17 +103,41 @@ const orderService = {
    * @param {string} orderId - ID del pedido
    * @param {string} status - Nuevo estado
    * @param {string} [notes] - Notas del cambio
+   * @param {boolean} [forceDelivery] - Forzar entrega aunque haya saldo pendiente (solo Admin)
    * @returns {Promise} - Pedido actualizado
    */
-  async updateOrderStatus(orderId, status, notes = null) {
+  async updateOrderStatus(orderId, status, notes = null, forceDelivery = false) {
     try {
-      const response = await api.patch(`/orders/${orderId}/status`, { status, notes });
+      const response = await api.patch(`/orders/${orderId}/status`, {
+        status,
+        notes,
+        force_delivery: forceDelivery,
+      });
       return response.data;
     } catch (error) {
       if (error.response && error.response.data) {
         throw error.response.data;
       }
       throw { success: false, error: { message: 'Error de conexión con el servidor' } };
+    }
+  },
+
+  /**
+   * Registra un pago para un pedido
+   * US-ORD-004 CA-2/CA-4
+   * @param {string} orderId - ID del pedido
+   * @param {Object} paymentData - { amount, payment_method, payment_date, notes }
+   * @returns {Promise} - { data: order, message }
+   */
+  async registerPayment(orderId, paymentData) {
+    try {
+      const response = await api.post(`/orders/${orderId}/payments`, paymentData);
+      return response.data;
+    } catch (error) {
+      if (error.response && error.response.data) {
+        throw error.response.data;
+      }
+      throw { success: false, error: { message: 'Error al registrar pago' } };
     }
   },
 };

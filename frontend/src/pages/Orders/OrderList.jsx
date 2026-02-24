@@ -1,6 +1,7 @@
 /**
  * OrderList – Listado de pedidos con filtros y color chips
  * US-ORD-003: CA-1 (colores por estado), CA-2 (visibilidad de estado)
+ * US-ORD-004: CA-9 (colores estado pago, tooltip saldo, filtro por estado pago)
  */
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -29,6 +30,7 @@ import {
   MenuItem,
   FormControl,
   InputLabel,
+  Tooltip,
 } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 import AddIcon from '@mui/icons-material/Add';
@@ -36,8 +38,10 @@ import HomeIcon from '@mui/icons-material/Home';
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 import orderService from '../../services/orderService';
 import { STATUS_COLORS } from '../../components/orders/StatusChangeModal';
+import { PAYMENT_STATUS_COLORS } from './OrderDetail';
 
 const ALL_STATUSES = ['Pendiente', 'Confirmado', 'Procesando', 'Enviado', 'Entregado', 'Cancelado'];
+const ALL_PAYMENT_STATUSES = ['Pendiente', 'Parcialmente Pagado', 'Pagado'];
 
 const formatDate = (isoString) => {
   if (!isoString) return '-';
@@ -75,6 +79,7 @@ const OrderList = () => {
   // Filters
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
+  const [paymentStatusFilter, setPaymentStatusFilter] = useState('');
 
   const fetchOrders = useCallback(async () => {
     setLoading(true);
@@ -86,6 +91,7 @@ const OrderList = () => {
       };
       if (search.trim()) params.search = search.trim();
       if (statusFilter) params.status = statusFilter;
+      if (paymentStatusFilter) params.payment_status = paymentStatusFilter;
 
       const response = await orderService.getOrders(params);
       setOrders(response.data || []);
@@ -95,7 +101,7 @@ const OrderList = () => {
     } finally {
       setLoading(false);
     }
-  }, [page, rowsPerPage, search, statusFilter]);
+  }, [page, rowsPerPage, search, statusFilter, paymentStatusFilter]);
 
   useEffect(() => {
     fetchOrders();
@@ -109,6 +115,11 @@ const OrderList = () => {
 
   const handleStatusFilterChange = (e) => {
     setStatusFilter(e.target.value);
+    setPage(0);
+  };
+
+  const handlePaymentStatusFilterChange = (e) => {
+    setPaymentStatusFilter(e.target.value);
     setPage(0);
   };
 
@@ -171,6 +182,22 @@ const OrderList = () => {
           >
             <MenuItem value="">Todos</MenuItem>
             {ALL_STATUSES.map((s) => (
+              <MenuItem key={s} value={s}>
+                {s}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+        {/* CA-9: Filtro por estado de pago */}
+        <FormControl size="small" sx={{ minWidth: 180 }}>
+          <InputLabel>Estado de Pago</InputLabel>
+          <Select
+            value={paymentStatusFilter}
+            label="Estado de Pago"
+            onChange={handlePaymentStatusFilterChange}
+          >
+            <MenuItem value="">Todos</MenuItem>
+            {ALL_PAYMENT_STATUSES.map((s) => (
               <MenuItem key={s} value={s}>
                 {s}
               </MenuItem>
@@ -258,12 +285,27 @@ const OrderList = () => {
                       />
                     </TableCell>
                     <TableCell>
-                      <Chip
-                        label={order.payment_status}
-                        size="small"
-                        variant="outlined"
-                        sx={{ fontSize: '0.7rem' }}
-                      />
+                      {/* CA-9: Chip con color + tooltip de saldo pendiente */}
+                      <Tooltip
+                        title={
+                          order.payment_status !== 'Pagado' && order.pending_balance > 0
+                            ? `Saldo pendiente: ${formatCurrency(order.pending_balance)}`
+                            : ''
+                        }
+                        disableHoverListener={order.payment_status === 'Pagado' || !order.pending_balance}
+                      >
+                        <Chip
+                          label={order.payment_status}
+                          size="small"
+                          sx={{
+                            bgcolor: PAYMENT_STATUS_COLORS[order.payment_status] || '#9E9E9E',
+                            color: 'white',
+                            fontWeight: 'bold',
+                            fontSize: '0.7rem',
+                            cursor: 'default',
+                          }}
+                        />
+                      </Tooltip>
                     </TableCell>
                     <TableCell align="right">
                       <Typography variant="body2" fontWeight="medium">

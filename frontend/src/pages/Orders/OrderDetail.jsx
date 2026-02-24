@@ -1,6 +1,7 @@
 /**
  * OrderDetail – Vista detallada del pedido
  * US-ORD-003: CA-3 (cambio de estado), CA-6 (timeline historial)
+ * US-ORD-004: CA-2 (registrar pago), CA-3 (saldo), CA-5 (historial pagos), CA-8 (restricción)
  */
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
@@ -30,10 +31,20 @@ import HomeIcon from '@mui/icons-material/Home';
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import SwapHorizIcon from '@mui/icons-material/SwapHoriz';
+import PaymentIcon from '@mui/icons-material/Payment';
 import orderService from '../../services/orderService';
 import { STATUS_COLORS } from '../../components/orders/StatusChangeModal';
 import StatusChangeModal from '../../components/orders/StatusChangeModal';
 import StatusTimeline from '../../components/orders/StatusTimeline';
+import PaymentHistory from '../../components/orders/PaymentHistory';
+import PaymentRegistrationModal from '../../components/orders/PaymentRegistrationModal';
+
+/** CA-1: Colores por estado de pago */
+export const PAYMENT_STATUS_COLORS = {
+  'Pendiente': '#F44336',
+  'Parcialmente Pagado': '#FF9800',
+  'Pagado': '#4CAF50',
+};
 
 const TERMINAL_STATUSES = ['Entregado', 'Cancelado'];
 
@@ -71,9 +82,15 @@ const OrderDetail = () => {
   const [error, setError] = useState(null);
   const [successMessage, setSuccessMessage] = useState(null);
 
+  // Status change
   const [statusModalOpen, setStatusModalOpen] = useState(false);
   const [changingStatus, setChangingStatus] = useState(false);
   const [statusError, setStatusError] = useState(null);
+
+  // Payment registration
+  const [paymentModalOpen, setPaymentModalOpen] = useState(false);
+  const [registeringPayment, setRegisteringPayment] = useState(false);
+  const [paymentError, setPaymentError] = useState(null);
 
   const fetchOrder = useCallback(async () => {
     setLoading(true);
@@ -92,11 +109,11 @@ const OrderDetail = () => {
     fetchOrder();
   }, [fetchOrder]);
 
-  const handleStatusChange = async (newStatus, notes) => {
+  const handleStatusChange = async (newStatus, notes, forceDelivery = false) => {
     setChangingStatus(true);
     setStatusError(null);
     try {
-      await orderService.updateOrderStatus(id, newStatus, notes);
+      await orderService.updateOrderStatus(id, newStatus, notes, forceDelivery);
       setStatusModalOpen(false);
       setSuccessMessage(`Estado actualizado a "${newStatus}"`);
       await fetchOrder();
@@ -104,6 +121,25 @@ const OrderDetail = () => {
       setStatusError(err?.error?.message || 'Error al cambiar el estado');
     } finally {
       setChangingStatus(false);
+    }
+  };
+
+  // CA-2/CA-10: Registrar pago
+  const handleRegisterPayment = async (paymentData) => {
+    setRegisteringPayment(true);
+    setPaymentError(null);
+    try {
+      const response = await orderService.registerPayment(id, paymentData);
+      setPaymentModalOpen(false);
+      const msg = response.data?.payment_status === 'Pagado'
+        ? 'Pedido completamente pagado'
+        : response.message || `Pago de ${formatCurrency(paymentData.amount)} registrado exitosamente`;
+      setSuccessMessage(msg);
+      await fetchOrder();
+    } catch (err) {
+      setPaymentError(err?.error?.message || 'Error al registrar el pago');
+    } finally {
+      setRegisteringPayment(false);
     }
   };
 
@@ -131,6 +167,7 @@ const OrderDetail = () => {
   if (!order) return null;
 
   const canChangeStatus = !TERMINAL_STATUSES.includes(order.status);
+  const canRegisterPayment = order.status !== 'Cancelado' && order.payment_status !== 'Pagado';
 
   return (
     <Container maxWidth="lg" sx={{ py: 3 }}>
@@ -178,6 +215,13 @@ const OrderDetail = () => {
         </Alert>
       )}
 
+      {/* Payment error */}
+      {paymentError && (
+        <Alert severity="error" sx={{ mb: 2 }} onClose={() => setPaymentError(null)}>
+          {paymentError}
+        </Alert>
+      )}
+
       {/* Header */}
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 3 }}>
         <Box>
@@ -208,15 +252,28 @@ const OrderDetail = () => {
           </Typography>
         </Box>
 
-        {canChangeStatus && (
-          <Button
-            variant="contained"
-            startIcon={<SwapHorizIcon />}
-            onClick={() => setStatusModalOpen(true)}
-          >
-            Cambiar Estado
-          </Button>
-        )}
+        <Box sx={{ display: 'flex', gap: 1 }}>
+          {/* CA-2: Botón registrar pago */}
+          {canRegisterPayment && (
+            <Button
+              variant="outlined"
+              startIcon={<PaymentIcon />}
+              onClick={() => setPaymentModalOpen(true)}
+              color="success"
+            >
+              Registrar Pago
+            </Button>
+          )}
+          {canChangeStatus && (
+            <Button
+              variant="contained"
+              startIcon={<SwapHorizIcon />}
+              onClick={() => setStatusModalOpen(true)}
+            >
+              Cambiar Estado
+            </Button>
+          )}
+        </Box>
       </Box>
 
       <Grid container spacing={3}>
@@ -255,7 +312,11 @@ const OrderDetail = () => {
                   <Chip
                     label={order.payment_status}
                     size="small"
-                    variant="outlined"
+                    sx={{
+                      bgcolor: PAYMENT_STATUS_COLORS[order.payment_status] || '#9E9E9E',
+                      color: 'white',
+                      fontWeight: 'bold',
+                    }}
                   />
                 </Box>
               </Grid>
@@ -345,8 +406,36 @@ const OrderDetail = () => {
           </Paper>
         </Grid>
 
-        {/* Right column: status history timeline */}
+        {/* Right column: status history + payment section */}
         <Grid item xs={12} md={4}>
+          {/* CA-2/CA-5: Historial de pagos */}
+          <Paper variant="outlined" sx={{ p: 2, mb: 3 }}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+              <Typography variant="subtitle1" fontWeight="bold">
+                Pagos
+              </Typography>
+              {canRegisterPayment && (
+                <Button
+                  size="small"
+                  startIcon={<PaymentIcon />}
+                  onClick={() => setPaymentModalOpen(true)}
+                  color="success"
+                  variant="outlined"
+                >
+                  Registrar
+                </Button>
+              )}
+            </Box>
+            <Divider sx={{ mb: 2 }} />
+            <PaymentHistory
+              payments={order.payments || []}
+              amountPaid={order.amount_paid || 0}
+              pendingBalance={order.pending_balance || 0}
+              total={order.total || 0}
+            />
+          </Paper>
+
+          {/* Status history timeline */}
           <Paper variant="outlined" sx={{ p: 2 }}>
             <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
               Historial de Estados
@@ -361,12 +450,27 @@ const OrderDetail = () => {
       {statusModalOpen && (
         <StatusChangeModal
           currentStatus={order.status}
+          paymentStatus={order.payment_status}
+          pendingBalance={order.pending_balance || 0}
           onConfirm={handleStatusChange}
           onClose={() => {
             setStatusModalOpen(false);
             setStatusError(null);
           }}
           loading={changingStatus}
+        />
+      )}
+
+      {/* Payment registration modal */}
+      {paymentModalOpen && (
+        <PaymentRegistrationModal
+          pendingBalance={order.pending_balance || 0}
+          onConfirm={handleRegisterPayment}
+          onClose={() => {
+            setPaymentModalOpen(false);
+            setPaymentError(null);
+          }}
+          loading={registeringPayment}
         />
       )}
     </Container>
