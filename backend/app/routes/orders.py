@@ -24,14 +24,17 @@ orders_bp = Blueprint('orders', __name__, url_prefix='/api/orders')
 def list_orders():
     """
     GET /api/orders
-    CA-1/CA-2: Lista pedidos con paginación y filtros.
+    US-ORD-005: Lista pedidos con paginación, filtros, ordenamiento y métricas.
 
     Query params:
         - page: Página (default 1)
         - per_page: Items por página (default 20, max 100)
         - status: Filtrar por estado
+        - payment_status: Filtrar por estado de pago
         - customer_id: Filtrar por cliente
         - search: Búsqueda por número de pedido o nombre de cliente
+        - sort_by: Columna de ordenamiento (order_number, customer_name, created_at, total, status)
+        - sort_order: Dirección (asc, desc) - default desc
     """
     try:
         page = int(request.args.get('page', 1))
@@ -40,35 +43,72 @@ def list_orders():
         payment_status_filter = request.args.get('payment_status')
         customer_id_filter = request.args.get('customer_id')
         search = request.args.get('search', '').strip()
+        sort_by = request.args.get('sort_by', 'created_at')
+        sort_order = request.args.get('sort_order', 'desc')
+
+        from app.models.customer import Customer
+        from sqlalchemy import case, func, asc, desc
+
+        # CA-3: Determinar si necesitamos join con Customer
+        needs_customer = bool(search) or sort_by == 'customer_name'
 
         query = Order.query
+        if needs_customer:
+            query = query.outerjoin(Order.customer)
 
+        # Aplicar filtros
         if status_filter:
             query = query.filter(Order.status == status_filter)
-
-        # CA-9: Filtro por estado de pago
         if payment_status_filter:
             query = query.filter(Order.payment_status == payment_status_filter)
-
         if customer_id_filter:
             query = query.filter(Order.customer_id == customer_id_filter)
-
         if search:
-            from app.models.customer import Customer
-            query = query.join(Order.customer).filter(
+            query = query.filter(
                 db.or_(
                     Order.order_number.ilike(f'%{search}%'),
                     Customer.nombre_razon_social.ilike(f'%{search}%'),
                 )
             )
 
-        query = query.order_by(Order.created_at.desc())
+        # CA-6: Calcular total de ventas sobre datos filtrados (antes de paginar)
+        total_amount = query.with_entities(
+            func.coalesce(func.sum(Order.total), 0)
+        ).scalar()
+
+        # CA-6: Conteos por estado (global, sin filtro de estado)
+        status_counts_result = db.session.query(
+            Order.status, func.count(Order.id)
+        ).group_by(Order.status).all()
+        status_counts = {s: c for s, c in status_counts_result}
+
+        # CA-3: Ordenamiento dinámico
+        STATUS_ORDER_EXPR = case(
+            (Order.status == 'Pendiente', 1),
+            (Order.status == 'Confirmado', 2),
+            (Order.status == 'Procesando', 3),
+            (Order.status == 'Enviado', 4),
+            (Order.status == 'Entregado', 5),
+            (Order.status == 'Cancelado', 6),
+            else_=7
+        )
+        sort_columns = {
+            'order_number': Order.order_number,
+            'customer_name': Customer.nombre_razon_social,
+            'created_at': Order.created_at,
+            'total': Order.total,
+            'status': STATUS_ORDER_EXPR,
+        }
+        sort_col = sort_columns.get(sort_by, Order.created_at)
+        direction = desc if sort_order == 'desc' else asc
+        query = query.order_by(direction(sort_col))
+
         paginated = query.paginate(page=page, per_page=per_page, error_out=False)
 
         from decimal import Decimal
         orders_data = []
         for order in paginated.items:
-            # CA-9: Calcular saldo pendiente para el tooltip
+            # Calcular saldo pendiente para el tooltip de pago
             active_payments = order.payments.filter_by(is_deleted=False).all()
             amount_paid = sum(Decimal(str(p.amount)) for p in active_payments)
             total = Decimal(str(order.total)) if order.total else Decimal('0')
@@ -96,6 +136,10 @@ def list_orders():
                 'per_page': paginated.per_page,
                 'total': paginated.total,
                 'pages': paginated.pages,
+            },
+            'metrics': {
+                'total_amount': float(total_amount),
+                'status_counts': status_counts,
             }
         }), 200
 
