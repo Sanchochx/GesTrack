@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Container, Typography, Box, Alert, Grid } from '@mui/material';
+import { Container, Typography, Box, Grid, Divider } from '@mui/material';
 import authService from '../../services/authService';
 import InventoryValueWidget from '../../components/inventory/InventoryValueWidget';
 import CategoryValueBreakdown from '../../components/inventory/CategoryValueBreakdown';
@@ -40,33 +40,34 @@ const AdminDashboard = () => {
   return (
     <Container maxWidth="xl">
       <Box sx={{ p: 3, mt: 4 }}>
-        {/* Mensaje de bienvenida (CA-3) */}
-        <Alert severity="success" sx={{ mb: 3 }}>
-          ¡Bienvenido/a, {user.full_name}!
-        </Alert>
-
-        <Typography variant="h4" gutterBottom>
-          Dashboard de Administrador
-        </Typography>
-        <Typography variant="body1" color="text.secondary" paragraph sx={{ mb: 4 }}>
-          Acceso completo a todas las funcionalidades del sistema
+        {/* Section: KPI Summary */}
+        <Typography variant="overline" color="text.secondary" sx={{ fontWeight: 600, letterSpacing: 1.5, display: 'block', mb: 2 }}>
+          Resumen del Inventario
         </Typography>
 
         {/* US-INV-005, US-INV-007: Widgets de Valor del Inventario y Alertas */}
         <Grid container spacing={3}>
           {/* US-INV-007: Alertas de Stock Crítico */}
-          <Grid item xs={12} md={4}>
+          <Grid item xs={12} md={6} lg={4}>
             <OutOfStockAlertWidget maxItems={5} />
           </Grid>
 
           {/* Valor Total del Inventario */}
-          <Grid item xs={12} md={4}>
+          <Grid item xs={12} md={6} lg={4}>
             <InventoryValueWidget period="30d" />
           </Grid>
 
           {/* Exportar Reporte de Valor */}
-          <Grid item xs={12} md={4}>
+          <Grid item xs={12} md={6} lg={4}>
             <InventoryValueExportCard />
+          </Grid>
+
+          {/* Section Divider: Charts */}
+          <Grid item xs={12}>
+            <Divider sx={{ my: 1 }} />
+            <Typography variant="overline" color="text.secondary" sx={{ fontWeight: 600, letterSpacing: 1.5, display: 'block', mt: 2, mb: 2 }}>
+              Análisis y Evolución
+            </Typography>
           </Grid>
 
           {/* Gráfico de Evolución del Valor */}
@@ -74,13 +75,21 @@ const AdminDashboard = () => {
             <ValueEvolutionChart />
           </Grid>
 
+          {/* Section Divider: Distribución */}
+          <Grid item xs={12}>
+            <Divider sx={{ my: 1 }} />
+            <Typography variant="overline" color="text.secondary" sx={{ fontWeight: 600, letterSpacing: 1.5, display: 'block', mt: 2, mb: 2 }}>
+              Distribución del Inventario
+            </Typography>
+          </Grid>
+
           {/* Desglose por Categoría */}
-          <Grid item xs={12} lg={6}>
+          <Grid item xs={12}>
             <CategoryValueBreakdown />
           </Grid>
 
-          {/* Métricas Adicionales */}
-          <Grid item xs={12} lg={6}>
+          {/* Top Productos · Top Categorías · Distribución de Stock */}
+          <Grid item xs={12}>
             <ValueMetricsPanel />
           </Grid>
         </Grid>

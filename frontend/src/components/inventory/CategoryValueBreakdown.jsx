@@ -73,25 +73,25 @@ const CategoryValueBreakdown = ({ onCategoryClick }) => {
     }
   };
 
-  // Colores para el gráfico de pastel
-  const COLORS = [
+  const FALLBACK_COLORS = [
     theme.palette.primary.main,
     theme.palette.secondary.main,
     theme.palette.success.main,
     theme.palette.warning.main,
     theme.palette.error.main,
     theme.palette.info.main,
-    '#9C27B0', // Purple
-    '#FF9800', // Orange
-    '#795548', // Brown
-    '#607D8B'  // Blue Grey
+    '#9C27B0',
+    '#FF9800',
+    '#795548',
+    '#607D8B'
   ];
 
   // Preparar datos para el gráfico de pastel
-  const chartData = categories.map(cat => ({
+  const chartData = categories.map((cat, index) => ({
     name: cat.category_name,
     value: cat.total_value,
-    percentage: cat.percentage
+    percentage: cat.percentage,
+    color: cat.category_color || FALLBACK_COLORS[index % FALLBACK_COLORS.length]
   }));
 
   // Custom label para el gráfico
@@ -127,9 +127,11 @@ const CategoryValueBreakdown = ({ onCategoryClick }) => {
     }
   };
 
+  const cardSx = { borderRadius: 2, elevation: 2 };
+
   if (loading) {
     return (
-      <Card>
+      <Card elevation={2} sx={cardSx}>
         <CardContent sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: 400 }}>
           <CircularProgress />
         </CardContent>
@@ -139,8 +141,8 @@ const CategoryValueBreakdown = ({ onCategoryClick }) => {
 
   if (error) {
     return (
-      <Card>
-        <CardContent>
+      <Card elevation={2} sx={cardSx}>
+        <CardContent sx={{ p: 3 }}>
           <Typography color="error">{error}</Typography>
         </CardContent>
       </Card>
@@ -149,8 +151,8 @@ const CategoryValueBreakdown = ({ onCategoryClick }) => {
 
   if (categories.length === 0) {
     return (
-      <Card>
-        <CardContent>
+      <Card elevation={2} sx={cardSx}>
+        <CardContent sx={{ p: 3 }}>
           <Typography color="text.secondary" align="center">
             No hay datos disponibles
           </Typography>
@@ -160,98 +162,114 @@ const CategoryValueBreakdown = ({ onCategoryClick }) => {
   }
 
   return (
-    <Card>
-      <CardContent>
-        <Typography variant="h6" gutterBottom>
+    <Card elevation={2} sx={{ borderRadius: 2 }}>
+      <CardContent sx={{ p: 3, '&:last-child': { pb: 3 } }}>
+        <Typography variant="h6" fontWeight={600} gutterBottom sx={{ mb: 3 }}>
           Distribución por Categoría
         </Typography>
 
-        {/* Gráfico de Pastel */}
-        <Box sx={{ height: 300, mb: 3 }}>
-          <ResponsiveContainer width="100%" height="100%">
-            <PieChart>
-              <Pie
-                data={chartData}
-                cx="50%"
-                cy="50%"
-                labelLine={false}
-                label={renderCustomLabel}
-                outerRadius={100}
-                fill="#8884d8"
-                dataKey="value"
-              >
-                {chartData.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                ))}
-              </Pie>
-              <Tooltip content={<CustomTooltip />} />
-              <Legend />
-            </PieChart>
-          </ResponsiveContainer>
-        </Box>
-
-        {/* Tabla de Categorías */}
-        <TableContainer>
-          <Table size="small">
-            <TableHead>
-              <TableRow>
-                <TableCell>Categoría</TableCell>
-                <TableCell align="right">Productos</TableCell>
-                <TableCell align="right">Unidades</TableCell>
-                <TableCell align="right">Valor Total</TableCell>
-                <TableCell align="right">% del Total</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {categories.map((category, index) => (
-                <TableRow
-                  key={category.category_id}
-                  hover
-                  onClick={() => handleRowClick(category.category_id)}
-                  sx={{ cursor: onCategoryClick ? 'pointer' : 'default' }}
+        {/* Layout: gráfico a la izquierda, tabla a la derecha en pantallas grandes */}
+        <Box
+          sx={{
+            display: 'flex',
+            flexDirection: { xs: 'column', lg: 'row' },
+            gap: 3,
+            alignItems: { lg: 'flex-start' }
+          }}
+        >
+          {/* Gráfico de Pastel */}
+          <Box sx={{ height: 360, flex: { lg: '0 0 360px' }, minWidth: 0 }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={chartData}
+                  cx="50%"
+                  cy="50%"
+                  labelLine={false}
+                  label={renderCustomLabel}
+                  outerRadius={120}
+                  fill="#8884d8"
+                  dataKey="value"
                 >
-                  <TableCell>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <Box
-                        sx={{
-                          width: 12,
-                          height: 12,
-                          borderRadius: '50%',
-                          backgroundColor: COLORS[index % COLORS.length]
-                        }}
-                      />
-                      <Typography variant="body2" sx={{ fontWeight: 'medium' }}>
-                        {category.category_name}
-                      </Typography>
-                    </Box>
-                  </TableCell>
-                  <TableCell align="right">
-                    {category.product_count}
-                  </TableCell>
-                  <TableCell align="right">
-                    {category.total_quantity.toLocaleString()}
-                  </TableCell>
-                  <TableCell align="right">
-                    <Typography variant="body2" sx={{ fontWeight: 'medium' }}>
-                      {category.formatted_value}
-                    </Typography>
-                  </TableCell>
-                  <TableCell align="right">
-                    <Chip
-                      label={`${category.percentage.toFixed(1)}%`}
-                      size="small"
-                      sx={{
-                        backgroundColor: `${COLORS[index % COLORS.length]}20`,
-                        color: COLORS[index % COLORS.length],
-                        fontWeight: 'bold'
-                      }}
-                    />
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
+                  {chartData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  ))}
+                </Pie>
+                <Tooltip content={<CustomTooltip />} />
+                <Legend />
+              </PieChart>
+            </ResponsiveContainer>
+          </Box>
+
+          {/* Tabla de Categorías */}
+          <Box sx={{ flex: 1, minWidth: 0, overflow: 'auto' }}>
+            <TableContainer>
+              <Table size="small">
+                <TableHead>
+                  <TableRow>
+                    <TableCell sx={{ fontWeight: 600 }}>Categoría</TableCell>
+                    <TableCell align="right" sx={{ fontWeight: 600 }}>Productos</TableCell>
+                    <TableCell align="right" sx={{ fontWeight: 600 }}>Unidades</TableCell>
+                    <TableCell align="right" sx={{ fontWeight: 600 }}>Valor Total</TableCell>
+                    <TableCell align="right" sx={{ fontWeight: 600 }}>% del Total</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {categories.map((category, index) => {
+                    const color = chartData[index]?.color;
+                    return (
+                      <TableRow
+                        key={category.category_id}
+                        hover
+                        onClick={() => handleRowClick(category.category_id)}
+                        sx={{ cursor: onCategoryClick ? 'pointer' : 'default' }}
+                      >
+                        <TableCell>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <Box
+                              sx={{
+                                width: 12,
+                                height: 12,
+                                borderRadius: '50%',
+                                backgroundColor: color,
+                                flexShrink: 0
+                              }}
+                            />
+                            <Typography variant="body2" fontWeight={500}>
+                              {category.category_name}
+                            </Typography>
+                          </Box>
+                        </TableCell>
+                        <TableCell align="right">
+                          {category.product_count}
+                        </TableCell>
+                        <TableCell align="right">
+                          {category.total_quantity.toLocaleString()}
+                        </TableCell>
+                        <TableCell align="right">
+                          <Typography variant="body2" fontWeight={500}>
+                            {category.formatted_value}
+                          </Typography>
+                        </TableCell>
+                        <TableCell align="right">
+                          <Chip
+                            label={`${category.percentage.toFixed(1)}%`}
+                            size="small"
+                            sx={{
+                              backgroundColor: `${color}20`,
+                              color: color,
+                              fontWeight: 'bold'
+                            }}
+                          />
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          </Box>
+        </Box>
       </CardContent>
     </Card>
   );

@@ -79,7 +79,7 @@ const InventoryValueExportCard = () => {
 
   return (
     <>
-      <Card sx={{ height: '100%' }}>
+      <Card elevation={2} sx={{ height: '100%' }}>
         <CardContent>
           {/* Título */}
           <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>

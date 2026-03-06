@@ -130,7 +130,7 @@ const InventoryValueWidget = ({ period = '7d' }) => {
 
   if (loading) {
     return (
-      <Card sx={{ height: '100%' }}>
+      <Card elevation={2} sx={{ height: '100%' }}>
         <CardContent sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: 200 }}>
           <CircularProgress />
         </CardContent>
@@ -140,7 +140,7 @@ const InventoryValueWidget = ({ period = '7d' }) => {
 
   if (error) {
     return (
-      <Card sx={{ height: '100%' }}>
+      <Card elevation={2} sx={{ height: '100%' }}>
         <CardContent>
           <Typography color="error">{error}</Typography>
         </CardContent>
@@ -149,7 +149,7 @@ const InventoryValueWidget = ({ period = '7d' }) => {
   }
 
   return (
-    <Card sx={{ height: '100%', position: 'relative' }}>
+    <Card elevation={2} sx={{ height: '100%', position: 'relative' }}>
       <CardContent>
         {/* Título */}
         <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>

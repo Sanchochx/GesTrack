@@ -145,7 +145,7 @@ const OutOfStockAlertWidget = ({ maxItems = 5, refreshInterval = 300000 }) => {
   // Renderizar loading
   if (loading) {
     return (
-      <Card elevation={3}>
+      <Card elevation={2} sx={{ height: '100%' }}>
         <CardContent>
           <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
             <Skeleton variant="circular" width={40} height={40} sx={{ mr: 2 }} />
@@ -163,7 +163,7 @@ const OutOfStockAlertWidget = ({ maxItems = 5, refreshInterval = 300000 }) => {
   // Renderizar error
   if (error) {
     return (
-      <Card elevation={3}>
+      <Card elevation={2} sx={{ height: '100%' }}>
         <CardContent>
           <Alert
             severity="error"
@@ -184,8 +184,9 @@ const OutOfStockAlertWidget = ({ maxItems = 5, refreshInterval = 300000 }) => {
 
   return (
     <Card
-      elevation={3}
+      elevation={2}
       sx={{
+        height: '100%',
         border: hasAlerts ? `2px solid ${theme.palette.error.main}` : 'none',
         bgcolor: hasAlerts ? 'error.lighter' : 'background.paper',
         transition: 'all 0.3s ease'

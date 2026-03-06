@@ -144,7 +144,7 @@ const ValueEvolutionChart = () => {
 
   if (error) {
     return (
-      <Card>
+      <Card elevation={2}>
         <CardContent>
           <Typography color="error">{error}</Typography>
         </CardContent>
@@ -153,7 +153,7 @@ const ValueEvolutionChart = () => {
   }
 
   return (
-    <Card>
+    <Card elevation={2}>
       <CardContent>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
           <Typography variant="h6">
