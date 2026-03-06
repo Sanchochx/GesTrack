@@ -118,24 +118,24 @@
 - Implementar virtual scrolling si hay muchos pedidos
 
 ## Definición de Hecho
-- [ ] Frontend: Componente de tabla de pedidos
-- [ ] Frontend: Paginación con controles completos
-- [ ] Frontend: Ordenamiento por columnas
-- [ ] Frontend: Badges con código de colores
-- [ ] Frontend: Botón de crear nuevo pedido
-- [ ] Frontend: Panel de resumen de totales
-- [ ] Frontend: Menú de acciones rápidas
-- [ ] Frontend: Estados vacíos y sin resultados
-- [ ] Frontend: Loading states
-- [ ] Backend: API GET /api/orders con paginación
-- [ ] Backend: Soporte de ordenamiento dinámico
-- [ ] Backend: Cálculo de totales y métricas
-- [ ] Backend: Optimización de queries (eager loading)
-- [ ] Base de datos: Índices creados
-- [ ] Pruebas de paginación
-- [ ] Pruebas de ordenamiento
-- [ ] Pruebas de performance con volumen alto
-- [ ] Responsive design (mobile, tablet, desktop)
+- [x] Frontend: Componente de tabla de pedidos
+- [x] Frontend: Paginación con controles completos
+- [x] Frontend: Ordenamiento por columnas
+- [x] Frontend: Badges con código de colores
+- [x] Frontend: Botón de crear nuevo pedido
+- [x] Frontend: Panel de resumen de totales
+- [x] Frontend: Menú de acciones rápidas
+- [x] Frontend: Estados vacíos y sin resultados
+- [x] Frontend: Loading states (skeleton)
+- [x] Backend: API GET /api/orders con paginación
+- [x] Backend: Soporte de ordenamiento dinámico
+- [x] Backend: Cálculo de totales y métricas
+- [x] Backend: Optimización de queries (eager loading)
+- [ ] Base de datos: Índices creados (diferido - v1.0 usa índices ORM default)
+- [ ] Pruebas de paginación (diferido v1.0)
+- [ ] Pruebas de ordenamiento (diferido v1.0)
+- [ ] Pruebas de performance con volumen alto (diferido v1.0)
+- [x] Responsive design (mobile, tablet, desktop)
 
 ## Dependencias
 - US-ORD-001 (Crear Pedido) debe estar completo

@@ -1,6 +1,6 @@
 # 🚀 GesTrack - Plan de Implementación
 
-**Última actualización:** 2026-02-23 (US-ORD-004 completada)
+**Última actualización:** 2026-03-06 (US-ORD-005 completada)
 **Versión:** 1.0
 
 ---
@@ -12,12 +12,12 @@
 │  PROGRESO GLOBAL DEL PROYECTO                               │
 ├─────────────────────────────────────────────────────────────┤
 │  Total Historias de Usuario:     82                         │
-│  ✅ Completadas:                   41                        │
+│  ✅ Completadas:                   42                        │
 │  🔄 Parcialmente Completadas:     0                         │
 │  ⏳ En Progreso:                   0                         │
-│  ⏸️  Pendientes:                   41                        │
+│  ⏸️  Pendientes:                   40                        │
 │                                                             │
-│  Progreso: [█████████░░░░░░░░░░░] 50% (41/82)              │
+│  Progreso: [█████████░░░░░░░░░░░] 51% (42/82)              │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -30,7 +30,7 @@
 | 01 | Foundation | 6 | 6 | 0 | 0 | [██████████] 100% |
 | 02 | Core Data | 10 | 10 | 0 | 0 | [██████████] 100% |
 | 03 | Stock Management | 10 | 10 | 0 | 0 | [██████████] 100% |
-| 04 | Sales | 26 | 14 | 0 | 12 | [█████░░░░░] 54% |
+| 04 | Sales | 26 | 15 | 0 | 11 | [█████░░░░░] 58% |
 | 05 | Supply Chain | 15 | 0 | 0 | 15 | [░░░░░░░░░░] 0% |
 | 06 | Analytics | 15 | 0 | 0 | 15 | [░░░░░░░░░░] 0% |
 
@@ -356,7 +356,7 @@
 **Objetivo:** Implementar funcionalidades principales de negocio
 **Épicas:** 03 Stock Management, 04 Sales
 **Total US:** 36
-**Progreso:** [██████░░░░] 58% (21/36 completadas) 🔄 EN PROGRESO
+**Progreso:** [██████░░░░] 61% (22/36 completadas) 🔄 EN PROGRESO
 
 ---
 
@@ -644,7 +644,7 @@
 ## Epic 04: Sales - Gestión de Clientes y Pedidos
 
 **Prioridad:** ⭐⭐⭐ ALTA
-**Progreso:** [█████░░░░░] 50% (13/26)
+**Progreso:** [██████░░░░] 58% (15/26)
 **Carpeta:** `context/user_stories/epic_04_sales/`
 
 
@@ -1054,12 +1054,31 @@
 - **Criterios de Aceptación:** CA-1 ✅ CA-2 ✅ CA-3 ✅ CA-4 ✅ CA-5 ✅ CA-6 ✅ CA-7 ✅ CA-8 ✅ CA-9 ✅ CA-10 ✅
 - **Fecha de completación:** 2026-02-23
 
-#### [ ] US-ORD-005: Listar Pedidos
+#### [x] US-ORD-005: Listar Pedidos
 - **Archivo:** `context/user_stories/epic_04_sales/US-ORD-005_listar_pedidos.md`
 - **Prioridad:** ALTA
 - **Estimación:** 5 pts
-- **Estado:** ⏸️ Pendiente
-- **Criterios de Aceptación:** 7
+- **Estado:** ✅ COMPLETADA
+- **Criterios de Aceptación:** CA-1 ✅ CA-2 ✅ CA-3 ✅ CA-4 ✅ CA-5 ✅ CA-6 ✅ CA-7 ✅ CA-8 ✅ CA-9 ✅ CA-10 ✅
+- **Progreso Backend:** ✅ 100%
+  - CA-3: Ordenamiento dinámico (sort_by, sort_order) para 5 columnas ✅
+  - CA-6: Métricas (total_amount, status_counts) en response ✅
+  - Soporte outerjoin con Customer para sort por nombre y búsqueda ✅
+- **Progreso Frontend:** ✅ 100%
+  - CA-1: Tabla con 7 columnas (Número, Cliente, Fecha, Total, Estado, Pago, Acciones) ✅
+  - CA-2: Paginación 10/20/50/100 con label "X–Y de Z pedidos" ✅
+  - CA-3: TableSortLabel en 5 columnas con toggle asc/desc ✅
+  - CA-4: Badges de estado y pago con colores correctos + tooltip saldo ✅
+  - CA-5: Botón "Nuevo Pedido" en header ✅
+  - CA-6: Panel de métricas (total pedidos, ventas totales, chips por estado) ✅
+  - CA-7: Menú ⋮ con Ver detalles, Cambiar estado, Registrar pago, Cancelar ✅
+  - CA-8: WarningAmber para pedidos Pendiente >3 días, ErrorOutline para pago pendiente ✅
+  - CA-9: Empty state diferenciado (sin pedidos vs filtros sin resultados) ✅
+  - CA-10: Skeleton rows durante carga (reemplaza CircularProgress) ✅
+- **Archivos Modificados:**
+  - Backend: `routes/orders.py` (list_orders con sorting + métricas)
+  - Frontend: `pages/Orders/OrderList.jsx` (reescritura completa)
+- **Fecha de completación:** 2026-03-06
 
 #### [ ] US-ORD-006: Buscar y Filtrar Pedidos
 - **Archivo:** `context/user_stories/epic_04_sales/US-ORD-006_buscar_filtrar_pedidos.md`
