@@ -74,7 +74,12 @@ const Sidebar = ({ user }) => {
     >
       {/* Branding */}
       <Box sx={{ px: 3, mb: 6 }}>
-        <img src={gesTrackLogo} alt="GesTrack" style={{ height: 52, display: 'block', marginBottom: 4 }} />
+        <img
+          src={gesTrackLogo}
+          alt="GesTrack"
+          onClick={() => navigate('/dashboard')}
+          style={{ height: 52, display: 'block', marginBottom: 4, cursor: 'pointer' }}
+        />
         <Typography
           sx={{ fontSize: 11, color: '#3d4a42', opacity: 0.7, fontFamily: 'Inter', letterSpacing: '0.02em' }}
         >

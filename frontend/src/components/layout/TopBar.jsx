@@ -71,20 +71,6 @@ const TopBar = ({ user, onMenuClick }) => {
           <MenuIcon />
         </IconButton>
 
-        <Typography
-          sx={{
-            fontFamily: 'Inter',
-            fontWeight: 900,
-            fontSize: 28,
-            color: '#006948',
-            cursor: 'pointer',
-            userSelect: 'none',
-          }}
-          onClick={() => navigate('/dashboard')}
-        >
-          GesTrack
-        </Typography>
-
         <Box
           component="form"
           onSubmit={handleSearchSubmit}
