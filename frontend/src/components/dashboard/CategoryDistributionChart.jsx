@@ -78,7 +78,7 @@ const CategoryDistributionChart = () => {
         border: '1px solid #bccac0',
         boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
         p: 3,
-        height: 400,
+        minHeight: 400,
         display: 'flex',
         flexDirection: 'column',
       }}

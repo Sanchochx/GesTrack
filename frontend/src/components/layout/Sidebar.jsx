@@ -14,7 +14,7 @@ import {
 import { useNavigate, useLocation } from 'react-router-dom';
 import authService from '../../services/authService';
 import inventoryService from '../../services/inventoryService';
-import gesTrackLogo from '../../assets/gestrack-logo.png';
+import gesTrackLogo from '../../assets/GesTrack Logo 2.png';
 
 const NAV_ITEMS = [
   { label: 'Inicio', icon: HomeIcon, path: '/dashboard', roles: ['Admin', 'Gerente de Almacén', 'Personal de Ventas'] },
@@ -74,7 +74,7 @@ const Sidebar = ({ user }) => {
     >
       {/* Branding */}
       <Box sx={{ px: 3, mb: 6 }}>
-        <img src={gesTrackLogo} alt="GesTrack" style={{ height: 36, display: 'block', marginBottom: 4 }} />
+        <img src={gesTrackLogo} alt="GesTrack" style={{ height: 52, display: 'block', marginBottom: 4 }} />
         <Typography
           sx={{ fontSize: 11, color: '#3d4a42', opacity: 0.7, fontFamily: 'Inter', letterSpacing: '0.02em' }}
         >
