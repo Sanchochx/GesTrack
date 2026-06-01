@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+
+<html class="light" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Inventory Pro | Dashboard de Gestión</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind Config Verbatim -->
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "inverse-primary": "#68dba9",
+                    "secondary-container": "#dae2fd",
+                    "on-secondary": "#ffffff",
+                    "surface-tint": "#006c4a",
+                    "surface-container-highest": "#d3e4fe",
+                    "secondary-fixed": "#dae2fd",
+                    "surface-container-high": "#dce9ff",
+                    "on-primary-container": "#f5fff7",
+                    "inverse-surface": "#213145",
+                    "on-background": "#0b1c30",
+                    "surface-container": "#e5eeff",
+                    "primary": "#006948",
+                    "tertiary-fixed-dim": "#ffb3ae",
+                    "on-tertiary-fixed-variant": "#7f2928",
+                    "on-error-container": "#93000a",
+                    "on-primary-fixed-variant": "#005137",
+                    "on-surface-variant": "#3d4a42",
+                    "surface": "#f8f9ff",
+                    "on-secondary-container": "#5c647a",
+                    "on-tertiary-fixed": "#410004",
+                    "outline": "#6d7a72",
+                    "secondary-fixed-dim": "#bec6e0",
+                    "surface-container-lowest": "#ffffff",
+                    "on-surface": "#0b1c30",
+                    "on-tertiary": "#ffffff",
+                    "on-secondary-fixed-variant": "#3f465c",
+                    "error": "#ba1a1a",
+                    "tertiary-fixed": "#ffdad7",
+                    "surface-variant": "#d3e4fe",
+                    "on-secondary-fixed": "#131b2e",
+                    "on-error": "#ffffff",
+                    "error-container": "#ffdad6",
+                    "primary-fixed-dim": "#68dba9",
+                    "secondary": "#565e74",
+                    "outline-variant": "#bccac0",
+                    "primary-container": "#00855d",
+                    "on-tertiary-container": "#fffbff",
+                    "surface-bright": "#f8f9ff",
+                    "tertiary": "#9b3e3b",
+                    "tertiary-container": "#ba5551",
+                    "inverse-on-surface": "#eaf1ff",
+                    "surface-container-low": "#eff4ff",
+                    "on-primary-fixed": "#002114",
+                    "background": "#f8f9ff",
+                    "surface-dim": "#cbdbf5",
+                    "on-primary": "#ffffff",
+                    "primary-fixed": "#85f8c4"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.125rem",
+                    "lg": "0.25rem",
+                    "xl": "0.5rem",
+                    "full": "0.75rem"
+            },
+            "spacing": {
+                    "xs": "8px",
+                    "lg": "32px",
+                    "md": "24px",
+                    "xl": "48px",
+                    "sm": "16px",
+                    "gutter": "24px",
+                    "margin": "32px",
+                    "base": "4px"
+            },
+            "fontFamily": {
+                    "display-lg": ["Inter"],
+                    "label-md": ["Inter"],
+                    "body-md": ["Inter"],
+                    "headline-md": ["Inter"],
+                    "body-lg": ["Inter"],
+                    "data-mono": ["Inter"],
+                    "headline-lg": ["Inter"]
+            },
+            "fontSize": {
+                    "display-lg": ["36px", {"lineHeight": "44px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "label-md": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "500"}],
+                    "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                    "headline-md": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                    "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "data-mono": ["14px", {"lineHeight": "20px", "fontWeight": "600"}],
+                    "headline-lg": ["28px", {"lineHeight": "36px", "letterSpacing": "-0.01em", "fontWeight": "600"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 10px; }
+    </style>
+</head>
+<body class="bg-surface-container-low text-on-surface">
+<div class="flex min-h-screen">
+<!-- SideNavBar (from JSON) -->
+<aside class="fixed left-0 h-screen w-64 bg-surface-container-low border-r border-outline-variant flex flex-col py-md z-50">
+<div class="px-md mb-xl">
+<h1 class="font-headline-md text-headline-md font-bold text-primary">Logistics Portal</h1>
+<p class="font-body-md text-body-md text-on-surface-variant opacity-70">Global Inventory System</p>
+</div>
+<nav class="flex-1 space-y-base px-sm">
+<a class="flex items-center gap-sm px-md py-sm rounded-lg text-primary font-bold border-r-4 border-primary bg-primary-container/10 transition-all duration-200" href="#">
+<span class="material-symbols-outlined">inventory_2</span>
+<span class="font-body-md">Inventory</span>
+</a>
+<a class="flex items-center gap-sm px-md py-sm rounded-lg text-on-surface-variant hover:bg-surface-container-high transition-colors" href="#">
+<span class="material-symbols-outlined">swap_horiz</span>
+<span class="font-body-md">Movements</span>
+</a>
+<a class="flex items-center gap-sm px-md py-sm rounded-lg text-on-surface-variant hover:bg-surface-container-high transition-colors" href="#">
+<span class="material-symbols-outlined">payments</span>
+<span class="font-body-md">Sales</span>
+</a>
+<a class="flex items-center gap-sm px-md py-sm rounded-lg text-on-surface-variant hover:bg-surface-container-high transition-colors" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="font-body-md">Administration</span>
+</a>
+</nav>
+<div class="px-sm pt-md mt-md border-t border-outline-variant">
+<button class="w-full flex items-center justify-center gap-xs bg-primary text-on-primary py-xs rounded-lg font-label-md hover:bg-primary-container transition-colors mb-md">
+<span class="material-symbols-outlined text-[18px]">download</span>
+                    Export Global Data
+                </button>
+<a class="flex items-center gap-sm px-md py-sm rounded-lg text-on-surface-variant hover:bg-surface-container-high" href="#">
+<span class="material-symbols-outlined">help_outline</span>
+<span class="font-body-md">Support</span>
+</a>
+<a class="flex items-center gap-sm px-md py-sm rounded-lg text-on-surface-variant hover:bg-surface-container-high" href="#">
+<span class="material-symbols-outlined">logout</span>
+<span class="font-body-md">Sign Out</span>
+</a>
+</div>
+</aside>
+<!-- Main Content Wrapper -->
+<main class="ml-64 flex-1 flex flex-col">
+<!-- TopNavBar (from JSON) -->
+<header class="sticky top-0 z-40 bg-surface-container-lowest flex justify-between items-center h-16 px-lg w-full shadow-sm border-b border-outline-variant">
+<div class="flex items-center gap-lg">
+<span class="font-headline-lg text-headline-lg font-black text-primary">Inventory Pro</span>
+<div class="relative hidden lg:block">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline">search</span>
+<input class="pl-10 pr-4 py-2 bg-surface-container-low border border-outline-variant rounded-full text-body-md focus:outline-none focus:border-primary w-64" placeholder="Buscar productos..." type="text"/>
+</div>
+</div>
+<nav class="flex items-center gap-md">
+<a class="font-label-md text-primary font-bold border-b-2 border-primary pb-2" href="#">Dashboard</a>
+<a class="font-label-md text-secondary hover:text-primary-container transition-colors" href="#">Reports</a>
+<a class="font-label-md text-secondary hover:text-primary-container transition-colors" href="#">Analytics</a>
+<div class="h-6 w-px bg-outline-variant mx-xs"></div>
+<button class="material-symbols-outlined text-secondary hover:bg-surface-container-high p-2 rounded-full">notifications</button>
+<button class="material-symbols-outlined text-secondary hover:bg-surface-container-high p-2 rounded-full">apps</button>
+<div class="flex items-center gap-xs ml-md cursor-pointer hover:bg-surface-container-high px-2 py-1 rounded-lg">
+<img alt="User Avatar" class="w-8 h-8 rounded-full border border-primary-container" data-alt="A professional headshot of a middle-aged male logistics manager with a confident expression. He is wearing a sharp, charcoal grey suit and a crisp white shirt, standing against a blurred office background. The lighting is bright and clean, characteristic of a high-end corporate environment, with a warm but professional tone that suggests leadership and reliability." src="https://lh3.googleusercontent.com/aida-public/AB6AXuC3jgRI0KalmDnW_vDZGi0SohKMgcnNtN4m5jmEfun8u8ymXRmgFeiWXQRGVF7IuQyQvB4kpLPRGA2dkOoNXBlPq9VxCS_r4roF4dbV2pPP5NA_t6wCLKjosMeoAWzNZe8gmkDFx5Xgswk7P9vEdLdS_X74XzzUr6HX4lXMftUw2WGp4eZfSsGRjWY-NfyEuUT_geqgBwMU2BNzHXZ8BJszpOzN-V3JWu6wS7vx5I2UkoGM89MRl2-ZpfeORo33KCHmJdBJ8rlhNWI"/>
+<span class="font-label-md font-bold">Admin</span>
+</div>
+</nav></header>
+<!-- Dashboard Content -->
+<div class="p-lg space-y-lg max-w-[1440px] mx-auto w-full">
+<!-- Section 1: Summary Cards -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-gutter">
+<!-- Productos Sin Stock -->
+<div class="bg-surface-container-lowest p-md rounded-xl border border-error/20 shadow-sm relative overflow-hidden">
+<div class="flex justify-between items-start mb-sm">
+<div>
+<h3 class="font-label-md text-error flex items-center gap-xs">
+<span class="material-symbols-outlined text-[20px]">warning</span>
+                                    PRODUCTOS SIN STOCK
+                                </h3>
+<div class="text-[48px] font-black text-on-surface leading-tight mt-xs">5</div>
+</div>
+<button class="p-xs text-outline hover:text-on-surface"><span class="material-symbols-outlined">open_in_new</span></button>
+</div>
+<div class="space-y-xs mb-md">
+<div class="flex justify-between text-body-md border-b border-outline-variant/30 pb-xs">
+<span class="text-on-surface-variant">Teclado Mecánico RGB</span>
+<span class="font-bold text-error">0 un.</span>
+</div>
+<div class="flex justify-between text-body-md border-b border-outline-variant/30 pb-xs">
+<span class="text-on-surface-variant">Webcam HD 1080p</span>
+<span class="font-bold text-error">0 un.</span>
+</div>
+<div class="flex justify-between text-body-md border-b border-outline-variant/30 pb-xs">
+<span class="text-on-surface-variant">Escritorio L Hidráulico</span>
+<span class="font-bold text-error">0 un.</span>
+</div>
+</div>
+<button class="w-full bg-error text-on-error py-xs rounded-lg font-bold hover:opacity-90 transition-opacity">
+                            VER TODOS LOS PRODUCTOS
+                        </button>
+</div>
+<!-- Valor Total Inventario -->
+<div class="bg-surface-container-lowest p-md rounded-xl border border-outline-variant shadow-sm flex flex-col justify-between">
+<div>
+<h3 class="font-label-md text-on-surface-variant">VALOR TOTAL DE INVENTARIO</h3>
+<div class="flex items-baseline gap-xs mt-xs">
+<span class="text-primary font-black text-[32px]">COP 104,784,000</span>
+<span class="text-primary-container font-bold text-label-md bg-primary-fixed-dim px-2 py-0.5 rounded-full">+4.2%</span>
+</div>
+<p class="text-body-md text-on-surface-variant opacity-60 mt-xs">Actualizado ahora</p>
+</div>
+<div class="grid grid-cols-2 gap-sm mt-md">
+<div class="bg-surface-container-low p-sm rounded-lg">
+<div class="text-label-md text-on-surface-variant uppercase">Productos</div>
+<div class="font-headline-md font-bold">28</div>
+</div>
+<div class="bg-surface-container-low p-sm rounded-lg">
+<div class="text-label-md text-on-surface-variant uppercase">Unidades</div>
+<div class="font-headline-md font-bold">904</div>
+</div>
+</div>
+</div>
+<!-- Exportar Reporte -->
+<div class="bg-surface-container-lowest p-md rounded-xl border border-outline-variant shadow-sm flex flex-col">
+<h3 class="font-label-md text-on-surface-variant flex items-center gap-xs">
+<span class="material-symbols-outlined text-[18px]">description</span>
+                            EXPORTAR REPORTE
+                        </h3>
+<p class="text-body-md text-on-surface-variant mt-xs mb-md">Selecciona el periodo para el informe detallado.</p>
+<div class="flex gap-xs p-1 bg-surface-container-low rounded-lg mb-md">
+<button class="flex-1 py-1 px-2 rounded-md font-label-md bg-white shadow-sm text-primary">7 DÍAS</button>
+<button class="flex-1 py-1 px-2 rounded-md font-label-md text-on-surface-variant hover:bg-white/50 transition-colors">30 DÍAS</button>
+<button class="flex-1 py-1 px-2 rounded-md font-label-md text-on-surface-variant hover:bg-white/50 transition-colors">1 AÑO</button>
+</div>
+<div class="flex-1 space-y-xs mb-md">
+<div class="flex items-center gap-xs text-body-md text-on-surface-variant">
+<span class="material-symbols-outlined text-primary text-[18px]">check_circle</span> Valor total por categoría
+                            </div>
+<div class="flex items-center gap-xs text-body-md text-on-surface-variant">
+<span class="material-symbols-outlined text-primary text-[18px]">check_circle</span> Top 10 productos de mayor valor
+                            </div>
+</div>
+<button class="w-full bg-primary text-on-primary py-sm rounded-lg font-bold flex items-center justify-center gap-sm hover:scale-[0.98] transition-transform">
+<span class="material-symbols-outlined">download</span>
+                            DESCARGAR EXCEL
+                        </button>
+</div>
+</div>
+<!-- Section 2: Analytics -->
+<div class="grid grid-cols-12 gap-gutter">
+<!-- Line Chart Area -->
+<div class="col-span-12 lg:col-span-8 bg-white p-md rounded-xl border border-outline-variant shadow-sm h-[400px] flex flex-col">
+<div class="flex justify-between items-center mb-md">
+<h2 class="font-headline-md font-bold text-on-surface">Evolución del Valor del Inventario</h2>
+<div class="flex gap-sm">
+<div class="flex items-center gap-xs"><span class="w-3 h-3 rounded-full bg-primary"></span><span class="text-label-md">Activo</span></div>
+<div class="flex items-center gap-xs"><span class="w-3 h-3 rounded-full bg-outline-variant"></span><span class="text-label-md">Histórico</span></div>
+</div>
+</div>
+<div class="flex-1 w-full relative group">
+<!-- SVG Placeholder for Chart -->
+<div class="absolute inset-0 flex items-end justify-between px-4 pb-2 border-l border-b border-outline-variant/30">
+<!-- Simple simulated bar graph for visual depth -->
+<div class="w-12 bg-primary/20 hover:bg-primary transition-colors h-[40%] rounded-t-sm"></div>
+<div class="w-12 bg-primary/20 hover:bg-primary transition-colors h-[60%] rounded-t-sm"></div>
+<div class="w-12 bg-primary/20 hover:bg-primary transition-colors h-[45%] rounded-t-sm"></div>
+<div class="w-12 bg-primary/20 hover:bg-primary transition-colors h-[80%] rounded-t-sm"></div>
+<div class="w-12 bg-primary/20 hover:bg-primary transition-colors h-[70%] rounded-t-sm"></div>
+<div class="w-12 bg-primary/20 hover:bg-primary transition-colors h-[95%] rounded-t-sm"></div>
+<div class="w-12 bg-primary/20 hover:bg-primary transition-colors h-[85%] rounded-t-sm"></div>
+<div class="w-12 bg-primary/20 hover:bg-primary transition-colors h-[100%] rounded-t-sm"></div>
+</div>
+<div class="absolute -left-12 top-0 h-full flex flex-col justify-between text-[10px] text-outline py-2">
+<span>120M</span><span>80M</span><span>40M</span><span>0</span>
+</div>
+</div>
+<div class="flex justify-between px-4 mt-4 text-label-md text-outline">
+<span>Ene</span><span>Feb</span><span>Mar</span><span>Abr</span><span>May</span><span>Jun</span><span>Jul</span><span>Ago</span>
+</div>
+</div>
+<!-- Pie Chart & Stats -->
+<div class="col-span-12 lg:col-span-4 bg-white p-md rounded-xl border border-outline-variant shadow-sm flex flex-col">
+<h2 class="font-headline-md font-bold text-on-surface mb-md">Distribución por Categoría</h2>
+<div class="flex-1 flex flex-col items-center justify-center space-y-md">
+<!-- Donut Chart Simulated with CSS gradients -->
+<div class="relative w-48 h-48 rounded-full border-[12px] border-primary" style="background: conic-gradient(#006948 0% 45%, #00855d 45% 65%, #565e74 65% 80%, #ba1a1a 80% 100%);">
+<div class="absolute inset-0 m-auto w-32 h-32 bg-white rounded-full flex flex-col items-center justify-center">
+<span class="text-label-md text-on-surface-variant">TOTAL</span>
+<span class="text-headline-md font-bold text-on-surface">904 Un.</span>
+</div>
+</div>
+<div class="w-full space-y-sm">
+<div class="flex justify-between items-center text-body-md">
+<div class="flex items-center gap-xs"><span class="w-3 h-3 rounded-full bg-primary"></span> Electrónica</div>
+<span class="font-bold">45%</span>
+</div>
+<div class="flex justify-between items-center text-body-md">
+<div class="flex items-center gap-xs"><span class="w-3 h-3 rounded-full bg-primary-container"></span> Oficina</div>
+<span class="font-bold">20%</span>
+</div>
+<div class="flex justify-between items-center text-body-md">
+<div class="flex items-center gap-xs"><span class="w-3 h-3 rounded-full bg-secondary"></span> Hogar</div>
+<span class="font-bold">15%</span>
+</div>
+<div class="flex justify-between items-center text-body-md">
+<div class="flex items-center gap-xs"><span class="w-3 h-3 rounded-full bg-error"></span> Otros</div>
+<span class="font-bold">20%</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Section 3: Rankings & Stock Breakdown -->
+<div class="grid grid-cols-12 gap-gutter">
+<!-- Top 10 Products -->
+<div class="col-span-12 lg:col-span-6 bg-white rounded-xl border border-outline-variant shadow-sm overflow-hidden flex flex-col">
+<div class="p-md border-b border-outline-variant flex justify-between items-center">
+<h2 class="font-headline-md font-bold text-on-surface">Top 10 Productos por Valor</h2>
+<button class="text-primary font-bold text-label-md hover:underline">Ver Todo</button>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left">
+<thead class="bg-surface-container-low">
+<tr>
+<th class="px-md py-sm font-label-md text-on-surface-variant uppercase">Producto</th>
+<th class="px-md py-sm font-label-md text-on-surface-variant uppercase">Categoría</th>
+<th class="px-md py-sm font-label-md text-on-surface-variant uppercase text-right">Valor Total</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant/30">
+<tr class="hover:bg-surface-container-low/50 transition-colors">
+<td class="px-md py-sm flex items-center gap-sm">
+<div class="w-8 h-8 rounded bg-surface-container-high flex items-center justify-center text-label-md font-bold">1</div>
+<span class="text-body-md font-bold">Laptop HP Pavilion 15</span>
+</td>
+<td class="px-md py-sm"><span class="bg-primary/10 text-primary px-2 py-0.5 rounded-full text-label-md font-medium">Electrónica</span></td>
+<td class="px-md py-sm text-right font-data-mono">COP 15,200,000</td>
+</tr>
+<tr class="hover:bg-surface-container-low/50 transition-colors">
+<td class="px-md py-sm flex items-center gap-sm">
+<div class="w-8 h-8 rounded bg-surface-container-high flex items-center justify-center text-label-md font-bold">2</div>
+<span class="text-body-md font-bold">Monitor Samsung 34" Curve</span>
+</td>
+<td class="px-md py-sm"><span class="bg-primary/10 text-primary px-2 py-0.5 rounded-full text-label-md font-medium">Electrónica</span></td>
+<td class="px-md py-sm text-right font-data-mono">COP 12,450,000</td>
+</tr>
+<tr class="hover:bg-surface-container-low/50 transition-colors">
+<td class="px-md py-sm flex items-center gap-sm">
+<div class="w-8 h-8 rounded bg-surface-container-high flex items-center justify-center text-label-md font-bold">3</div>
+<span class="text-body-md font-bold">Silla Ergonómica Pro</span>
+</td>
+<td class="px-md py-sm"><span class="bg-secondary-container text-secondary px-2 py-0.5 rounded-full text-label-md font-medium">Oficina</span></td>
+<td class="px-md py-sm text-right font-data-mono">COP 8,900,000</td>
+</tr>
+<tr class="hover:bg-surface-container-low/50 transition-colors">
+<td class="px-md py-sm flex items-center gap-sm">
+<div class="w-8 h-8 rounded bg-surface-container-high flex items-center justify-center text-label-md font-bold">4</div>
+<span class="text-body-md font-bold">Cafetera Expreso Pro</span>
+</td>
+<td class="px-md py-sm"><span class="bg-tertiary-fixed text-tertiary px-2 py-0.5 rounded-full text-label-md font-medium">Hogar</span></td>
+<td class="px-md py-sm text-right font-data-mono">COP 7,120,000</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<!-- Top 5 Categories & Stock Status -->
+<div class="col-span-12 lg:col-span-6 space-y-gutter">
+<!-- Top Categories by Investment -->
+<div class="bg-white p-md rounded-xl border border-outline-variant shadow-sm">
+<h2 class="font-headline-md font-bold text-on-surface mb-md">Top Categorías por Inversión</h2>
+<div class="space-y-md">
+<div class="space-y-xs">
+<div class="flex justify-between text-label-md font-bold">
+<span>ELECTRONICA</span>
+<span class="text-primary">COP 58,550,000 (55%)</span>
+</div>
+<div class="w-full h-2 bg-surface-container-low rounded-full overflow-hidden">
+<div class="h-full bg-primary" style="width: 55%"></div>
+</div>
+</div>
+<div class="space-y-xs">
+<div class="flex justify-between text-label-md font-bold">
+<span>OFICINA</span>
+<span class="text-primary">COP 22,480,000 (21%)</span>
+</div>
+<div class="w-full h-2 bg-surface-container-low rounded-full overflow-hidden">
+<div class="h-full bg-primary-container" style="width: 21%"></div>
+</div>
+</div>
+<div class="space-y-xs">
+<div class="flex justify-between text-label-md font-bold">
+<span>HOGAR Y COCINA</span>
+<span class="text-primary">COP 14,200,000 (14%)</span>
+</div>
+<div class="w-full h-2 bg-surface-container-low rounded-full overflow-hidden">
+<div class="h-full bg-secondary" style="width: 14%"></div>
+</div>
+</div>
+</div>
+</div>
+<!-- Stock Status Distribution -->
+<div class="bg-white p-md rounded-xl border border-outline-variant shadow-sm">
+<h2 class="font-headline-md font-bold text-on-surface mb-md">Distribución de Stock</h2>
+<div class="grid grid-cols-3 gap-md">
+<div class="text-center p-sm bg-primary/5 rounded-lg border border-primary/20">
+<div class="material-symbols-outlined text-primary mb-xs">check_circle</div>
+<div class="font-headline-md font-bold text-on-surface">22</div>
+<div class="text-[10px] text-primary font-bold uppercase tracking-wider">Stock Normal</div>
+</div>
+<div class="text-center p-sm bg-tertiary/5 rounded-lg border border-tertiary/20">
+<div class="material-symbols-outlined text-tertiary mb-xs">warning</div>
+<div class="font-headline-md font-bold text-on-surface">7</div>
+<div class="text-[10px] text-tertiary font-bold uppercase tracking-wider">Stock Bajo</div>
+</div>
+<div class="text-center p-sm bg-error/5 rounded-lg border border-error/20">
+<div class="material-symbols-outlined text-error mb-xs">error</div>
+<div class="font-headline-md font-bold text-on-surface">5</div>
+<div class="text-[10px] text-error font-bold uppercase tracking-wider">Sin Stock</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Footer Meta -->
+<footer class="mt-auto px-lg py-md border-t border-outline-variant bg-surface-container-lowest flex justify-between items-center text-label-md text-outline">
+<div>© 2024 Inventory Pro v2.4.1 | Logged in as Warehouse Manager</div>
+<div class="flex gap-md">
+<a class="hover:text-primary" href="#">Privacy Policy</a>
+<a class="hover:text-primary" href="#">System Status</a>
+</div>
+</footer>
+</main>
+</div>
+<!-- Micro-interaction JavaScript -->
+<script>
+        document.querySelectorAll('button, a').forEach(el => {
+            el.addEventListener('mousedown', () => {
+                el.classList.add('scale-95');
+            });
+            el.addEventListener('mouseup', () => {
+                el.classList.remove('scale-95');
+            });
+            el.addEventListener('mouseleave', () => {
+                el.classList.remove('scale-95');
+            });
+        });
+
+        // Simple search animation
+        const searchInput = document.querySelector('input[type="text"]');
+        searchInput.addEventListener('focus', () => {
+            searchInput.classList.add('w-80');
+        });
+        searchInput.addEventListener('blur', () => {
+            searchInput.classList.remove('w-80');
+        });
+    </script>
+</body></html>

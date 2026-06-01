@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Container, Typography, Box, Grid, Divider } from '@mui/material';
 import authService from '../../services/authService';
+import DashboardHeader from '../../components/common/DashboardHeader';
 import InventoryValueWidget from '../../components/inventory/InventoryValueWidget';
 import CategoryValueBreakdown from '../../components/inventory/CategoryValueBreakdown';
 import ValueEvolutionChart from '../../components/inventory/ValueEvolutionChart';
@@ -10,9 +11,8 @@ import InventoryValueExportCard from '../../components/inventory/InventoryValueE
 import OutOfStockAlertWidget from '../../components/inventory/OutOfStockAlertWidget';
 
 /**
- * Dashboard para usuarios con rol Admin
- * US-AUTH-002 - CA-6: Redirección por rol
- * US-INV-005 - CA-2: Visualización de valor del inventario
+ * DS-002: Dashboard para Admin — Sistema de Diseño Emerald Logic.
+ * Cabecera unificada + visión general de inventario y alertas críticas.
  */
 const AdminDashboard = () => {
   const navigate = useNavigate();
@@ -20,18 +20,8 @@ const AdminDashboard = () => {
 
   useEffect(() => {
     const currentUser = authService.getCurrentUser();
-
-    if (!currentUser) {
-      navigate('/login');
-      return;
-    }
-
-    if (currentUser.role !== 'Admin') {
-      // Redirigir si no tiene el rol correcto
-      navigate('/dashboard');
-      return;
-    }
-
+    if (!currentUser) { navigate('/login'); return; }
+    if (currentUser.role !== 'Admin') { navigate('/dashboard'); return; }
     setUser(currentUser);
   }, [navigate]);
 
@@ -39,15 +29,21 @@ const AdminDashboard = () => {
 
   return (
     <Container maxWidth="xl">
-      <Box sx={{ p: 3, mt: 4 }}>
+      <Box sx={{ p: { xs: 2, md: 3 }, mt: 4 }}>
+        {/* DS-001: Cabecera personalizada Emerald Logic */}
+        <DashboardHeader role={user.role} userName={user.full_name} />
+
         {/* Section: KPI Summary */}
-        <Typography variant="overline" color="text.secondary" sx={{ fontWeight: 600, letterSpacing: 1.5, display: 'block', mb: 2 }}>
+        <Typography
+          variant="overline"
+          color="text.secondary"
+          sx={{ fontWeight: 600, letterSpacing: 1.5, display: 'block', mb: 2 }}
+        >
           Resumen del Inventario
         </Typography>
 
-        {/* US-INV-005, US-INV-007: Widgets de Valor del Inventario y Alertas */}
         <Grid container spacing={3}>
-          {/* US-INV-007: Alertas de Stock Crítico */}
+          {/* Alertas de Stock Crítico */}
           <Grid item xs={12} md={6} lg={4}>
             <OutOfStockAlertWidget maxItems={5} />
           </Grid>
@@ -62,33 +58,38 @@ const AdminDashboard = () => {
             <InventoryValueExportCard />
           </Grid>
 
-          {/* Section Divider: Charts */}
+          {/* Section: Análisis */}
           <Grid item xs={12}>
             <Divider sx={{ my: 1 }} />
-            <Typography variant="overline" color="text.secondary" sx={{ fontWeight: 600, letterSpacing: 1.5, display: 'block', mt: 2, mb: 2 }}>
+            <Typography
+              variant="overline"
+              color="text.secondary"
+              sx={{ fontWeight: 600, letterSpacing: 1.5, display: 'block', mt: 2, mb: 2 }}
+            >
               Análisis y Evolución
             </Typography>
           </Grid>
 
-          {/* Gráfico de Evolución del Valor */}
           <Grid item xs={12}>
             <ValueEvolutionChart />
           </Grid>
 
-          {/* Section Divider: Distribución */}
+          {/* Section: Distribución */}
           <Grid item xs={12}>
             <Divider sx={{ my: 1 }} />
-            <Typography variant="overline" color="text.secondary" sx={{ fontWeight: 600, letterSpacing: 1.5, display: 'block', mt: 2, mb: 2 }}>
+            <Typography
+              variant="overline"
+              color="text.secondary"
+              sx={{ fontWeight: 600, letterSpacing: 1.5, display: 'block', mt: 2, mb: 2 }}
+            >
               Distribución del Inventario
             </Typography>
           </Grid>
 
-          {/* Desglose por Categoría */}
           <Grid item xs={12}>
             <CategoryValueBreakdown />
           </Grid>
 
-          {/* Top Productos · Top Categorías · Distribución de Stock */}
           <Grid item xs={12}>
             <ValueMetricsPanel />
           </Grid>
