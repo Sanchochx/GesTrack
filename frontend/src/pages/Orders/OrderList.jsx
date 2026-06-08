@@ -5,9 +5,12 @@
  *             CA-8 (indicadores), CA-9 (estados vacíos), CA-10 (skeleton)
  * US-ORD-003: CA-1 (colores por estado), CA-2 (visibilidad de estado)
  * US-ORD-004: CA-9 (colores estado pago, tooltip saldo, filtro por estado pago)
+ * US-ORD-006: CA-1 (debounce búsqueda), CA-2 (fecha), CA-3 (multi-estado),
+ *             CA-4 (multi-pago), CA-5 (combinar), CA-6 (chips), CA-7 (contador),
+ *             CA-8 (limpiar), CA-9 (URL params)
  */
 import { useState, useEffect, useCallback } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import {
   Container,
   Box,
@@ -27,15 +30,10 @@ import {
   TablePagination,
   TableSortLabel,
   Chip,
-  TextField,
-  InputAdornment,
-  Select,
-  MenuItem,
-  FormControl,
-  InputLabel,
   Tooltip,
   IconButton,
   Menu,
+  MenuItem,
   Grid,
   Divider,
   Skeleton,
@@ -45,7 +43,6 @@ import {
   DialogContentText,
   DialogActions,
 } from '@mui/material';
-import SearchIcon from '@mui/icons-material/Search';
 import AddIcon from '@mui/icons-material/Add';
 import HomeIcon from '@mui/icons-material/Home';
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
@@ -56,15 +53,15 @@ import PaymentIcon from '@mui/icons-material/Payment';
 import CancelIcon from '@mui/icons-material/Cancel';
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
-import FilterListOffIcon from '@mui/icons-material/FilterListOff';
 import orderService from '../../services/orderService';
 import { STATUS_COLORS } from '../../components/orders/StatusChangeModal';
 import { PAYMENT_STATUS_COLORS } from './OrderDetail';
 import StatusChangeModal from '../../components/orders/StatusChangeModal';
 import PaymentRegistrationModal from '../../components/orders/PaymentRegistrationModal';
+import OrderFilters from '../../components/orders/OrderFilters';
+import { DEFAULT_STATUSES, PAYMENT_STATUSES } from '../../components/orders/orderConstants';
+import useDebounce from '../../hooks/useDebounce';
 
-const ALL_STATUSES = ['Pendiente', 'Confirmado', 'Procesando', 'Enviado', 'Entregado', 'Cancelado'];
-const ALL_PAYMENT_STATUSES = ['Pendiente', 'Parcialmente Pagado', 'Pagado'];
 const TERMINAL_STATUSES = ['Entregado', 'Cancelado'];
 // CA-8: días en Pendiente antes de mostrar alerta
 const PENDING_ALERT_DAYS = 3;
@@ -97,6 +94,8 @@ const STATUS_ORDER = ['Pendiente', 'Confirmado', 'Procesando', 'Enviado', 'Entre
 const OrderList = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  // CA-9: Persistencia de filtros en URL
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -109,10 +108,29 @@ const OrderList = () => {
   const [rowsPerPage, setRowsPerPage] = useState(20);
   const [total, setTotal] = useState(0);
 
-  // Filtros
-  const [search, setSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState('');
-  const [paymentStatusFilter, setPaymentStatusFilter] = useState('');
+  // CA-1: Búsqueda por texto (con debounce)
+  const [search, setSearch] = useState(searchParams.get('search') || '');
+  const debouncedSearch = useDebounce(search, 300);
+
+  // CA-3: Multi-selección de estados (US-ORD-006)
+  const initStatuses = () => {
+    const raw = searchParams.get('status');
+    if (raw) return raw.split(',').filter(Boolean);
+    return DEFAULT_STATUSES;
+  };
+  const [selectedStatuses, setSelectedStatuses] = useState(initStatuses);
+
+  // CA-4: Multi-selección de estados de pago
+  const initPaymentStatuses = () => {
+    const raw = searchParams.get('payment_status');
+    if (raw) return raw.split(',').filter(Boolean);
+    return PAYMENT_STATUSES;
+  };
+  const [selectedPaymentStatuses, setSelectedPaymentStatuses] = useState(initPaymentStatuses);
+
+  // CA-2: Filtro por rango de fechas
+  const [dateFrom, setDateFrom] = useState(searchParams.get('date_from') || null);
+  const [dateTo, setDateTo] = useState(searchParams.get('date_to') || null);
 
   // CA-3: Ordenamiento
   const [sortBy, setSortBy] = useState('created_at');
@@ -132,6 +150,21 @@ const OrderList = () => {
   const [cancelConfirmOrder, setCancelConfirmOrder] = useState(null);
   const [cancelLoading, setCancelLoading] = useState(false);
 
+  // CA-9: Sincronizar filtros activos con URL
+  useEffect(() => {
+    const params = {};
+    if (debouncedSearch.trim()) params.search = debouncedSearch.trim();
+    const defaultStatuses = DEFAULT_STATUSES.slice().sort().join(',');
+    const currentStatuses = selectedStatuses.slice().sort().join(',');
+    if (currentStatuses !== defaultStatuses) params.status = currentStatuses;
+    if (!PAYMENT_STATUSES.every((s) => selectedPaymentStatuses.includes(s))) {
+      params.payment_status = selectedPaymentStatuses.join(',');
+    }
+    if (dateFrom) params.date_from = dateFrom;
+    if (dateTo) params.date_to = dateTo;
+    setSearchParams(params, { replace: true });
+  }, [debouncedSearch, selectedStatuses, selectedPaymentStatuses, dateFrom, dateTo, setSearchParams]);
+
   const fetchOrders = useCallback(async () => {
     setLoading(true);
     setError(null);
@@ -142,9 +175,17 @@ const OrderList = () => {
         sort_by: sortBy,
         sort_order: sortOrder,
       };
-      if (search.trim()) params.search = search.trim();
-      if (statusFilter) params.status = statusFilter;
-      if (paymentStatusFilter) params.payment_status = paymentStatusFilter;
+      // CA-1: Búsqueda con debounce aplicado
+      if (debouncedSearch.trim()) params.search = debouncedSearch.trim();
+      // CA-3: Multi-estado (comma-separated)
+      if (selectedStatuses.length > 0) params.status = selectedStatuses.join(',');
+      // CA-4: Multi-estado pago
+      if (selectedPaymentStatuses.length > 0 && !PAYMENT_STATUSES.every((s) => selectedPaymentStatuses.includes(s))) {
+        params.payment_status = selectedPaymentStatuses.join(',');
+      }
+      // CA-2: Fechas
+      if (dateFrom) params.date_from = dateFrom;
+      if (dateTo) params.date_to = dateTo;
 
       const response = await orderService.getOrders(params);
       setOrders(response.data || []);
@@ -155,7 +196,7 @@ const OrderList = () => {
     } finally {
       setLoading(false);
     }
-  }, [page, rowsPerPage, search, statusFilter, paymentStatusFilter, sortBy, sortOrder]);
+  }, [page, rowsPerPage, debouncedSearch, selectedStatuses, selectedPaymentStatuses, dateFrom, dateTo, sortBy, sortOrder]);
 
   useEffect(() => {
     fetchOrders();
@@ -172,29 +213,50 @@ const OrderList = () => {
     setPage(0);
   };
 
-  const handleSearchChange = (e) => {
-    setSearch(e.target.value);
-    setPage(0);
-  };
-
-  const handleStatusFilterChange = (e) => {
-    setStatusFilter(e.target.value);
-    setPage(0);
-  };
-
-  const handlePaymentStatusFilterChange = (e) => {
-    setPaymentStatusFilter(e.target.value);
-    setPage(0);
-  };
-
+  // CA-8: Limpiar todos los filtros
   const clearFilters = () => {
     setSearch('');
-    setStatusFilter('');
-    setPaymentStatusFilter('');
+    setSelectedStatuses(DEFAULT_STATUSES);
+    setSelectedPaymentStatuses(PAYMENT_STATUSES);
+    setDateFrom(null);
+    setDateTo(null);
     setPage(0);
   };
 
-  const hasFilters = search || statusFilter || paymentStatusFilter;
+  // Resetear página cuando cambian filtros
+  const handleSearchChange = (value) => {
+    setSearch(value);
+    setPage(0);
+  };
+
+  const handleStatusesChange = (statuses) => {
+    setSelectedStatuses(statuses);
+    setPage(0);
+  };
+
+  const handlePaymentStatusesChange = (statuses) => {
+    setSelectedPaymentStatuses(statuses);
+    setPage(0);
+  };
+
+  const handleDateFromChange = (date) => {
+    setDateFrom(date);
+    setPage(0);
+  };
+
+  const handleDateToChange = (date) => {
+    setDateTo(date);
+    setPage(0);
+  };
+
+  // CA-6/CA-8: Hay filtros activos si difieren de los valores por defecto
+  const hasFilters =
+    debouncedSearch.trim() ||
+    dateFrom ||
+    dateTo ||
+    !DEFAULT_STATUSES.slice().sort().join(',').includes(selectedStatuses.slice().sort().join(',')) ||
+    selectedStatuses.length !== DEFAULT_STATUSES.length ||
+    !PAYMENT_STATUSES.every((s) => selectedPaymentStatuses.includes(s));
 
   // CA-7: Acciones del menú
   const openActionMenu = (e, order) => {
@@ -298,14 +360,12 @@ const OrderList = () => {
           {hasFilters ? (
             <>
               <Typography color="text.secondary" variant="body1">
-                No se encontraron pedidos con los filtros aplicados
+                No se encontraron pedidos con los criterios seleccionados
               </Typography>
-              <Button
-                size="small"
-                startIcon={<FilterListOffIcon />}
-                onClick={clearFilters}
-                variant="outlined"
-              >
+              <Typography variant="body2" color="text.disabled">
+                Intenta modificar o limpiar los filtros
+              </Typography>
+              <Button size="small" onClick={clearFilters} variant="outlined">
                 Limpiar filtros
               </Button>
             </>
@@ -407,46 +467,24 @@ const OrderList = () => {
         </Grid>
       </Paper>
 
-      {/* Filtros */}
-      <Box sx={{ display: 'flex', gap: 2, mb: 2, flexWrap: 'wrap', alignItems: 'center' }}>
-        <TextField
-          placeholder="Buscar por número o cliente..."
-          value={search}
-          onChange={handleSearchChange}
-          size="small"
-          sx={{ minWidth: 260 }}
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <SearchIcon fontSize="small" />
-              </InputAdornment>
-            ),
-          }}
+      {/* CA-1 a CA-9 (US-ORD-006): Panel de filtros avanzados */}
+      <Paper variant="outlined" sx={{ p: 1.5, mb: 2 }}>
+        <OrderFilters
+          search={search}
+          onSearchChange={handleSearchChange}
+          selectedStatuses={selectedStatuses}
+          onStatusesChange={handleStatusesChange}
+          selectedPaymentStatuses={selectedPaymentStatuses}
+          onPaymentStatusesChange={handlePaymentStatusesChange}
+          dateFrom={dateFrom}
+          dateTo={dateTo}
+          onDateFromChange={handleDateFromChange}
+          onDateToChange={handleDateToChange}
+          onClearFilters={clearFilters}
+          totalResults={total}
+          loading={loading}
         />
-        <FormControl size="small" sx={{ minWidth: 160 }}>
-          <InputLabel>Estado</InputLabel>
-          <Select value={statusFilter} label="Estado" onChange={handleStatusFilterChange}>
-            <MenuItem value="">Todos</MenuItem>
-            {ALL_STATUSES.map((s) => (
-              <MenuItem key={s} value={s}>{s}</MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-        <FormControl size="small" sx={{ minWidth: 180 }}>
-          <InputLabel>Estado de Pago</InputLabel>
-          <Select value={paymentStatusFilter} label="Estado de Pago" onChange={handlePaymentStatusFilterChange}>
-            <MenuItem value="">Todos</MenuItem>
-            {ALL_PAYMENT_STATUSES.map((s) => (
-              <MenuItem key={s} value={s}>{s}</MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-        {hasFilters && (
-          <Button size="small" startIcon={<FilterListOffIcon />} onClick={clearFilters} color="inherit">
-            Limpiar
-          </Button>
-        )}
-      </Box>
+      </Paper>
 
       {/* Snackbar de éxito */}
       <Snackbar
@@ -533,7 +571,6 @@ const OrderList = () => {
                 // CA-8: Advertencia de saldo pendiente
                 const hasPendingPayment =
                   order.payment_status !== 'Pagado' && order.pending_balance > 0;
-                const isEditable = !TERMINAL_STATUSES.includes(order.status);
 
                 return (
                   <TableRow

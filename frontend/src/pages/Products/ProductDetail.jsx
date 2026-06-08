@@ -378,84 +378,89 @@ const ProductDetail = () => {
       </Box>
 
       {/* CA-8: Layout responsive */}
-      <Grid container spacing={3}>
-        {/* CA-1 & CA-9: Columna Izquierda - Imagen del producto */}
+      <Grid container spacing={2}>
+        {/* CA-1 & CA-9: Columna Izquierda - Imagen + Estado de Stock */}
         <Grid item xs={12} md={5}>
-          <Card>
-            {!imageError && product.image_url ? (
-              <Box
-                onClick={() => setZoomModalOpen(true)}
-                sx={{
-                  cursor: 'zoom-in',
-                  position: 'relative',
-                  '&:hover': {
-                    opacity: 0.9,
-                  },
-                }}
-              >
-                <CardMedia
-                  component="img"
-                  image={product.image_url}
-                  alt={product.name}
-                  sx={{
-                    width: '100%',
-                    height: 'auto',
-                    maxHeight: 500,
-                    objectFit: 'contain',
-                    backgroundColor: '#f5f5f5',
-                    p: 2,
-                  }}
-                  onError={() => setImageError(true)}
-                />
-                {/* US-PROD-009 CA-11: Hint de zoom */}
-                <Typography
-                  variant="caption"
-                  sx={{
-                    position: 'absolute',
-                    bottom: 8,
-                    right: 8,
-                    backgroundColor: 'rgba(0, 0, 0, 0.6)',
-                    color: 'white',
-                    px: 1,
-                    py: 0.5,
-                    borderRadius: 1,
-                  }}
-                >
-                  Click para ampliar
-                </Typography>
-              </Box>
-            ) : (
-              <Box
-                sx={{
-                  width: '100%',
-                  height: 400,
-                  display: 'flex',
-                  flexDirection: 'column',
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                  backgroundColor: '#f5f5f5',
-                  p: 2,
-                }}
-              >
-                <ImageNotSupportedIcon sx={{ fontSize: 80, color: 'text.secondary', mb: 2 }} />
-                <Typography variant="h6" color="text.secondary">
-                  Sin imagen disponible
-                </Typography>
-                <Button
-                  variant="text"
-                  size="small"
-                  startIcon={<EditIcon />}
-                  onClick={handleEdit}
-                  sx={{ mt: 1 }}
-                >
-                  Agregar imagen
-                </Button>
-              </Box>
-            )}
-          </Card>
+          <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 2, alignItems: 'stretch' }}>
+            {/* Imagen */}
+            <Box sx={{ flex: { sm: '0 0 55%' } }}>
+              <Card sx={{ height: '100%' }}>
+                {!imageError && product.image_url ? (
+                  <Box
+                    onClick={() => setZoomModalOpen(true)}
+                    sx={{
+                      cursor: 'zoom-in',
+                      position: 'relative',
+                      height: '100%',
+                      '&:hover': { opacity: 0.9 },
+                    }}
+                  >
+                    <CardMedia
+                      component="img"
+                      image={product.image_url}
+                      alt={product.name}
+                      sx={{
+                        width: '100%',
+                        height: '100%',
+                        minHeight: 260,
+                        objectFit: 'contain',
+                        backgroundColor: '#f5f5f5',
+                        p: 2,
+                      }}
+                      onError={() => setImageError(true)}
+                    />
+                    {/* US-PROD-009 CA-11: Hint de zoom */}
+                    <Typography
+                      variant="caption"
+                      sx={{
+                        position: 'absolute',
+                        bottom: 8,
+                        right: 8,
+                        backgroundColor: 'rgba(0, 0, 0, 0.6)',
+                        color: 'white',
+                        px: 1,
+                        py: 0.5,
+                        borderRadius: 1,
+                      }}
+                    >
+                      Click para ampliar
+                    </Typography>
+                  </Box>
+                ) : (
+                  <Box
+                    sx={{
+                      width: '100%',
+                      height: '100%',
+                      minHeight: 260,
+                      display: 'flex',
+                      flexDirection: 'column',
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                      backgroundColor: '#f5f5f5',
+                      p: 2,
+                    }}
+                  >
+                    <ImageNotSupportedIcon sx={{ fontSize: 80, color: 'text.secondary', mb: 2 }} />
+                    <Typography variant="h6" color="text.secondary">
+                      Sin imagen disponible
+                    </Typography>
+                    <Button
+                      variant="text"
+                      size="small"
+                      startIcon={<EditIcon />}
+                      onClick={handleEdit}
+                      sx={{ mt: 1 }}
+                    >
+                      Agregar imagen
+                    </Button>
+                  </Box>
+                )}
+              </Card>
+            </Box>
 
-          {/* CA-3: Card de Estado de Stock */}
-          <Paper sx={{ mt: 2, p: 2 }}>
+            {/* CA-3: Card de Estado de Stock */}
+            <Box sx={{ flex: 1 }}>
+          <Paper sx={{ p: 2, height: '100%' }}>
             <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center' }}>
               <InventoryIcon sx={{ mr: 1 }} />
               Estado del Inventario
@@ -556,12 +561,14 @@ const ProductDetail = () => {
               </Box>
             </Box>
           </Paper>
+            </Box>
+          </Box>
         </Grid>
 
         {/* Columna Derecha - Información Detallada */}
         <Grid item xs={12} md={7}>
           {/* CA-1: Información General */}
-          <Paper sx={{ p: 3, mb: 3 }}>
+          <Paper sx={{ p: 3, mb: 2 }}>
             <Typography variant="h6" gutterBottom>
               Información General
             </Typography>
@@ -606,7 +613,7 @@ const ProductDetail = () => {
           </Paper>
 
           {/* CA-2: Información de Precios */}
-          <Paper sx={{ p: 3, mb: 3 }}>
+          <Paper sx={{ p: 3, mb: 2 }}>
             <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center' }}>
               <MoneyIcon sx={{ mr: 1 }} />
               Información de Precios
@@ -691,7 +698,7 @@ const ProductDetail = () => {
 
           {/* CA-7: Movimientos Recientes de Inventario */}
           {product.recent_movements && product.recent_movements.length > 0 && (
-            <Paper sx={{ p: 3, mb: 3 }}>
+            <Paper sx={{ p: 3, mb: 2 }}>
               <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center' }}>
                 <HistoryIcon sx={{ mr: 1 }} />
                 Movimientos Recientes
@@ -759,7 +766,7 @@ const ProductDetail = () => {
           )}
 
           {/* CA-5: Metadatos del Sistema */}
-          <Paper sx={{ p: 3, mb: 3 }}>
+          <Paper sx={{ p: 3, mb: 2 }}>
             <Typography variant="h6" gutterBottom>
               Información del Sistema
             </Typography>

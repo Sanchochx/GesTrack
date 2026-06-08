@@ -10,11 +10,7 @@ import {
 import { useNavigate, useLocation } from 'react-router-dom';
 import authService from '../../services/authService';
 
-const TABS = [
-  { label: 'Dashboard', path: '/dashboard' },
-  { label: 'Pedidos', path: '/orders' },
-  { label: 'Analítica', path: '/inventory/dashboard' },
-];
+const TABS = [];
 
 const TopBar = ({ user, onMenuClick }) => {
   const navigate = useNavigate();
@@ -130,16 +126,6 @@ const TopBar = ({ user, onMenuClick }) => {
           })}
         </Box>
 
-        {/* Divider */}
-        <Box
-          sx={{
-            width: 1,
-            height: 24,
-            bgcolor: '#bccac0',
-            display: { xs: 'none', md: 'block' },
-          }}
-          aria-hidden="true"
-        />
 
         {/* Notifications */}
         <IconButton size="small" sx={{ color: '#565e74' }} aria-label="notificaciones">

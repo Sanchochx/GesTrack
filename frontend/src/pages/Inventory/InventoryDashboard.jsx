@@ -395,7 +395,7 @@ const InventoryDashboard = () => {
         {/* CA-6 & CA-2: Charts row */}
         <Grid container spacing={3} sx={{ mb: 3 }}>
           {/* CA-6: Gráfico de Evolución del Valor */}
-          <Grid item xs={12} lg={7}>
+          <Grid item xs={12} lg={6}>
             <Card sx={{ height: '100%' }}>
               <CardHeader
                 title="Evolución del Valor del Inventario"
@@ -445,7 +445,7 @@ const InventoryDashboard = () => {
           </Grid>
 
           {/* CA-2: Distribución por Categoría */}
-          <Grid item xs={12} lg={5}>
+          <Grid item xs={12} lg={6}>
             <Card sx={{ height: '100%' }}>
               <CardHeader
                 title="Distribución por Categoría"
@@ -454,37 +454,79 @@ const InventoryDashboard = () => {
               />
               <CardContent>
                 {categoryData.length > 0 ? (
-                  <ResponsiveContainer width="100%" height={300}>
-                    <PieChart>
-                      <Pie
-                        data={categoryData}
-                        dataKey="total_value"
-                        nameKey="category_name"
-                        cx="50%"
-                        cy="50%"
-                        innerRadius={60}
-                        outerRadius={100}
-                        paddingAngle={2}
-                        label={({ category_name, percentage }) =>
-                          `${category_name} (${percentage?.toFixed(1) || 0}%)`
-                        }
-                        labelLine={!isMobile}
-                      >
-                        {categoryData.map((entry, index) => (
-                          <Cell
-                            key={`cell-${index}`}
-                            fill={entry.category_color || CHART_COLORS[index % CHART_COLORS.length]}
-                            cursor="pointer"
-                            onClick={() => navigate('/inventory/by-category')}
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexDirection: isMobile ? 'column' : 'row' }}>
+                    <Box sx={{ flexShrink: 0 }}>
+                      <ResponsiveContainer width={isMobile ? 280 : 240} height={280}>
+                        <PieChart>
+                          <Pie
+                            data={categoryData}
+                            dataKey="total_value"
+                            nameKey="category_name"
+                            cx="50%"
+                            cy="50%"
+                            innerRadius={65}
+                            outerRadius={110}
+                            paddingAngle={2}
+                          >
+                            {categoryData.map((entry, index) => (
+                              <Cell
+                                key={`cell-${index}`}
+                                fill={entry.category_color || CHART_COLORS[index % CHART_COLORS.length]}
+                                cursor="pointer"
+                                onClick={() => navigate('/inventory/by-category')}
+                              />
+                            ))}
+                          </Pie>
+                          <RechartsTooltip
+                            formatter={(value, name) => [formatCurrency(value), name]}
                           />
-                        ))}
-                      </Pie>
-                      <RechartsTooltip
-                        formatter={(value, name) => [formatCurrency(value), name]}
-                      />
-                      {!isMobile && <Legend />}
-                    </PieChart>
-                  </ResponsiveContainer>
+                        </PieChart>
+                      </ResponsiveContainer>
+                    </Box>
+                    <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 1, minWidth: 0 }}>
+                      {categoryData.map((entry, index) => {
+                        const color = entry.category_color || CHART_COLORS[index % CHART_COLORS.length];
+                        return (
+                          <Box
+                            key={index}
+                            sx={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: 1,
+                              cursor: 'pointer',
+                              borderRadius: 1,
+                              px: 1,
+                              py: 0.5,
+                              '&:hover': { bgcolor: 'action.hover' }
+                            }}
+                            onClick={() => navigate('/inventory/by-category')}
+                          >
+                            <Box
+                              sx={{
+                                width: 12,
+                                height: 12,
+                                borderRadius: '50%',
+                                bgcolor: color,
+                                flexShrink: 0
+                              }}
+                            />
+                            <Typography
+                              variant="body2"
+                              sx={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
+                            >
+                              {entry.category_name}
+                            </Typography>
+                            <Typography
+                              variant="body2"
+                              sx={{ fontWeight: 'bold', color, flexShrink: 0 }}
+                            >
+                              {(entry.percentage ?? 0).toFixed(1)}%
+                            </Typography>
+                          </Box>
+                        );
+                      })}
+                    </Box>
+                  </Box>
                 ) : (
                   <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 300 }}>
                     <Typography color="text.secondary">Sin datos de categorías</Typography>

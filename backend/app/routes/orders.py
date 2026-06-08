@@ -39,37 +39,73 @@ def list_orders():
     try:
         page = int(request.args.get('page', 1))
         per_page = min(int(request.args.get('per_page', 20)), 100)
-        status_filter = request.args.get('status')
-        payment_status_filter = request.args.get('payment_status')
+        # US-ORD-006 CA-3: Soporte de múltiples estados separados por coma
+        status_raw = request.args.get('status', '').strip()
+        status_filters = [s.strip() for s in status_raw.split(',') if s.strip()] if status_raw else []
+        # US-ORD-006 CA-4: Soporte de múltiples estados de pago
+        payment_status_raw = request.args.get('payment_status', '').strip()
+        payment_status_filters = [s.strip() for s in payment_status_raw.split(',') if s.strip()] if payment_status_raw else []
         customer_id_filter = request.args.get('customer_id')
         search = request.args.get('search', '').strip()
+        # US-ORD-006 CA-2: Filtro por rango de fechas
+        date_from_raw = request.args.get('date_from', '').strip()
+        date_to_raw = request.args.get('date_to', '').strip()
         sort_by = request.args.get('sort_by', 'created_at')
         sort_order = request.args.get('sort_order', 'desc')
 
         from app.models.customer import Customer
         from sqlalchemy import case, func, asc, desc
+        from datetime import datetime, timezone, timedelta
 
-        # CA-3: Determinar si necesitamos join con Customer
+        # Parsear fechas (formato ISO YYYY-MM-DD)
+        date_from = None
+        date_to = None
+        if date_from_raw:
+            try:
+                date_from = datetime.strptime(date_from_raw, '%Y-%m-%d').replace(tzinfo=timezone.utc)
+            except ValueError:
+                pass
+        if date_to_raw:
+            try:
+                # Incluir todo el día hasta las 23:59:59
+                date_to = datetime.strptime(date_to_raw, '%Y-%m-%d').replace(
+                    hour=23, minute=59, second=59, tzinfo=timezone.utc
+                )
+            except ValueError:
+                pass
+
+        # Determinar si necesitamos join con Customer
         needs_customer = bool(search) or sort_by == 'customer_name'
 
         query = Order.query
         if needs_customer:
             query = query.outerjoin(Order.customer)
 
-        # Aplicar filtros
-        if status_filter:
-            query = query.filter(Order.status == status_filter)
-        if payment_status_filter:
-            query = query.filter(Order.payment_status == payment_status_filter)
+        # CA-3: Filtro por múltiples estados
+        if status_filters:
+            query = query.filter(Order.status.in_(status_filters))
+        # CA-4: Filtro por múltiples estados de pago
+        if payment_status_filters:
+            query = query.filter(Order.payment_status.in_(payment_status_filters))
         if customer_id_filter:
             query = query.filter(Order.customer_id == customer_id_filter)
+        # CA-2: Filtro por rango de fechas
+        if date_from:
+            query = query.filter(Order.created_at >= date_from)
+        if date_to:
+            query = query.filter(Order.created_at <= date_to)
+        # CA-1: Búsqueda por texto en número de pedido, nombre e email de cliente
         if search:
-            query = query.filter(
-                db.or_(
-                    Order.order_number.ilike(f'%{search}%'),
-                    Customer.nombre_razon_social.ilike(f'%{search}%'),
+            if needs_customer:
+                query = query.filter(
+                    db.or_(
+                        Order.order_number.ilike(f'%{search}%'),
+                        Customer.nombre_razon_social.ilike(f'%{search}%'),
+                        Customer.email.ilike(f'%{search}%'),
+                    )
                 )
-            )
+            else:
+                query = query.filter(Order.order_number.ilike(f'%{search}%'))
 
         # CA-6: Calcular total de ventas sobre datos filtrados (antes de paginar)
         total_amount = query.with_entities(

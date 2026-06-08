@@ -79,6 +79,9 @@ class Order(db.Model):
                 'nombre_razon_social': self.customer.nombre_razon_social,
                 'correo': self.customer.correo,
                 'telefono_movil': self.customer.telefono_movil,
+                'direccion': self.customer.direccion,
+                'municipio_ciudad': self.customer.municipio_ciudad,
+                'departamento': self.customer.departamento,
             } if self.customer else None,
             'created_by_id': self.created_by_id,
             'created_by_name': self.created_by.full_name if self.created_by else None,
@@ -162,6 +165,7 @@ class OrderItem(db.Model):
             'subtotal': float(self.subtotal) if self.subtotal else 0.0,
             'product_name': self.product_name,
             'product_sku': self.product_sku,
+            'product_image_url': self.product.image_url if self.product else None,
         }
 
 
