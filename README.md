@@ -1,3 +1,32 @@
+```text
+    _____                  __               ____           
+  / ___/____ _____  _____/ /_  ____       / __ \___ _   __
+  \__ \/ __ `/ __ \/ ___/ __ \/ __ \     / / / / _ \ | / /
+ ___/ / /_/ / / / / /__/ / / / /_/ /    / /_/ /  __/ |/ / 
+/____/\__,_/_/ /_/\___/_/ /_/\____/____/_____/\___/|___/  
+                                 /_____/                  
+
+               .-"""-.
+             _/-=-.   \
+            (_|a a/   |_
+             / "  \   ,_)
+        _    \`=' /__/
+       / \_  .;--'  `-.
+       \___)//      ,  \
+        \ \/;        \  \
+         \_.|         | |
+          .-\ '     _/_/
+        .'  _;.    (_  \
+       /  .'   `\   \\_/
+      |_ /       |  |\\
+     /  _)       /  / ||
+    /  /       _/  /  //
+    \_/       ( `-/  ||
+              /  /   \\ .-.
+              \_/     \'-'/
+                       `"`
+```
+
 # GesTrack (En desarrollo)
 
 Sistema de gestión de inventario y pedidos para pequeñas y medianas empresas. GesTrack ofrece seguimiento de stock en tiempo real, gestión de clientes y procesamiento de pedidos a través de una API REST en el backend y un frontend moderno en React.
