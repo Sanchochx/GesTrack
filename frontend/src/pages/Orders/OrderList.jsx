@@ -37,11 +37,6 @@ import {
   Grid,
   Divider,
   Skeleton,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogContentText,
-  DialogActions,
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import HomeIcon from '@mui/icons-material/Home';
@@ -58,6 +53,7 @@ import { STATUS_COLORS } from '../../components/orders/StatusChangeModal';
 import { PAYMENT_STATUS_COLORS } from './OrderDetail';
 import StatusChangeModal from '../../components/orders/StatusChangeModal';
 import PaymentRegistrationModal from '../../components/orders/PaymentRegistrationModal';
+import CancelOrderModal from '../../components/orders/CancelOrderModal';
 import OrderFilters from '../../components/orders/OrderFilters';
 import { DEFAULT_STATUSES, PAYMENT_STATUSES } from '../../components/orders/orderConstants';
 import useDebounce from '../../hooks/useDebounce';
@@ -149,6 +145,7 @@ const OrderList = () => {
   // Cancelar pedido desde lista
   const [cancelConfirmOrder, setCancelConfirmOrder] = useState(null);
   const [cancelLoading, setCancelLoading] = useState(false);
+  const [cancelError, setCancelError] = useState(null);
 
   // CA-9: Sincronizar filtros activos con URL
   useEffect(() => {
@@ -320,17 +317,17 @@ const OrderList = () => {
     }
   };
 
-  const handleCancelConfirm = async () => {
+  const handleCancelConfirm = async ({ cancellation_reason, cancellation_reason_detail }) => {
     if (!cancelConfirmOrder) return;
     setCancelLoading(true);
+    setCancelError(null);
     try {
-      await orderService.cancelOrder(cancelConfirmOrder.id);
-      setSuccessMessage(`Pedido ${cancelConfirmOrder.order_number} cancelado`);
+      await orderService.cancelOrder(cancelConfirmOrder.id, cancellation_reason, cancellation_reason_detail);
+      setSuccessMessage(`Pedido ${cancelConfirmOrder.order_number} cancelado correctamente. El stock ha sido restaurado.`);
       setCancelConfirmOrder(null);
       fetchOrders();
     } catch (err) {
-      setError(err?.error?.message || 'Error al cancelar pedido');
-      setCancelConfirmOrder(null);
+      setCancelError(err?.error?.message || 'Error al cancelar pedido');
     } finally {
       setCancelLoading(false);
     }
@@ -571,12 +568,14 @@ const OrderList = () => {
                 // CA-8: Advertencia de saldo pendiente
                 const hasPendingPayment =
                   order.payment_status !== 'Pagado' && order.pending_balance > 0;
+                // US-ORD-009 CA-7: Estilo atenuado para pedidos cancelados
+                const isCancelled = order.status === 'Cancelado';
 
                 return (
                   <TableRow
                     key={order.id}
                     hover
-                    sx={{ cursor: 'pointer' }}
+                    sx={{ cursor: 'pointer', opacity: isCancelled ? 0.6 : 1 }}
                     onClick={() => navigate(`/orders/${order.id}`)}
                   >
                     <TableCell>
@@ -587,13 +586,20 @@ const OrderList = () => {
                             <WarningAmberIcon fontSize="small" sx={{ color: 'warning.main' }} />
                           </Tooltip>
                         )}
-                        <Typography variant="body2" fontWeight="medium" color="primary">
+                        <Typography
+                          variant="body2"
+                          fontWeight="medium"
+                          color={isCancelled ? 'text.secondary' : 'primary'}
+                          sx={{ textDecoration: isCancelled ? 'line-through' : 'none' }}
+                        >
                           {order.order_number}
                         </Typography>
                       </Box>
                     </TableCell>
                     <TableCell>
-                      <Typography variant="body2">{order.customer_name || '-'}</Typography>
+                      <Typography variant="body2" sx={{ textDecoration: isCancelled ? 'line-through' : 'none' }}>
+                        {order.customer_name || '-'}
+                      </Typography>
                     </TableCell>
                     <TableCell>
                       <Typography variant="body2" color="text.secondary">
@@ -601,7 +607,11 @@ const OrderList = () => {
                       </Typography>
                     </TableCell>
                     <TableCell align="right">
-                      <Typography variant="body2" fontWeight="medium">
+                      <Typography
+                        variant="body2"
+                        fontWeight="medium"
+                        sx={{ textDecoration: isCancelled ? 'line-through' : 'none' }}
+                      >
                         {formatCurrency(order.total)}
                       </Typography>
                     </TableCell>
@@ -704,7 +714,7 @@ const OrderList = () => {
             Registrar pago
           </MenuItem>
         )}
-        {actionMenuOrder && ['Pendiente', 'Confirmado'].includes(actionMenuOrder.status) && (
+        {actionMenuOrder && !TERMINAL_STATUSES.includes(actionMenuOrder.status) && (
           <MenuItem onClick={handleOpenCancelConfirm} sx={{ color: 'error.main' }}>
             <CancelIcon fontSize="small" sx={{ mr: 1 }} />
             Cancelar pedido
@@ -734,30 +744,16 @@ const OrderList = () => {
         />
       )}
 
-      {/* Confirmación de cancelación */}
-      <Dialog open={Boolean(cancelConfirmOrder)} onClose={() => !cancelLoading && setCancelConfirmOrder(null)}>
-        <DialogTitle>Cancelar pedido</DialogTitle>
-        <DialogContent>
-          <DialogContentText>
-            ¿Estás seguro de cancelar el pedido{' '}
-            <strong>{cancelConfirmOrder?.order_number}</strong>? El stock de los productos será
-            restaurado automáticamente.
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setCancelConfirmOrder(null)} disabled={cancelLoading}>
-            Volver
-          </Button>
-          <Button
-            onClick={handleCancelConfirm}
-            color="error"
-            variant="contained"
-            disabled={cancelLoading}
-          >
-            {cancelLoading ? 'Cancelando...' : 'Cancelar pedido'}
-          </Button>
-        </DialogActions>
-      </Dialog>
+      {/* US-ORD-009: Modal de cancelación */}
+      {cancelConfirmOrder && (
+        <CancelOrderModal
+          order={cancelConfirmOrder}
+          onConfirm={handleCancelConfirm}
+          onClose={() => { if (!cancelLoading) { setCancelConfirmOrder(null); setCancelError(null); } }}
+          loading={cancelLoading}
+          error={cancelError}
+        />
+      )}
     </Container>
   );
 };

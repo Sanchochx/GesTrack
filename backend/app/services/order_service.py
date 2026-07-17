@@ -2,29 +2,106 @@
 Servicio de gestión de pedidos
 US-ORD-001: Crear Pedido
 US-ORD-004: Estado de Pago del Pedido
+US-ORD-013: Validación de Stock al Crear Pedido
 """
+import logging
 from app import db
 from app.models.order import Order, OrderItem, OrderStatusHistory
+from app.models.order_edit_audit import OrderEditAudit
 from app.models.product import Product
 from app.models.customer import Customer
 from app.models.inventory_movement import InventoryMovement
 from app.models.payment import Payment
 from app.services.stock_service import InsufficientStockError, StockUpdateError
+from app.utils.constants import DISCOUNT_AUTHORIZATION_THRESHOLD
 from decimal import Decimal
 from datetime import datetime, date
+
+logger = logging.getLogger(__name__)
+
+
+class OrderConflictError(Exception):
+    """US-ORD-008: El pedido fue modificado por otro usuario (bloqueo optimista)"""
+    pass
+
+
+class DiscountAuthorizationError(Exception):
+    """US-ORD-014 CA-7: Descuento >20% requiere autorización de Admin"""
+    pass
+
+
+def _compute_discount(subtotal, data, user_role, user_id):
+    """
+    US-ORD-014: Calcula el monto de descuento a partir de discount_type/discount_value,
+    valida el subtotal y la autorización requerida para descuentos > 20%.
+
+    Returns:
+        dict con discount_amount, discount_type, discount_value, discount_reason,
+        discount_justification (texto legible) y discount_authorized_by_id.
+    """
+    discount_type = data.get('discount_type')
+    discount_value = Decimal(str(data.get('discount_value', 0) or 0))
+
+    if discount_value <= 0 or not discount_type:
+        return {
+            'discount_amount': Decimal('0'),
+            'discount_type': None,
+            'discount_value': None,
+            'discount_reason': None,
+            'discount_justification': None,
+            'discount_authorized_by_id': None,
+        }
+
+    if discount_type == 'percentage':
+        discount_amount = (subtotal * (discount_value / Decimal('100'))).quantize(Decimal('0.01'))
+    else:
+        discount_amount = discount_value
+
+    # CA-11: El descuento no puede exceder el subtotal
+    if discount_amount > subtotal:
+        raise ValueError('El descuento no puede ser mayor al subtotal')
+
+    discount_pct = (discount_amount / subtotal * 100) if subtotal > 0 else Decimal('0')
+
+    reason = data.get('discount_reason')
+    discount_justification = (
+        data.get('discount_reason_detail').strip()
+        if reason == 'Otro' and data.get('discount_reason_detail')
+        else reason
+    )
+
+    authorized_by_id = None
+    if discount_pct > DISCOUNT_AUTHORIZATION_THRESHOLD:
+        # CA-7: Solo Admin puede aplicar descuentos mayores al 20%
+        if user_role != 'Admin':
+            raise DiscountAuthorizationError(
+                f'Descuentos mayores al {DISCOUNT_AUTHORIZATION_THRESHOLD}% requieren autorización '
+                f'de un Administrador'
+            )
+        authorized_by_id = user_id
+
+    return {
+        'discount_amount': discount_amount,
+        'discount_type': discount_type,
+        'discount_value': discount_value,
+        'discount_reason': reason,
+        'discount_justification': discount_justification,
+        'discount_authorized_by_id': authorized_by_id,
+    }
 
 
 class OrderService:
     """Servicio para gestionar pedidos"""
 
     @staticmethod
-    def create_order(data, user_id):
+    def create_order(data, user_id, user_role=None):
         """
         CA-8: Crea un nuevo pedido con validación de stock y movimientos de inventario.
 
         Args:
             data: Datos validados del pedido (del schema)
             user_id: ID del usuario que crea el pedido
+            user_role: Rol del usuario que crea el pedido (US-ORD-014 CA-7)
 
         Returns:
             Order: Pedido creado
@@ -32,6 +109,7 @@ class OrderService:
         Raises:
             ValueError: Si el cliente no existe o no está activo
             InsufficientStockError: Si no hay stock suficiente
+            DiscountAuthorizationError: Si el descuento excede el 20% y el usuario no es Admin
             StockUpdateError: Error al actualizar stock
         """
         try:
@@ -71,6 +149,13 @@ class OrderService:
                     })
 
             if stock_errors:
+                # CA-10: Registrar intentos de sobreventa para análisis de demanda no satisfecha
+                for err in stock_errors:
+                    logger.warning(
+                        'Intento de sobreventa: usuario=%s producto=%s (%s) solicitado=%s disponible=%s',
+                        user_id, err['product_name'], err['product_id'],
+                        err['requested'], err['available'],
+                    )
                 error = InsufficientStockError(
                     f'Stock insuficiente para {len(stock_errors)} producto(s)',
                 )
@@ -102,9 +187,15 @@ class OrderService:
 
             tax_percentage = Decimal(str(data.get('tax_percentage', 0) or 0))
             shipping_cost = Decimal(str(data.get('shipping_cost', 0) or 0))
-            discount_amount = Decimal(str(data.get('discount_amount', 0) or 0))
-            tax_amount = subtotal * (tax_percentage / Decimal('100'))
-            total = subtotal + tax_amount + shipping_cost - discount_amount
+
+            # US-ORD-014 CA-1 a CA-3, CA-6, CA-7, CA-9: Calcular y validar descuento
+            discount = _compute_discount(subtotal, data, user_role, user_id)
+            discount_amount = discount['discount_amount']
+
+            # CA-4: Impuesto se calcula sobre el subtotal después del descuento
+            net_subtotal = subtotal - discount_amount
+            tax_amount = net_subtotal * (tax_percentage / Decimal('100'))
+            total = net_subtotal + tax_amount + shipping_cost
 
             # 6. Crear pedido
             order = Order(
@@ -118,7 +209,11 @@ class OrderService:
                 tax_amount=tax_amount,
                 shipping_cost=shipping_cost,
                 discount_amount=discount_amount,
-                discount_justification=data.get('discount_justification'),
+                discount_justification=discount['discount_justification'],
+                discount_type=discount['discount_type'],
+                discount_value=discount['discount_value'],
+                discount_reason=discount['discount_reason'],
+                discount_authorized_by_id=discount['discount_authorized_by_id'],
                 total=total,
                 notes=data.get('notes'),
                 items=order_items,
@@ -171,7 +266,7 @@ class OrderService:
             db.session.commit()
             return order
 
-        except (ValueError, InsufficientStockError):
+        except (ValueError, InsufficientStockError, DiscountAuthorizationError):
             db.session.rollback()
             raise
         except Exception as e:
@@ -179,15 +274,317 @@ class OrderService:
             raise StockUpdateError(f'Error al crear pedido: {str(e)}')
 
     @staticmethod
-    def cancel_order(order_id, user_id, notes=None):
+    def update_order(order_id, data, user_id, user_role=None):
         """
-        CA-8: Cancela un pedido desde cualquier estado excepto Entregado o Cancelado,
+        US-ORD-008: Edita un pedido existente (CA-1, CA-3 a CA-10).
+
+        Args:
+            order_id: ID del pedido a editar
+            data: Datos validados del pedido (del schema OrderUpdateSchema)
+            user_id: ID del usuario que edita
+            user_role: Rol del usuario que edita (US-ORD-014 CA-7/CA-10)
+
+        Returns:
+            tuple: (Order, dict) — pedido actualizado y diff de auditoría
+
+        Raises:
+            ValueError: Estado no editable, cliente inválido, o justificación faltante
+            OrderConflictError: El pedido fue modificado por otro usuario
+            InsufficientStockError: Si no hay stock suficiente para el aumento solicitado
+            DiscountAuthorizationError: Si el descuento excede el 20% y el usuario no es Admin
+            StockUpdateError: Error al actualizar stock
+        """
+        try:
+            order = Order.query.get(order_id)
+            if not order:
+                raise ValueError('Pedido no encontrado')
+
+            # CA-1: Solo pedidos Pendiente o Confirmado se pueden editar
+            if order.status not in ('Pendiente', 'Confirmado'):
+                raise ValueError(
+                    f'Este pedido no puede editarse porque está en estado "{order.status}"'
+                )
+
+            # CA-10 (Notas técnicas): Bloqueo optimista usando updated_at
+            expected_updated_at = data.get('expected_updated_at')
+            if expected_updated_at:
+                current_updated_at = order.updated_at.isoformat() if order.updated_at else None
+                if current_updated_at and expected_updated_at != current_updated_at:
+                    raise OrderConflictError(
+                        'El pedido fue modificado por otro usuario. Recargue la página e intente de nuevo.'
+                    )
+
+            # CA-3: Validar cliente
+            customer = Customer.query.get(data['customer_id'])
+            if not customer:
+                raise ValueError('Cliente no encontrado')
+            if not customer.is_active:
+                raise ValueError('El cliente no está activo')
+
+            # Snapshot "antes" para comparación de totales (CA-8) y auditoría (CA-10)
+            old_items_map = {item.product_id: item for item in order.items}
+            previous_total = Decimal(str(order.total)) if order.total else Decimal('0')
+            previous_customer_id = order.customer_id
+
+            new_items_data = data['items']
+            new_product_ids = {item['product_id'] for item in new_items_data}
+            old_product_ids = set(old_items_map.keys())
+            all_product_ids = new_product_ids | old_product_ids
+
+            # Bloquear todos los productos afectados (agregados, eliminados o modificados)
+            products = Product.query.filter(
+                Product.id.in_(all_product_ids)
+            ).with_for_update().all()
+            products_map = {p.id: p for p in products}
+
+            for pid in all_product_ids:
+                if pid not in products_map:
+                    raise ValueError(f'Producto no encontrado: {pid}')
+
+            # CA-4/CA-5/CA-6: Calcular deltas de stock (positivo = requiere reducir stock)
+            deltas = {}
+            for pid in all_product_ids:
+                old_qty = old_items_map[pid].quantity if pid in old_items_map else 0
+                new_item = next((i for i in new_items_data if i['product_id'] == pid), None)
+                new_qty = int(new_item['quantity']) if new_item else 0
+                deltas[pid] = new_qty - old_qty
+
+            # CA-6/CA-9: Validar stock disponible para incrementos, con datos actuales (locked)
+            stock_errors = []
+            for pid, delta in deltas.items():
+                if delta > 0:
+                    product = products_map[pid]
+                    if product.stock_quantity < delta:
+                        stock_errors.append({
+                            'product_id': pid,
+                            'product_name': product.name,
+                            'requested': delta,
+                            'available': product.stock_quantity,
+                        })
+
+            if stock_errors:
+                # CA-10: Registrar intentos de sobreventa para análisis de demanda no satisfecha
+                for err in stock_errors:
+                    logger.warning(
+                        'Intento de sobreventa (edición de pedido %s): usuario=%s producto=%s (%s) '
+                        'solicitado=%s disponible=%s',
+                        order.order_number, user_id, err['product_name'], err['product_id'],
+                        err['requested'], err['available'],
+                    )
+                error = InsufficientStockError(
+                    f'Stock insuficiente para {len(stock_errors)} producto(s)',
+                )
+                error.details = stock_errors
+                raise error
+
+            # CA-7: Justificación requerida si algún precio unitario cambia >10%
+            price_changes = []
+            for new_item in new_items_data:
+                pid = new_item['product_id']
+                old_item = old_items_map.get(pid)
+                if old_item is None:
+                    continue
+                old_price = Decimal(str(old_item.unit_price))
+                new_price = Decimal(str(new_item['unit_price']))
+                if old_price > 0:
+                    change_pct = abs((new_price - old_price) / old_price) * 100
+                    if change_pct > 10:
+                        price_changes.append({
+                            'product_id': pid,
+                            'product_name': old_item.product_name,
+                            'old_price': float(old_price),
+                            'new_price': float(new_price),
+                        })
+
+            if price_changes:
+                price_justification = data.get('price_justification')
+                if not price_justification or not price_justification.strip():
+                    names = ', '.join(pc['product_name'] for pc in price_changes)
+                    raise ValueError(
+                        f'Se requiere justificación: el precio cambió más del 10% para: {names}'
+                    )
+
+            # CA-8: Recalcular totales
+            subtotal = Decimal('0')
+            for item in new_items_data:
+                qty = int(item['quantity'])
+                price = Decimal(str(item['unit_price']))
+                subtotal += price * qty
+
+            tax_percentage = Decimal(str(data.get('tax_percentage', 0) or 0))
+            shipping_cost = Decimal(str(data.get('shipping_cost', 0) or 0))
+
+            # US-ORD-014 CA-10: Recalcular descuento (requiere nueva justificación/autorización si cambió)
+            discount = _compute_discount(subtotal, data, user_role, user_id)
+            discount_amount = discount['discount_amount']
+
+            # CA-4: Impuesto se calcula sobre el subtotal después del descuento
+            net_subtotal = subtotal - discount_amount
+            tax_amount = net_subtotal * (tax_percentage / Decimal('100'))
+            new_total = net_subtotal + tax_amount + shipping_cost
+
+            # --- Aplicar cambios dentro de la transacción ---
+
+            # 1. Ajustar stock y crear movimientos de inventario por producto con delta != 0
+            for pid, delta in deltas.items():
+                if delta == 0:
+                    continue
+                product = products_map[pid]
+                previous_stock = product.stock_quantity
+                new_stock = previous_stock - delta
+                product.stock_quantity = new_stock
+                product.reserved_stock = max(0, product.reserved_stock + delta)
+                product.stock_last_updated = datetime.utcnow()
+                product.last_updated_by_id = user_id
+                product.version += 1
+
+                movement = InventoryMovement(
+                    product_id=product.id,
+                    user_id=user_id,
+                    movement_type='order_edit',
+                    quantity=-delta,
+                    previous_stock=previous_stock,
+                    new_stock=new_stock,
+                    reason=f'Ajuste por edición de pedido {order.order_number}',
+                    reference=order.order_number,
+                    related_order_id=order.id,
+                )
+                db.session.add(movement)
+
+            # 2. CA-5: Eliminar items de productos que salieron del pedido
+            removed_product_ids = old_product_ids - new_product_ids
+            for item in list(order.items):
+                if item.product_id in removed_product_ids:
+                    order.items.remove(item)
+                    db.session.delete(item)
+
+            # 3. CA-4/CA-6/CA-7: Actualizar items existentes y agregar nuevos
+            for new_item in new_items_data:
+                pid = new_item['product_id']
+                qty = int(new_item['quantity'])
+                price = Decimal(str(new_item['unit_price']))
+                product = products_map[pid]
+                existing = old_items_map.get(pid)
+                if existing:
+                    existing.quantity = qty
+                    existing.unit_price = price
+                    existing.subtotal = price * qty
+                else:
+                    order.items.append(OrderItem(
+                        product_id=product.id,
+                        quantity=qty,
+                        unit_price=price,
+                        subtotal=price * qty,
+                        product_name=product.name,
+                        product_sku=product.sku,
+                    ))
+
+            # 4. Actualizar cliente y totales del pedido (CA-3, CA-8)
+            order.customer_id = data['customer_id']
+            order.subtotal = subtotal
+            order.tax_percentage = tax_percentage
+            order.tax_amount = tax_amount
+            order.shipping_cost = shipping_cost
+            order.discount_amount = discount_amount
+            order.discount_justification = discount['discount_justification']
+            order.discount_type = discount['discount_type']
+            order.discount_value = discount['discount_value']
+            order.discount_reason = discount['discount_reason']
+            order.discount_authorized_by_id = discount['discount_authorized_by_id']
+            order.total = new_total
+            order.notes = data.get('notes')
+
+            # 5. CA-10: Registro de auditoría con diff antes/después
+            changes = OrderService._build_edit_diff(
+                previous_customer_id, order.customer_id,
+                previous_total, new_total,
+                old_items_map, new_items_data,
+            )
+            audit = OrderEditAudit(
+                order_id=order.id,
+                edited_by_id=user_id,
+                changes=changes,
+                edit_reason=data.get('edit_reason'),
+            )
+            db.session.add(audit)
+
+            db.session.commit()
+            return order, changes
+
+        except (ValueError, InsufficientStockError, OrderConflictError, DiscountAuthorizationError):
+            db.session.rollback()
+            raise
+        except Exception as e:
+            db.session.rollback()
+            raise StockUpdateError(f'Error al editar pedido: {str(e)}')
+
+    @staticmethod
+    def _build_edit_diff(previous_customer_id, new_customer_id, previous_total, new_total,
+                          old_items_map, new_items_data):
+        """CA-10: Construye un diff legible de los cambios aplicados al pedido"""
+        changes = {
+            'total': {'before': float(previous_total), 'after': float(new_total)},
+        }
+
+        if previous_customer_id != new_customer_id:
+            changes['customer_id'] = {'before': previous_customer_id, 'after': new_customer_id}
+
+        new_items_map = {i['product_id']: i for i in new_items_data}
+        old_ids = set(old_items_map.keys())
+        new_ids = set(new_items_map.keys())
+
+        items_added = [
+            {
+                'product_id': pid,
+                'quantity': int(new_items_map[pid]['quantity']),
+                'unit_price': float(new_items_map[pid]['unit_price']),
+            }
+            for pid in (new_ids - old_ids)
+        ]
+
+        items_removed = [
+            {
+                'product_id': pid,
+                'product_name': old_items_map[pid].product_name,
+                'quantity': old_items_map[pid].quantity,
+                'unit_price': float(old_items_map[pid].unit_price),
+            }
+            for pid in (old_ids - new_ids)
+        ]
+
+        items_modified = []
+        for pid in (old_ids & new_ids):
+            old_item = old_items_map[pid]
+            new_item = new_items_map[pid]
+            old_qty, new_qty = old_item.quantity, int(new_item['quantity'])
+            old_price, new_price = float(old_item.unit_price), float(new_item['unit_price'])
+            if old_qty != new_qty or old_price != new_price:
+                items_modified.append({
+                    'product_id': pid,
+                    'product_name': old_item.product_name,
+                    'quantity': {'before': old_qty, 'after': new_qty},
+                    'unit_price': {'before': old_price, 'after': new_price},
+                })
+
+        if items_added:
+            changes['items_added'] = items_added
+        if items_removed:
+            changes['items_removed'] = items_removed
+        if items_modified:
+            changes['items_modified'] = items_modified
+
+        return changes
+
+    @staticmethod
+    def cancel_order(order_id, user_id, cancellation_reason=None):
+        """
+        US-ORD-009: Cancela un pedido desde cualquier estado excepto Entregado o Cancelado,
         y restaura el stock.
 
         Args:
             order_id: ID del pedido a cancelar
             user_id: ID del usuario que cancela
-            notes: Motivo de cancelación (opcional)
+            cancellation_reason: Motivo de cancelación (opcional)
 
         Returns:
             Order: Pedido cancelado
@@ -201,10 +598,10 @@ class OrderService:
             order = Order.query.get(order_id)
             if not order:
                 raise ValueError('Pedido no encontrado')
-            if order.status in ('Entregado', 'Cancelado'):
-                raise ValueError(
-                    f'No se puede cancelar un pedido en estado "{order.status}".'
-                )
+            if order.status == 'Entregado':
+                raise ValueError('Los pedidos entregados no pueden cancelarse')
+            if order.status == 'Cancelado':
+                raise ValueError('Este pedido ya está cancelado')
 
             # 2. Obtener los items con lock pesimista sobre los productos (CA-5)
             product_ids = [item.product_id for item in order.items]
@@ -213,8 +610,9 @@ class OrderService:
             ).with_for_update().all()
             products_map = {p.id: p for p in products}
 
-            # 3. Restaurar stock y crear movimientos de cancelación (CA-3, CA-8)
+            # 3. Restaurar stock y crear movimientos de cancelación (CA-4)
             order_number = order.order_number
+            reason_text = cancellation_reason or 'Pedido cancelado por el usuario'
             for item in order.items:
                 product = products_map.get(item.product_id)
                 if not product:
@@ -231,7 +629,7 @@ class OrderService:
                 product.last_updated_by_id = user_id
                 product.version += 1
 
-                # CA-8: Movimiento tipo 'order_cancellation'
+                # CA-4: Movimiento tipo 'order_cancellation'
                 movement = InventoryMovement(
                     product_id=product.id,
                     user_id=user_id,
@@ -239,23 +637,31 @@ class OrderService:
                     quantity=qty,
                     previous_stock=previous_stock,
                     new_stock=new_stock,
-                    reason=f'Cancelación de pedido {order_number}',
+                    reason=f'Devolución por cancelación de pedido {order_number}',
                     reference=order_number,
                     related_order_id=order.id,
+                    notes=reason_text,
                 )
                 db.session.add(movement)
 
-            # 4. Actualizar estado del pedido
+            # 4. CA-6: Marcar reembolso pendiente si el pedido tiene pagos registrados
+            active_payments = order.payments.filter_by(is_deleted=False).all()
+            amount_paid = sum(Decimal(str(p.amount)) for p in active_payments)
+
+            # 5. Actualizar estado y datos de cancelación del pedido (CA-5, CA-6)
             previous_status = order.status
             order.status = 'Cancelado'
+            order.cancelled_at = datetime.utcnow()
+            order.cancellation_reason = reason_text
+            order.refund_pending = amount_paid > 0
 
-            # 5. Registrar en historial de estados
+            # 6. Registrar en historial de estados
             status_entry = OrderStatusHistory(
                 order_id=order.id,
                 changed_by_id=user_id,
                 previous_status=previous_status,
                 status='Cancelado',
-                notes=notes or 'Pedido cancelado por el usuario',
+                notes=reason_text,
             )
             db.session.add(status_entry)
 

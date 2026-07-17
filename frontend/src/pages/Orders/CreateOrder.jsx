@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Container,
   Box,
@@ -29,6 +29,8 @@ import OrderForm from '../../components/forms/OrderForm';
  */
 const CreateOrder = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const preselectedCustomerId = searchParams.get('customer');
 
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
   const [createdOrder, setCreatedOrder] = useState(null);
@@ -113,6 +115,7 @@ const CreateOrder = () => {
       <OrderForm
         onSuccess={handleSuccess}
         onCancel={handleCancel}
+        preselectedCustomerId={preselectedCustomerId}
       />
 
       {/* CA-8: Success Dialog */}

@@ -59,3 +59,26 @@ a:hover {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* US-ORD-012 CA-7: Formato imprimible del pedido — oculta la UI de la app
+   y muestra únicamente el bloque .printable-order-root */
+.printable-order-root {
+  display: none;
+}
+
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  .printable-order-root,
+  .printable-order-root * {
+    visibility: visible;
+  }
+  .printable-order-root {
+    display: block;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+  }
+}

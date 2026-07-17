@@ -4,12 +4,13 @@ US-ORD-001: Crear Pedido
 US-INV-008: Cancelar pedido y actualizar estado (reserva de stock)
 US-ORD-004: Estado de Pago del Pedido
 """
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, send_file
 from flask_jwt_extended import jwt_required, get_jwt_identity, get_jwt
 from app import db
-from app.services.order_service import OrderService
+from app.services.order_service import OrderService, OrderConflictError, DiscountAuthorizationError
+from app.services.order_pdf_service import OrderPdfService
 from app.services.stock_service import InsufficientStockError, StockUpdateError
-from app.schemas.order_schema import order_create_schema
+from app.schemas.order_schema import order_create_schema, order_update_schema, order_cancel_schema
 from app.schemas.payment_schema import payment_create_schema
 from app.utils.decorators import require_role
 from app.models.order import Order, OrderStatusHistory
@@ -231,6 +232,46 @@ def get_order(order_id):
         }), 500
 
 
+@orders_bp.route('/<string:order_id>/pdf', methods=['GET'])
+@jwt_required()
+@require_role(['Admin', 'Personal de Ventas', 'Gerente de Almacén'])
+def export_order_pdf(order_id):
+    """
+    GET /api/orders/:id/pdf
+    US-ORD-012 CA-9: Genera y descarga el PDF del pedido.
+    """
+    try:
+        order = Order.query.get(order_id)
+        if not order:
+            return jsonify({
+                'success': False,
+                'error': {
+                    'code': 'NOT_FOUND',
+                    'message': 'Pedido no encontrado'
+                }
+            }), 404
+
+        pdf_buffer = OrderPdfService.generate_pdf(order)
+        filename = OrderPdfService.build_filename(order)
+
+        return send_file(
+            pdf_buffer,
+            mimetype='application/pdf',
+            as_attachment=True,
+            download_name=filename,
+        )
+
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': {
+                'code': 'SERVER_ERROR',
+                'message': 'Error al generar el PDF del pedido',
+                'details': str(e)
+            }
+        }), 500
+
+
 @orders_bp.route('', methods=['POST'])
 @jwt_required()
 @require_role(['Admin', 'Personal de Ventas', 'Gerente de Almacén'])
@@ -244,8 +285,10 @@ def create_order():
         - items: Lista de items [{product_id, quantity, unit_price}] (requerido)
         - tax_percentage: Porcentaje de impuesto (opcional, default 0)
         - shipping_cost: Costo de envío (opcional, default 0)
-        - discount_amount: Monto de descuento (opcional, default 0)
-        - discount_justification: Justificación del descuento (requerido si >20%)
+        - discount_type: Tipo de descuento, "percentage" o "fixed" (opcional)
+        - discount_value: Valor del descuento ingresado (opcional, default 0)
+        - discount_reason: Motivo del descuento, de lista predefinida (requerido si hay descuento)
+        - discount_reason_detail: Detalle si discount_reason es "Otro" (requerido en ese caso, max 200 chars)
         - notes: Notas del pedido (opcional, max 500 chars)
     """
     try:
@@ -254,9 +297,10 @@ def create_order():
 
         # Obtener usuario actual
         current_user_id = get_jwt_identity()
+        current_user_role = get_jwt().get('role')
 
         # Crear pedido via servicio
-        order = OrderService.create_order(data, current_user_id)
+        order = OrderService.create_order(data, current_user_id, current_user_role)
 
         return jsonify({
             'success': True,
@@ -296,6 +340,15 @@ def create_order():
             response['error']['details'] = e.details
         return jsonify(response), 409
 
+    except DiscountAuthorizationError as e:
+        return jsonify({
+            'success': False,
+            'error': {
+                'code': 'DISCOUNT_AUTHORIZATION_REQUIRED',
+                'message': str(e)
+            }
+        }), 403
+
     except StockUpdateError as e:
         return jsonify({
             'success': False,
@@ -311,6 +364,106 @@ def create_order():
             'error': {
                 'code': 'SERVER_ERROR',
                 'message': 'Error al crear pedido',
+                'details': str(e)
+            }
+        }), 500
+
+
+@orders_bp.route('/<string:order_id>', methods=['PUT'])
+@jwt_required()
+@require_role(['Admin', 'Personal de Ventas', 'Gerente de Almacén'])
+def update_order(order_id):
+    """
+    PUT /api/orders/:id
+    US-ORD-008: Edita un pedido existente (CA-1, CA-3 a CA-10).
+
+    Body:
+        - customer_id: ID del cliente (requerido)
+        - items: Lista de items [{product_id, quantity, unit_price}] (requerido) — estado final del pedido
+        - tax_percentage, shipping_cost, discount_type, discount_value, discount_reason,
+          discount_reason_detail, notes: igual que en creación
+        - price_justification: Requerido si algún precio unitario cambia más del 10%
+        - edit_reason: Motivo de la edición (opcional)
+        - expected_updated_at: ISO datetime del pedido cargado en el formulario, para bloqueo optimista
+    """
+    try:
+        data = order_update_schema.load(request.json)
+        current_user_id = get_jwt_identity()
+        current_user_role = get_jwt().get('role')
+
+        order, changes = OrderService.update_order(order_id, data, current_user_id, current_user_role)
+
+        return jsonify({
+            'success': True,
+            'data': order.to_dict(),
+            'changes': changes,
+            'message': f'Pedido {order.order_number} actualizado exitosamente'
+        }), 200
+
+    except ValidationError as e:
+        return jsonify({
+            'success': False,
+            'error': {
+                'code': 'VALIDATION_ERROR',
+                'message': 'Error de validación',
+                'details': e.messages
+            }
+        }), 400
+
+    except OrderConflictError as e:
+        return jsonify({
+            'success': False,
+            'error': {
+                'code': 'CONFLICT',
+                'message': str(e)
+            }
+        }), 409
+
+    except ValueError as e:
+        return jsonify({
+            'success': False,
+            'error': {
+                'code': 'VALIDATION_ERROR',
+                'message': str(e)
+            }
+        }), 400
+
+    except InsufficientStockError as e:
+        response = {
+            'success': False,
+            'error': {
+                'code': 'INSUFFICIENT_STOCK',
+                'message': str(e),
+            }
+        }
+        if hasattr(e, 'details'):
+            response['error']['details'] = e.details
+        return jsonify(response), 409
+
+    except DiscountAuthorizationError as e:
+        return jsonify({
+            'success': False,
+            'error': {
+                'code': 'DISCOUNT_AUTHORIZATION_REQUIRED',
+                'message': str(e)
+            }
+        }), 403
+
+    except StockUpdateError as e:
+        return jsonify({
+            'success': False,
+            'error': {
+                'code': 'STOCK_ERROR',
+                'message': str(e)
+            }
+        }), 500
+
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': {
+                'code': 'SERVER_ERROR',
+                'message': 'Error al editar pedido',
                 'details': str(e)
             }
         }), 500
@@ -377,23 +530,37 @@ def validate_stock():
 def cancel_order(order_id):
     """
     POST /api/orders/:id/cancel
-    US-INV-008 CA-3: Cancela un pedido en estado Pendiente y restaura el stock.
+    US-ORD-009: Cancela un pedido (excepto Entregado/Cancelado) y restaura el stock.
 
-    Body (opcional):
-        - notes: Motivo de cancelación
+    Body:
+        - cancellation_reason: Motivo de cancelación (requerido, de lista predefinida)
+        - cancellation_reason_detail: Detalle si cancellation_reason es "Otro" (requerido en ese caso, max 200 chars)
     """
     try:
+        data = order_cancel_schema.load(request.get_json() or {})
         current_user_id = get_jwt_identity()
-        data = request.get_json() or {}
-        notes = data.get('notes')
 
-        order = OrderService.cancel_order(order_id, current_user_id, notes)
+        reason = data['cancellation_reason']
+        if reason == 'Otro':
+            reason = data['cancellation_reason_detail'].strip()
+
+        order = OrderService.cancel_order(order_id, current_user_id, reason)
 
         return jsonify({
             'success': True,
             'data': order.to_dict(),
-            'message': f'Pedido {order.order_number} cancelado. Stock restaurado para todos los productos.'
+            'message': f'Pedido {order.order_number} cancelado correctamente. El stock ha sido restaurado.'
         }), 200
+
+    except ValidationError as e:
+        return jsonify({
+            'success': False,
+            'error': {
+                'code': 'VALIDATION_ERROR',
+                'message': 'Error de validación',
+                'details': e.messages
+            }
+        }), 400
 
     except ValueError as e:
         return jsonify({

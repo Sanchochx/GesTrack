@@ -29,6 +29,9 @@ import CustomerSegmentation from './pages/Customers/CustomerSegmentation';
 import CreateOrder from './pages/Orders/CreateOrder';
 import OrderList from './pages/Orders/OrderList';
 import OrderDetail from './pages/Orders/OrderDetail';
+import EditOrder from './pages/Orders/EditOrder';
+import ReturnsList from './pages/Returns/ReturnsList';
+import CreateSupplier from './pages/Suppliers/CreateSupplier';
 import ProtectedRoute from './components/common/ProtectedRoute';
 import authService from './services/authService';
 
@@ -175,8 +178,24 @@ function App() {
             element={<ProtectedRoute allowedRoles={['Admin', 'Personal de Ventas', 'Gerente de Almacén']}><CreateOrder /></ProtectedRoute>}
           />
           <Route
+            path="/orders/:id/edit"
+            element={<ProtectedRoute allowedRoles={['Admin', 'Personal de Ventas', 'Gerente de Almacén']}><EditOrder /></ProtectedRoute>}
+          />
+          <Route
             path="/orders/:id"
             element={<ProtectedRoute allowedRoles={['Admin', 'Personal de Ventas', 'Gerente de Almacén']}><OrderDetail /></ProtectedRoute>}
+          />
+
+          {/* Returns */}
+          <Route
+            path="/returns"
+            element={<ProtectedRoute allowedRoles={['Admin', 'Personal de Ventas', 'Gerente de Almacén']}><ReturnsList /></ProtectedRoute>}
+          />
+
+          {/* Suppliers */}
+          <Route
+            path="/suppliers/new"
+            element={<ProtectedRoute allowedRoles={['Admin', 'Gerente de Almacén']}><CreateSupplier /></ProtectedRoute>}
           />
 
           {/* Categories */}

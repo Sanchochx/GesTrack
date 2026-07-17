@@ -35,10 +35,20 @@ class Order(db.Model):
     shipping_cost = db.Column(db.Numeric(12, 2), nullable=False, default=0)
     discount_amount = db.Column(db.Numeric(12, 2), nullable=False, default=0)
     discount_justification = db.Column(db.String(500), nullable=True)
+    # US-ORD-014: Descuentos en Pedidos
+    discount_type = db.Column(db.String(20), nullable=True)  # 'percentage' o 'fixed'
+    discount_value = db.Column(db.Numeric(10, 2), nullable=True)  # valor ingresado (15 o 75.00)
+    discount_reason = db.Column(db.String(50), nullable=True)  # motivo predefinido
+    discount_authorized_by_id = db.Column(db.String(36), db.ForeignKey('users.id'), nullable=True)
     total = db.Column(db.Numeric(12, 2), nullable=False, default=0)
 
     # Notas
     notes = db.Column(db.Text, nullable=True)
+
+    # US-ORD-009: Cancelación
+    cancelled_at = db.Column(db.DateTime, nullable=True)
+    cancellation_reason = db.Column(db.String(500), nullable=True)
+    refund_pending = db.Column(db.Boolean, nullable=False, default=False)
 
     # Timestamps
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
@@ -47,6 +57,7 @@ class Order(db.Model):
     # Relaciones
     customer = db.relationship('Customer', backref=db.backref('orders', lazy='dynamic'))
     created_by = db.relationship('User', foreign_keys=[created_by_id])
+    discount_authorized_by = db.relationship('User', foreign_keys=[discount_authorized_by_id])
     items = db.relationship('OrderItem', backref='order', lazy='joined', cascade='all, delete-orphan')
     status_history = db.relationship('OrderStatusHistory', backref='order', lazy='dynamic', cascade='all, delete-orphan')
     payments = db.relationship('Payment', back_populates='order', lazy='dynamic')
@@ -93,10 +104,18 @@ class Order(db.Model):
             'shipping_cost': float(self.shipping_cost) if self.shipping_cost else 0.0,
             'discount_amount': float(self.discount_amount) if self.discount_amount else 0.0,
             'discount_justification': self.discount_justification,
+            'discount_type': self.discount_type,
+            'discount_value': float(self.discount_value) if self.discount_value is not None else None,
+            'discount_reason': self.discount_reason,
+            'discount_authorized_by_id': self.discount_authorized_by_id,
+            'discount_authorized_by_name': self.discount_authorized_by.full_name if self.discount_authorized_by else None,
             'total': float(self.total) if self.total else 0.0,
             'amount_paid': float(amount_paid),
             'pending_balance': float(pending_balance),
             'notes': self.notes,
+            'cancelled_at': self.cancelled_at.isoformat() if self.cancelled_at else None,
+            'cancellation_reason': self.cancellation_reason,
+            'refund_pending': self.refund_pending,
             'items': [item.to_dict() for item in self.items],
             'items_count': len(self.items),
             'payments': [p.to_dict() for p in payments_list],

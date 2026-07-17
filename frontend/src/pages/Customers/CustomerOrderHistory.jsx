@@ -61,6 +61,7 @@ import {
   ArrowDownward as ArrowDownwardIcon,
   FilterList as FilterListIcon,
   Refresh as RefreshIcon,
+  Add as AddIcon,
 } from '@mui/icons-material';
 import {
   BarChart,
@@ -450,6 +451,14 @@ export default function CustomerOrderHistory() {
 
   const customerName = customer?.nombre_razon_social || '...';
 
+  // CA-10: sin filtros aplicados = estado vacío real (nunca ha comprado)
+  const isDefaultFilters =
+    !dateFrom &&
+    !dateTo &&
+    selectedStatuses.length === DEFAULT_STATUSES.length &&
+    DEFAULT_STATUSES.every((s) => selectedStatuses.includes(s)) &&
+    selectedPaymentStatuses.length === PAYMENT_STATUSES.length;
+
   if (loading && !customer) {
     return (
       <Container maxWidth="xl" sx={{ py: 4 }}>
@@ -719,25 +728,42 @@ export default function CustomerOrderHistory() {
             ))}
           </Box>
         ) : orders.length === 0 ? (
-          <Box sx={{ p: 4, textAlign: 'center' }}>
-            <ShoppingBagIcon sx={{ fontSize: 48, color: 'text.disabled', mb: 1 }} />
-            <Typography color="text.secondary">
-              No se encontraron pedidos con los filtros aplicados
-            </Typography>
-            <Button
-              size="small"
-              sx={{ mt: 1 }}
-              onClick={() => {
-                setDateFrom('');
-                setDateTo('');
-                setSelectedStatuses(DEFAULT_STATUSES);
-                setSelectedPaymentStatuses(PAYMENT_STATUSES);
-                setPage(0);
-              }}
-            >
-              Limpiar filtros
-            </Button>
-          </Box>
+          isDefaultFilters ? (
+            // CA-10: Estado vacío real - el cliente nunca ha realizado un pedido
+            <Box sx={{ p: 4, textAlign: 'center' }}>
+              <ShoppingBagIcon sx={{ fontSize: 48, color: 'text.disabled', mb: 1 }} />
+              <Typography color="text.secondary" sx={{ mb: 2 }}>
+                {customerName} aún no ha realizado ningún pedido
+              </Typography>
+              <Button
+                variant="contained"
+                startIcon={<AddIcon />}
+                onClick={() => navigate(`/orders/new?customer=${id}`)}
+              >
+                Crear primer pedido
+              </Button>
+            </Box>
+          ) : (
+            <Box sx={{ p: 4, textAlign: 'center' }}>
+              <ShoppingBagIcon sx={{ fontSize: 48, color: 'text.disabled', mb: 1 }} />
+              <Typography color="text.secondary">
+                No se encontraron pedidos con los filtros aplicados
+              </Typography>
+              <Button
+                size="small"
+                sx={{ mt: 1 }}
+                onClick={() => {
+                  setDateFrom('');
+                  setDateTo('');
+                  setSelectedStatuses(DEFAULT_STATUSES);
+                  setSelectedPaymentStatuses(PAYMENT_STATUSES);
+                  setPage(0);
+                }}
+              >
+                Limpiar filtros
+              </Button>
+            </Box>
+          )
         ) : (
           <>
             <TableContainer>

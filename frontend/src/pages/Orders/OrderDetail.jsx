@@ -5,7 +5,7 @@
  * US-ORD-004: CA-2 (registrar pago), CA-3 (saldo), CA-5 (historial pagos), CA-8 (restricción)
  */
 import { useState, useEffect, useCallback } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import {
   Container,
   Box,
@@ -31,11 +31,6 @@ import {
   AccordionSummary,
   AccordionDetails,
   Avatar,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  TextField,
   IconButton,
   Tooltip,
 } from '@mui/material';
@@ -47,18 +42,24 @@ import PaymentIcon from '@mui/icons-material/Payment';
 import CancelIcon from '@mui/icons-material/Cancel';
 import EditIcon from '@mui/icons-material/Edit';
 import PrintIcon from '@mui/icons-material/Print';
+import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import PersonIcon from '@mui/icons-material/Person';
 import HistoryIcon from '@mui/icons-material/History';
 import EmailIcon from '@mui/icons-material/Email';
 import PhoneIcon from '@mui/icons-material/Phone';
 import InfoIcon from '@mui/icons-material/Info';
+import AssignmentReturnIcon from '@mui/icons-material/AssignmentReturn';
 import orderService from '../../services/orderService';
+import returnService from '../../services/returnService';
 import { STATUS_COLORS } from '../../components/orders/StatusChangeModal';
 import StatusChangeModal from '../../components/orders/StatusChangeModal';
 import StatusTimeline from '../../components/orders/StatusTimeline';
 import PaymentHistory from '../../components/orders/PaymentHistory';
 import PaymentRegistrationModal from '../../components/orders/PaymentRegistrationModal';
+import CancelOrderModal from '../../components/orders/CancelOrderModal';
+import CreateReturnModal from '../../components/orders/CreateReturnModal';
+import PrintableOrder from '../../components/orders/PrintableOrder';
 
 /** CA-1: Colores por estado de pago */
 export const PAYMENT_STATUS_COLORS = {
@@ -68,6 +69,13 @@ export const PAYMENT_STATUS_COLORS = {
 };
 
 const TERMINAL_STATUSES = ['Entregado', 'Cancelado'];
+
+/** US-ORD-011 CA-8: Colores por estado de devolución */
+export const RETURN_STATUS_COLORS = {
+  'Pendiente': '#FF9800',
+  'Aprobada': '#4CAF50',
+  'Rechazada': '#F44336',
+};
 
 const formatCurrency = (amount) =>
   new Intl.NumberFormat('es-CO', {
@@ -113,26 +121,106 @@ const AuditPanel = ({ order }) => (
         </Grid>
         <Grid item xs={12} sm={6}>
           <InfoRow label="Última modificación" value={formatDate(order.updated_at)} />
-          {order.status === 'Cancelado' && order.status_history?.length > 0 && (
-            <InfoRow
-              label="Fecha de cancelación"
-              value={formatDate(
-                order.status_history.find((h) => h.status === 'Cancelado')?.created_at
-              )}
-            />
-          )}
         </Grid>
-        {order.status === 'Cancelado' && order.status_history?.find((h) => h.status === 'Cancelado')?.notes && (
-          <Grid item xs={12}>
-            <Typography variant="caption" color="text.secondary">Motivo de cancelación:</Typography>
-            <Typography variant="body2">
-              {order.status_history.find((h) => h.status === 'Cancelado').notes}
-            </Typography>
-          </Grid>
-        )}
       </Grid>
     </AccordionDetails>
   </Accordion>
+);
+
+/** US-ORD-009 CA-7: Sección de información de cancelación */
+const CancellationInfo = ({ order }) => {
+  const cancelledEntry = order.status_history?.find((h) => h.status === 'Cancelado');
+  return (
+    <Paper variant="outlined" sx={{ p: 2, mb: 3, borderColor: 'error.light', bgcolor: 'error.50' }}>
+      <Typography variant="subtitle1" fontWeight="bold" color="error.main" gutterBottom>
+        Información de Cancelación
+      </Typography>
+      <Divider sx={{ mb: 1.5, borderColor: 'error.light' }} />
+      <InfoRow label="Cancelado el" value={formatDate(order.cancelled_at || cancelledEntry?.created_at)} />
+      <InfoRow label="Cancelado por" value={cancelledEntry?.changed_by_name || '-'} />
+      <Box sx={{ mt: 1 }}>
+        <Typography variant="body2" color="text.secondary">Motivo:</Typography>
+        <Typography variant="body2">{order.cancellation_reason || '-'}</Typography>
+      </Box>
+      {order.refund_pending && (
+        <Alert severity="warning" sx={{ mt: 2 }}>
+          Reembolso pendiente: este pedido tenía pagos registrados por {formatCurrency(order.amount_paid)}.
+        </Alert>
+      )}
+    </Paper>
+  );
+};
+
+/** US-ORD-011 CA-10: Sección de devoluciones del pedido */
+const ReturnsSection = ({ returns, onViewReturn }) => (
+  <Paper variant="outlined" sx={{ p: 2, mb: 2 }}>
+    <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
+      Devoluciones
+    </Typography>
+    <Divider sx={{ mb: 1.5 }} />
+    {returns.length === 0 ? (
+      <Typography variant="body2" color="text.secondary">
+        No hay devoluciones para este pedido
+      </Typography>
+    ) : (
+      <TableContainer>
+        <Table size="small">
+          <TableHead>
+            <TableRow sx={{ bgcolor: 'grey.50' }}>
+              <TableCell sx={{ fontWeight: 'bold' }}>ID</TableCell>
+              <TableCell sx={{ fontWeight: 'bold' }}>Fecha</TableCell>
+              <TableCell sx={{ fontWeight: 'bold' }}>Productos</TableCell>
+              <TableCell sx={{ fontWeight: 'bold' }} align="right">Monto</TableCell>
+              <TableCell sx={{ fontWeight: 'bold' }}>Motivo</TableCell>
+              <TableCell sx={{ fontWeight: 'bold' }}>Estado</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {returns.map((r) => (
+              <TableRow
+                key={r.id}
+                hover
+                sx={{ cursor: onViewReturn ? 'pointer' : 'default' }}
+                onClick={() => onViewReturn && onViewReturn(r)}
+              >
+                <TableCell>
+                  <Typography variant="body2" color="primary" fontWeight="medium">
+                    {r.return_number}
+                  </Typography>
+                </TableCell>
+                <TableCell>
+                  <Typography variant="body2" color="text.secondary">{formatDate(r.return_date)}</Typography>
+                </TableCell>
+                <TableCell>
+                  <Typography variant="body2">
+                    {(r.items || []).map((i) => i.product_name).join(', ')}
+                  </Typography>
+                </TableCell>
+                <TableCell align="right">
+                  <Typography variant="body2" fontWeight="medium">{formatCurrency(r.total_amount)}</Typography>
+                </TableCell>
+                <TableCell>
+                  <Typography variant="body2">{r.reason}</Typography>
+                </TableCell>
+                <TableCell>
+                  <Chip
+                    label={r.status}
+                    size="small"
+                    sx={{
+                      bgcolor: RETURN_STATUS_COLORS[r.status] || '#9E9E9E',
+                      color: 'white',
+                      fontWeight: 'bold',
+                      fontSize: '0.7rem',
+                    }}
+                  />
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </TableContainer>
+    )}
+  </Paper>
 );
 
 /** CA-5: Progreso de pago visual */
@@ -159,11 +247,12 @@ const PaymentProgress = ({ total, amountPaid }) => {
 const OrderDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [successMessage, setSuccessMessage] = useState(null);
+  const [successMessage, setSuccessMessage] = useState(location.state?.successMessage || null);
 
   // Status change
   const [statusModalOpen, setStatusModalOpen] = useState(false);
@@ -175,11 +264,21 @@ const OrderDetail = () => {
   const [registeringPayment, setRegisteringPayment] = useState(false);
   const [paymentError, setPaymentError] = useState(null);
 
-  // CA-1: Cancel confirmation dialog
+  // US-ORD-009: Cancel confirmation dialog
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
-  const [cancelNotes, setCancelNotes] = useState('');
   const [cancelling, setCancelling] = useState(false);
   const [cancelError, setCancelError] = useState(null);
+
+  // US-ORD-011: Returns
+  const [returns, setReturns] = useState([]);
+  const [returnEligibility, setReturnEligibility] = useState({ eligible: false, message: null });
+  const [returnModalOpen, setReturnModalOpen] = useState(false);
+  const [creatingReturn, setCreatingReturn] = useState(false);
+  const [returnError, setReturnError] = useState(null);
+
+  // US-ORD-012: Export PDF
+  const [exportingPdf, setExportingPdf] = useState(false);
+  const [pdfError, setPdfError] = useState(null);
 
   const fetchOrder = useCallback(async () => {
     setLoading(true);
@@ -194,9 +293,28 @@ const OrderDetail = () => {
     }
   }, [id]);
 
+  const fetchReturns = useCallback(async () => {
+    try {
+      const response = await returnService.getOrderReturns(id);
+      setReturns(response.data || []);
+      setReturnEligibility(response.eligibility || { eligible: false, message: null });
+    } catch {
+      // Silencioso: la sección de devoluciones simplemente queda vacía
+    }
+  }, [id]);
+
   useEffect(() => {
     fetchOrder();
-  }, [fetchOrder]);
+    fetchReturns();
+  }, [fetchOrder, fetchReturns]);
+
+  // Limpiar el estado de navegación (mensaje de éxito tras editar) para que no reaparezca al refrescar
+  useEffect(() => {
+    if (location.state?.successMessage) {
+      navigate(location.pathname, { replace: true, state: {} });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleStatusChange = async (newStatus, notes, forceDelivery = false) => {
     setChangingStatus(true);
@@ -231,20 +349,48 @@ const OrderDetail = () => {
     }
   };
 
-  // CA-1: Cancel handler
-  const handleCancelOrder = async () => {
+  // US-ORD-009: Cancel handler
+  const handleCancelOrder = async ({ cancellation_reason, cancellation_reason_detail }) => {
     setCancelling(true);
     setCancelError(null);
     try {
-      await orderService.cancelOrder(id, cancelNotes || null);
+      await orderService.cancelOrder(id, cancellation_reason, cancellation_reason_detail);
       setCancelDialogOpen(false);
-      setCancelNotes('');
-      setSuccessMessage('Pedido cancelado. Stock restaurado.');
+      setSuccessMessage(`Pedido ${order.order_number} cancelado correctamente. El stock ha sido restaurado.`);
       await fetchOrder();
     } catch (err) {
       setCancelError(err?.error?.message || 'Error al cancelar el pedido');
     } finally {
       setCancelling(false);
+    }
+  };
+
+  // US-ORD-011: Create return handler
+  const handleCreateReturn = async (returnData) => {
+    setCreatingReturn(true);
+    setReturnError(null);
+    try {
+      const response = await returnService.createReturn(id, returnData);
+      setReturnModalOpen(false);
+      setSuccessMessage(response.message || 'Devolución creada exitosamente');
+      await fetchReturns();
+    } catch (err) {
+      setReturnError(err?.error?.message || 'Error al crear la devolución');
+    } finally {
+      setCreatingReturn(false);
+    }
+  };
+
+  // US-ORD-012 CA-9: Exportar PDF
+  const handleExportPdf = async () => {
+    setExportingPdf(true);
+    setPdfError(null);
+    try {
+      await orderService.exportOrderPdf(id);
+    } catch (err) {
+      setPdfError(err?.error?.message || 'Error al exportar el PDF del pedido');
+    } finally {
+      setExportingPdf(false);
     }
   };
 
@@ -274,6 +420,8 @@ const OrderDetail = () => {
   const canChangeStatus = !TERMINAL_STATUSES.includes(order.status);
   const canRegisterPayment = order.status !== 'Cancelado' && order.payment_status !== 'Pagado';
   const canCancel = !TERMINAL_STATUSES.includes(order.status);
+  // US-ORD-008 CA-1: Solo pedidos Pendiente o Confirmado se pueden editar
+  const canEdit = ['Pendiente', 'Confirmado'].includes(order.status);
 
   // CA-4: Subtotal neto (after discount)
   const subtotalAfterDiscount = (order.subtotal || 0) - (order.discount_amount || 0);
@@ -327,6 +475,18 @@ const OrderDetail = () => {
           {paymentError}
         </Alert>
       )}
+      {pdfError && (
+        <Alert severity="error" sx={{ mb: 2 }} onClose={() => setPdfError(null)}>
+          {pdfError}
+        </Alert>
+      )}
+
+      {/* US-ORD-009 CA-7: Banner de pedido cancelado */}
+      {order.status === 'Cancelado' && (
+        <Alert severity="error" sx={{ mb: 2 }}>
+          Este pedido fue cancelado
+        </Alert>
+      )}
 
       {/* CA-1: Header con número, estado, pago y acciones */}
       <Paper variant="outlined" sx={{ p: 2, mb: 3 }}>
@@ -359,13 +519,27 @@ const OrderDetail = () => {
                 Imprimir
               </Button>
             </Tooltip>
-            <Tooltip title={!canChangeStatus ? 'El pedido está en estado terminal' : ''}>
+            <Tooltip title="Exportar pedido a PDF">
+              <span>
+                <Button
+                  variant="outlined"
+                  size="small"
+                  startIcon={<PictureAsPdfIcon />}
+                  onClick={handleExportPdf}
+                  disabled={exportingPdf}
+                >
+                  {exportingPdf ? 'Generando...' : 'Exportar PDF'}
+                </Button>
+              </span>
+            </Tooltip>
+            <Tooltip title={!canEdit ? `Este pedido no puede editarse porque está en estado "${order.status}"` : ''}>
               <span>
                 <Button
                   variant="outlined"
                   size="small"
                   startIcon={<EditIcon />}
-                  disabled
+                  disabled={!canEdit}
+                  onClick={() => navigate(`/orders/${order.id}/edit`)}
                 >
                   Editar
                 </Button>
@@ -399,6 +573,21 @@ const OrderDetail = () => {
               >
                 Cancelar Pedido
               </Button>
+            )}
+            {/* US-ORD-011 CA-1: Botón visible solo en pedidos entregados elegibles */}
+            {order.status === 'Entregado' && (
+              <Tooltip title={!returnEligibility.eligible ? returnEligibility.message || '' : ''}>
+                <span>
+                  <Button
+                    variant="outlined"
+                    startIcon={<AssignmentReturnIcon />}
+                    disabled={!returnEligibility.eligible}
+                    onClick={() => setReturnModalOpen(true)}
+                  >
+                    Procesar Devolución
+                  </Button>
+                </span>
+              </Tooltip>
             )}
           </Box>
         </Box>
@@ -565,6 +754,12 @@ const OrderDetail = () => {
                   Motivo del descuento: {order.discount_justification}
                 </Typography>
               )}
+              {/* US-ORD-014 CA-9: Autorización de descuentos > 20% */}
+              {order.discount_authorized_by_name && (
+                <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
+                  Autorizado por: {order.discount_authorized_by_name}
+                </Typography>
+              )}
             </Box>
           </Paper>
 
@@ -578,6 +773,12 @@ const OrderDetail = () => {
               <Typography variant="body2" color="text.secondary">Sin notas adicionales.</Typography>
             )}
           </Paper>
+
+          {/* US-ORD-009 CA-7: Información de cancelación */}
+          {order.status === 'Cancelado' && <CancellationInfo order={order} />}
+
+          {/* US-ORD-011 CA-10: Devoluciones */}
+          <ReturnsSection returns={returns} />
 
           {/* CA-9: Auditoría */}
           <AuditPanel order={order} />
@@ -623,40 +824,28 @@ const OrderDetail = () => {
         </Grid>
       </Grid>
 
-      {/* CA-1: Dialog de cancelación */}
-      <Dialog open={cancelDialogOpen} onClose={() => !cancelling && setCancelDialogOpen(false)} maxWidth="xs" fullWidth>
-        <DialogTitle>Cancelar pedido {order.order_number}</DialogTitle>
-        <DialogContent>
-          {cancelError && (
-            <Alert severity="error" sx={{ mb: 2 }}>{cancelError}</Alert>
-          )}
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-            Esta acción cancelará el pedido y restaurará el stock de todos los productos.
-          </Typography>
-          <TextField
-            label="Motivo de cancelación (opcional)"
-            multiline
-            rows={3}
-            fullWidth
-            value={cancelNotes}
-            onChange={(e) => setCancelNotes(e.target.value)}
-            disabled={cancelling}
-          />
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => { setCancelDialogOpen(false); setCancelNotes(''); setCancelError(null); }} disabled={cancelling}>
-            Volver
-          </Button>
-          <Button
-            variant="contained"
-            color="error"
-            onClick={handleCancelOrder}
-            disabled={cancelling}
-          >
-            {cancelling ? 'Cancelando...' : 'Confirmar cancelación'}
-          </Button>
-        </DialogActions>
-      </Dialog>
+      {/* US-ORD-009: Modal de cancelación */}
+      {cancelDialogOpen && (
+        <CancelOrderModal
+          order={order}
+          onConfirm={handleCancelOrder}
+          onClose={() => { setCancelDialogOpen(false); setCancelError(null); }}
+          loading={cancelling}
+          error={cancelError}
+        />
+      )}
+
+      {/* US-ORD-011: Modal de devolución */}
+      {returnModalOpen && (
+        <CreateReturnModal
+          order={order}
+          existingReturns={returns}
+          onConfirm={handleCreateReturn}
+          onClose={() => { setReturnModalOpen(false); setReturnError(null); }}
+          loading={creatingReturn}
+          error={returnError}
+        />
+      )}
 
       {/* Modales de estado y pago */}
       {statusModalOpen && (
@@ -677,6 +866,9 @@ const OrderDetail = () => {
           loading={registeringPayment}
         />
       )}
+
+      {/* US-ORD-012 CA-2 a CA-7: Formato imprimible, oculto en pantalla */}
+      <PrintableOrder order={order} />
     </Container>
   );
 };

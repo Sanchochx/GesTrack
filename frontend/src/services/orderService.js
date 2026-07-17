@@ -61,6 +61,25 @@ const orderService = {
   },
 
   /**
+   * Edita un pedido existente
+   * US-ORD-008: CA-1 a CA-10
+   * @param {string} orderId - ID del pedido
+   * @param {Object} orderData - Datos del pedido editado
+   * @returns {Promise} - Respuesta del servidor
+   */
+  async updateOrder(orderId, orderData) {
+    try {
+      const response = await api.put(`/orders/${orderId}`, orderData);
+      return response.data;
+    } catch (error) {
+      if (error.response && error.response.data) {
+        throw error.response.data;
+      }
+      throw { success: false, error: { message: 'Error de conexión con el servidor' } };
+    }
+  },
+
+  /**
    * Valida disponibilidad de stock para una lista de items
    * CA-3: Validación de stock en tiempo real
    * @param {Array} items - Lista de {product_id, quantity}
@@ -79,15 +98,19 @@ const orderService = {
   },
 
   /**
-   * Cancela un pedido en estado Pendiente y restaura el stock
-   * US-INV-008 CA-3
+   * Cancela un pedido y restaura el stock
+   * US-ORD-009: CA-1 a CA-6
    * @param {string} orderId - ID del pedido
-   * @param {string} [notes] - Motivo de cancelación
+   * @param {string} cancellationReason - Motivo de cancelación (de lista predefinida)
+   * @param {string} [cancellationReasonDetail] - Detalle si el motivo es "Otro"
    * @returns {Promise} - Pedido cancelado
    */
-  async cancelOrder(orderId, notes = null) {
+  async cancelOrder(orderId, cancellationReason, cancellationReasonDetail = null) {
     try {
-      const response = await api.post(`/orders/${orderId}/cancel`, { notes });
+      const response = await api.post(`/orders/${orderId}/cancel`, {
+        cancellation_reason: cancellationReason,
+        cancellation_reason_detail: cancellationReasonDetail,
+      });
       return response.data;
     } catch (error) {
       if (error.response && error.response.data) {
@@ -138,6 +161,43 @@ const orderService = {
         throw error.response.data;
       }
       throw { success: false, error: { message: 'Error al registrar pago' } };
+    }
+  },
+
+  /**
+   * Descarga el PDF del pedido
+   * US-ORD-012 CA-9: Exportar Pedido a PDF
+   * @param {string} orderId - ID del pedido
+   * @returns {Promise} - Descarga automática del archivo
+   */
+  async exportOrderPdf(orderId) {
+    try {
+      const response = await api.get(`/orders/${orderId}/pdf`, {
+        responseType: 'blob',
+      });
+
+      let filename = `Pedido_${orderId}.pdf`;
+      const contentDisposition = response.headers['content-disposition'];
+      if (contentDisposition) {
+        const match = contentDisposition.match(/filename=([^;]+)/);
+        if (match) filename = match[1].replace(/"/g, '').trim();
+      }
+
+      const url = window.URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', filename);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+
+      return { success: true };
+    } catch (error) {
+      if (error.response && error.response.data) {
+        throw error.response.data;
+      }
+      throw { success: false, error: { message: 'Error al exportar el PDF del pedido' } };
     }
   },
 };
