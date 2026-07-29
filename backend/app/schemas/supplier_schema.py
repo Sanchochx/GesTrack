@@ -95,6 +95,86 @@ class SupplierCreateSchema(Schema):
             raise ValidationError('Las condiciones de pago no pueden exceder 200 caracteres')
 
 
+class SupplierUpdateSchema(Schema):
+    """Schema para actualizar un proveedor existente (US-SUPP-004)"""
+
+    class Meta:
+        unknown = 'exclude'
+
+    company_name = fields.Str(required=False)
+    contact_name = fields.Str(required=False)
+    email = fields.Email(required=False, error_messages={'invalid': 'Formato de correo inválido'})
+    phone = fields.Str(required=False)
+    address = fields.Str(required=False, allow_none=True)
+    website = fields.Str(required=False, allow_none=True)
+    category_ids = fields.List(fields.Str(), required=False)
+    payment_bank = fields.Str(required=False, allow_none=True)
+    payment_account = fields.Str(required=False, allow_none=True)
+    payment_terms = fields.Str(required=False, allow_none=True)
+
+    @validates('company_name')
+    def validate_company_name(self, value):
+        if value is not None:
+            if not value.strip():
+                raise ValidationError('El nombre de la empresa no puede estar vacío')
+            if len(value) > 200:
+                raise ValidationError('El nombre de la empresa no puede exceder 200 caracteres')
+
+    @validates('contact_name')
+    def validate_contact_name(self, value):
+        if value is not None:
+            if not value.strip():
+                raise ValidationError('El nombre de contacto no puede estar vacío')
+            if len(value) > 200:
+                raise ValidationError('El nombre de contacto no puede exceder 200 caracteres')
+
+    @validates('email')
+    def validate_email(self, value):
+        if value is not None:
+            if not value.strip():
+                raise ValidationError('El correo no puede estar vacío')
+            if len(value) > 120:
+                raise ValidationError('El correo no puede exceder 120 caracteres')
+
+    @validates('phone')
+    def validate_phone(self, value):
+        if value is not None:
+            if not value.strip():
+                raise ValidationError('El teléfono no puede estar vacío')
+            if len(value) > 20:
+                raise ValidationError('El teléfono no puede exceder 20 caracteres')
+            if not re.match(r'^[\d\s\-\+\(\)]+$', value.strip()):
+                raise ValidationError('El teléfono solo puede contener números, espacios, guiones, paréntesis y +')
+
+    @validates('address')
+    def validate_address(self, value):
+        if value and len(value) > 300:
+            raise ValidationError('La dirección no puede exceder 300 caracteres')
+
+    @validates('website')
+    def validate_website(self, value):
+        if value and value.strip():
+            if len(value) > 300:
+                raise ValidationError('El sitio web no puede exceder 300 caracteres')
+            if not URL_REGEX.match(value.strip()):
+                raise ValidationError('Formato de sitio web inválido')
+
+    @validates('payment_bank')
+    def validate_payment_bank(self, value):
+        if value and len(value) > 100:
+            raise ValidationError('El banco no puede exceder 100 caracteres')
+
+    @validates('payment_account')
+    def validate_payment_account(self, value):
+        if value and len(value) > 50:
+            raise ValidationError('El número de cuenta no puede exceder 50 caracteres')
+
+    @validates('payment_terms')
+    def validate_payment_terms(self, value):
+        if value and len(value) > 200:
+            raise ValidationError('Las condiciones de pago no pueden exceder 200 caracteres')
+
+
 class SupplierResponseSchema(Schema):
     """Schema para respuestas de proveedor"""
 
@@ -116,5 +196,6 @@ class SupplierResponseSchema(Schema):
 
 # Instancias de esquemas para uso en rutas
 supplier_create_schema = SupplierCreateSchema()
+supplier_update_schema = SupplierUpdateSchema()
 supplier_response_schema = SupplierResponseSchema()
 suppliers_response_schema = SupplierResponseSchema(many=True)

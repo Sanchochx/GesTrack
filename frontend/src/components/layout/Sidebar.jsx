@@ -6,6 +6,7 @@ import {
   AssignmentReturn as ReturnsIcon,
   People as CustomersIcon,
   Category as ProductsIcon,
+  LocalShipping as SuppliersIcon,
   Settings as AdminIcon,
   Download as DownloadIcon,
   HelpOutline as HelpIcon,
@@ -25,6 +26,7 @@ const NAV_ITEMS = [
   { label: 'Devoluciones', icon: ReturnsIcon, path: '/returns', roles: ['Admin', 'Gerente de Almacén', 'Personal de Ventas'] },
   { label: 'Clientes', icon: CustomersIcon, path: '/customers', roles: ['Admin', 'Gerente de Almacén', 'Personal de Ventas'] },
   { label: 'Productos', icon: ProductsIcon, path: '/products', roles: ['Admin', 'Gerente de Almacén'] },
+  { label: 'Proveedores', icon: SuppliersIcon, path: '/suppliers', roles: ['Admin', 'Gerente de Almacén'] },
   { label: 'Administración', icon: AdminIcon, path: '/users', roles: ['Admin'] },
 ];
 

@@ -32,6 +32,9 @@ import OrderDetail from './pages/Orders/OrderDetail';
 import EditOrder from './pages/Orders/EditOrder';
 import ReturnsList from './pages/Returns/ReturnsList';
 import CreateSupplier from './pages/Suppliers/CreateSupplier';
+import SupplierList from './pages/Suppliers/SupplierList';
+import SupplierDetail from './pages/Suppliers/SupplierDetail';
+import EditSupplier from './pages/Suppliers/EditSupplier';
 import ProtectedRoute from './components/common/ProtectedRoute';
 import authService from './services/authService';
 
@@ -194,8 +197,20 @@ function App() {
 
           {/* Suppliers */}
           <Route
+            path="/suppliers"
+            element={<ProtectedRoute allowedRoles={['Admin', 'Gerente de Almacén']}><SupplierList /></ProtectedRoute>}
+          />
+          <Route
             path="/suppliers/new"
             element={<ProtectedRoute allowedRoles={['Admin', 'Gerente de Almacén']}><CreateSupplier /></ProtectedRoute>}
+          />
+          <Route
+            path="/suppliers/:id/edit"
+            element={<ProtectedRoute allowedRoles={['Admin', 'Gerente de Almacén']}><EditSupplier /></ProtectedRoute>}
+          />
+          <Route
+            path="/suppliers/:id"
+            element={<ProtectedRoute allowedRoles={['Admin', 'Gerente de Almacén']}><SupplierDetail /></ProtectedRoute>}
           />
 
           {/* Categories */}

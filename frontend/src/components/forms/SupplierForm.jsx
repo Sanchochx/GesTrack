@@ -31,24 +31,27 @@ const URL_REGEX = /^(https?:\/\/)?([\w-]+\.)+[\w-]{2,}(\/[^\s]*)?$/i;
 /**
  * SupplierForm Component
  * US-SUPP-001: Formulario de Registro de Proveedor
+ * US-SUPP-004: Editar Proveedor
  *
  * Props:
  * - onSuccess(supplier): Callback al guardar exitosamente
  * - onCancel(): Callback al cancelar
+ * - initialData: Datos iniciales del proveedor (para modo edición)
+ * - mode: 'create' | 'edit'
  */
-const SupplierForm = ({ onSuccess, onCancel }) => {
+const SupplierForm = ({ onSuccess, onCancel, initialData = null, mode = 'create' }) => {
   const [formData, setFormData] = useState({
-    company_name: '',
-    contact_name: '',
-    email: '',
-    phone: '',
-    address: '',
-    website: '',
-    payment_bank: '',
-    payment_account: '',
-    payment_terms: '',
+    company_name: initialData?.company_name || '',
+    contact_name: initialData?.contact_name || '',
+    email: initialData?.email || '',
+    phone: initialData?.phone || '',
+    address: initialData?.address || '',
+    website: initialData?.website || '',
+    payment_bank: initialData?.payment_bank || '',
+    payment_account: initialData?.payment_account || '',
+    payment_terms: initialData?.payment_terms || '',
   });
-  const [selectedCategories, setSelectedCategories] = useState([]);
+  const [selectedCategories, setSelectedCategories] = useState(initialData?.categories || []);
   const [availableCategories, setAvailableCategories] = useState([]);
 
   const [errors, setErrors] = useState({});
@@ -69,8 +72,17 @@ const SupplierForm = ({ onSuccess, onCancel }) => {
     loadCategories();
   }, []);
 
-  const isFormDirty = () =>
-    Object.values(formData).some(v => v && v.trim && v.trim() !== '') || selectedCategories.length > 0;
+  const isFormDirty = () => {
+    if (!initialData) {
+      return Object.values(formData).some(v => v && v.trim && v.trim() !== '') || selectedCategories.length > 0;
+    }
+    const categoryIdsChanged =
+      selectedCategories.map(c => c.id).sort().join(',') !==
+      (initialData.categories || []).map(c => c.id).sort().join(',');
+    return Object.keys(formData).some(key => formData[key] !== (initialData[key] || '')) || categoryIdsChanged;
+  };
+
+  const hasChanges = () => mode !== 'edit' || isFormDirty();
 
   const validateField = (name, value) => {
     let error = '';
@@ -182,6 +194,11 @@ const SupplierForm = ({ onSuccess, onCancel }) => {
 
     if (!validateAll()) return;
 
+    if (mode === 'edit' && !hasChanges()) {
+      onCancel();
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
@@ -198,12 +215,14 @@ const SupplierForm = ({ onSuccess, onCancel }) => {
         payment_terms: formData.payment_terms?.trim() || null,
       };
 
-      const result = await supplierService.createSupplier(submitData);
+      const result = mode === 'edit' && initialData?.id
+        ? await supplierService.updateSupplier(initialData.id, submitData)
+        : await supplierService.createSupplier(submitData);
 
       if (result.success) {
         onSuccess(result.data);
       } else {
-        setSubmitError(result.error?.message || 'Error al registrar proveedor');
+        setSubmitError(result.error?.message || (mode === 'edit' ? 'Error al actualizar proveedor' : 'Error al registrar proveedor'));
       }
     } catch (error) {
       if (error.error?.code === 'DUPLICATE_EMAIL') {
@@ -215,7 +234,7 @@ const SupplierForm = ({ onSuccess, onCancel }) => {
         });
         setErrors(prev => ({ ...prev, ...backendErrors }));
       } else {
-        setSubmitError(error.error?.message || 'Error al registrar proveedor');
+        setSubmitError(error.error?.message || (mode === 'edit' ? 'Error al actualizar proveedor' : 'Error al registrar proveedor'));
       }
     } finally {
       setIsSubmitting(false);
@@ -446,7 +465,7 @@ const SupplierForm = ({ onSuccess, onCancel }) => {
           startIcon={isSubmitting ? <CircularProgress size={20} color="inherit" /> : <SaveIcon />}
           disabled={isSubmitting || !isFormValid()}
         >
-          {isSubmitting ? 'Guardando...' : 'Guardar Proveedor'}
+          {isSubmitting ? 'Guardando...' : (mode === 'edit' ? 'Guardar Cambios' : 'Guardar Proveedor')}
         </Button>
       </Box>
 
