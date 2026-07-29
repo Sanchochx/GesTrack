@@ -35,6 +35,10 @@ import CreateSupplier from './pages/Suppliers/CreateSupplier';
 import SupplierList from './pages/Suppliers/SupplierList';
 import SupplierDetail from './pages/Suppliers/SupplierDetail';
 import EditSupplier from './pages/Suppliers/EditSupplier';
+import CreatePurchaseOrder from './pages/PurchaseOrders/CreatePurchaseOrder';
+import PurchaseOrderList from './pages/PurchaseOrders/PurchaseOrderList';
+import PurchaseOrderDetail from './pages/PurchaseOrders/PurchaseOrderDetail';
+import EditPurchaseOrder from './pages/PurchaseOrders/EditPurchaseOrder';
 import ProtectedRoute from './components/common/ProtectedRoute';
 import authService from './services/authService';
 
@@ -211,6 +215,24 @@ function App() {
           <Route
             path="/suppliers/:id"
             element={<ProtectedRoute allowedRoles={['Admin', 'Gerente de Almacén']}><SupplierDetail /></ProtectedRoute>}
+          />
+
+          {/* Purchase Orders */}
+          <Route
+            path="/purchase-orders"
+            element={<ProtectedRoute allowedRoles={['Admin', 'Gerente de Almacén']}><PurchaseOrderList /></ProtectedRoute>}
+          />
+          <Route
+            path="/purchase-orders/new"
+            element={<ProtectedRoute allowedRoles={['Admin', 'Gerente de Almacén']}><CreatePurchaseOrder /></ProtectedRoute>}
+          />
+          <Route
+            path="/purchase-orders/:id/edit"
+            element={<ProtectedRoute allowedRoles={['Admin', 'Gerente de Almacén']}><EditPurchaseOrder /></ProtectedRoute>}
+          />
+          <Route
+            path="/purchase-orders/:id"
+            element={<ProtectedRoute allowedRoles={['Admin', 'Gerente de Almacén']}><PurchaseOrderDetail /></ProtectedRoute>}
           />
 
           {/* Categories */}

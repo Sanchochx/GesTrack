@@ -18,6 +18,7 @@ import {
   Home as HomeIcon,
   LocalShipping as SuppliersIcon,
   PersonAdd as AddIcon,
+  AddShoppingCart as AddOrderIcon,
 } from '@mui/icons-material';
 import supplierService from '../../services/supplierService';
 import SupplierTable from '../../components/suppliers/SupplierTable';
@@ -122,14 +123,24 @@ const SupplierList = () => {
             Gestión de proveedores
           </Typography>
         </Box>
-        <Button
-          variant="contained"
-          color="primary"
-          startIcon={<AddIcon />}
-          onClick={() => navigate('/suppliers/new')}
-        >
-          Nuevo Proveedor
-        </Button>
+        <Box sx={{ display: 'flex', gap: 2 }}>
+          <Button
+            variant="outlined"
+            color="primary"
+            startIcon={<AddOrderIcon />}
+            onClick={() => navigate('/purchase-orders')}
+          >
+            Órdenes de Compra
+          </Button>
+          <Button
+            variant="contained"
+            color="primary"
+            startIcon={<AddIcon />}
+            onClick={() => navigate('/suppliers/new')}
+          >
+            Nuevo Proveedor
+          </Button>
+        </Box>
       </Box>
 
       {/* Error Alert */}

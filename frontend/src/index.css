@@ -82,3 +82,11 @@ a:hover {
     width: 100%;
   }
 }
+
+/* US-SUPP-009 CA-7: Impresión simple de la orden de compra — oculta elementos
+   marcados con .no-print (breadcrumbs, botones, historial de estados, alertas) */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+}

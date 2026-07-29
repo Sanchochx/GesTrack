@@ -55,6 +55,7 @@ def create_app(config_name=None):
     from app.routes.orders import orders_bp  # US-ORD-001
     from app.routes.returns import returns_bp  # US-ORD-011
     from app.routes.suppliers import suppliers_bp  # US-SUPP-001
+    from app.routes.purchase_orders import purchase_orders_bp  # US-SUPP-005
 
     app.register_blueprint(auth_bp, url_prefix='/api/auth')
     app.register_blueprint(categories_bp)
@@ -65,6 +66,7 @@ def create_app(config_name=None):
     app.register_blueprint(orders_bp)  # US-ORD-001
     app.register_blueprint(returns_bp)  # US-ORD-011
     app.register_blueprint(suppliers_bp)  # US-SUPP-001
+    app.register_blueprint(purchase_orders_bp)  # US-SUPP-005
 
     # Manejador de errores global
     @app.errorhandler(404)
