@@ -1,10 +1,18 @@
-import { Card, CardContent, Typography, Box, Avatar, Skeleton } from '@mui/material';
+import { Card, CardContent, Typography, Box, Avatar, Chip, Skeleton } from '@mui/material';
+import { TrendingUp as UpIcon, TrendingDown as DownIcon, Remove as FlatIcon } from '@mui/icons-material';
 
 /**
  * DS-001: Tarjeta KPI reutilizable del Sistema de Diseño Emerald Logic.
  * Usada en AdminDashboard, WarehouseDashboard y SalesDashboard.
+ *
+ * US-REP-001 CA-6: `trend` (opcional) muestra el % de cambio vs el período anterior.
+ * Formato: { value: number, label?: string } — value positivo/negativo/0.
  */
-const StatCard = ({ title, value, icon, color = 'primary', subtitle, onClick, loading = false }) => {
+const StatCard = ({ title, value, icon, color = 'primary', subtitle, trend, onClick, loading = false }) => {
+  const trendPositive = trend && trend.value > 0;
+  const trendNeutral = !trend || trend.value === 0;
+  const trendIcon = trendNeutral ? <FlatIcon sx={{ fontSize: 14 }} /> :
+    trendPositive ? <UpIcon sx={{ fontSize: 14 }} /> : <DownIcon sx={{ fontSize: 14 }} />;
   return (
     <Card
       elevation={2}
@@ -36,12 +44,23 @@ const StatCard = ({ title, value, icon, color = 'primary', subtitle, onClick, lo
             {loading ? (
               <Skeleton width={80} height={44} sx={{ mt: 0.5 }} />
             ) : (
-              <Typography
-                variant="h4"
-                sx={{ fontWeight: 700, color: `${color}.main`, mt: 0.5, lineHeight: 1.1 }}
-              >
-                {value}
-              </Typography>
+              <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 1, flexWrap: 'wrap', mt: 0.5 }}>
+                <Typography
+                  variant="h4"
+                  sx={{ fontWeight: 700, color: `${color}.main`, lineHeight: 1.1 }}
+                >
+                  {value}
+                </Typography>
+                {trend && (
+                  <Chip
+                    icon={trendIcon}
+                    label={`${trend.value >= 0 ? '+' : ''}${trend.value}%`}
+                    size="small"
+                    color={trendNeutral ? 'default' : trendPositive ? 'success' : 'error'}
+                    sx={{ fontWeight: 700, fontSize: 11, height: 22 }}
+                  />
+                )}
+              </Box>
             )}
 
             {subtitle && (

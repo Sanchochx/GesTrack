@@ -34,6 +34,11 @@ class PurchaseOrder(db.Model):
     # US-SUPP-008 CA-7: Fecha de recepción de mercancía
     received_at = db.Column(db.DateTime, nullable=True)
 
+    # US-SUPP-011: Cancelación de la orden de compra
+    cancelled_at = db.Column(db.DateTime, nullable=True)
+    cancelled_by_id = db.Column(db.String(36), db.ForeignKey('users.id'), nullable=True)
+    cancellation_reason = db.Column(db.String(500), nullable=True)
+
     # CA-4/CA-5/CA-6: Totales
     subtotal = db.Column(db.Numeric(12, 2), nullable=False, default=0)
     shipping_cost = db.Column(db.Numeric(12, 2), nullable=False, default=0)
@@ -46,6 +51,7 @@ class PurchaseOrder(db.Model):
     # Relaciones
     supplier = db.relationship('Supplier', backref=db.backref('purchase_orders', lazy='dynamic'))
     created_by = db.relationship('User', foreign_keys=[created_by_id])
+    cancelled_by = db.relationship('User', foreign_keys=[cancelled_by_id])
     items = db.relationship('PurchaseOrderItem', backref='purchase_order', lazy='joined', cascade='all, delete-orphan')
     status_history = db.relationship('PurchaseOrderStatusHistory', backref='purchase_order', lazy='dynamic', cascade='all, delete-orphan')
 
@@ -70,6 +76,9 @@ class PurchaseOrder(db.Model):
             'status': self.status,
             'expected_delivery_date': self.expected_delivery_date.isoformat() if self.expected_delivery_date else None,
             'received_at': self.received_at.isoformat() if self.received_at else None,
+            'cancelled_at': self.cancelled_at.isoformat() if self.cancelled_at else None,
+            'cancelled_by_name': self.cancelled_by.full_name if self.cancelled_by else None,
+            'cancellation_reason': self.cancellation_reason,
             'subtotal': float(self.subtotal) if self.subtotal else 0.0,
             'shipping_cost': float(self.shipping_cost) if self.shipping_cost else 0.0,
             'total': float(self.total) if self.total else 0.0,

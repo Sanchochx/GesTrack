@@ -761,7 +761,51 @@ const inventoryService = {
       console.error('Error fetching additional stats:', error);
       throw error.response?.data || { error: { message: 'Error al obtener estadísticas' } };
     }
-  }
+  },
+
+  // ==========================================
+  // US-SUPP-015: Notificaciones de Reabastecimiento
+  // ==========================================
+
+  /**
+   * US-SUPP-015: Lista sugerencias de reabastecimiento
+   * @param {boolean} includeDismissed - incluir sugerencias ya procesadas
+   */
+  getRestockSuggestions: async (includeDismissed = false) => {
+    try {
+      const response = await api.get('/inventory/restock-suggestions', {
+        params: { include_dismissed: includeDismissed }
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching restock suggestions:', error);
+      throw error.response?.data || { error: { message: 'Error al obtener sugerencias de reabastecimiento' } };
+    }
+  },
+
+  /**
+   * US-SUPP-015 CA-7: Marca una sugerencia como procesada
+   */
+  dismissRestockSuggestion: async (productId) => {
+    try {
+      const response = await api.post(`/inventory/restock-suggestions/${productId}/dismiss`);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { error: { message: 'Error al marcar la sugerencia como procesada' } };
+    }
+  },
+
+  /**
+   * US-SUPP-015 CA-7: Reactiva una sugerencia previamente procesada
+   */
+  undismissRestockSuggestion: async (productId) => {
+    try {
+      const response = await api.delete(`/inventory/restock-suggestions/${productId}/dismiss`);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { error: { message: 'Error al reactivar la sugerencia' } };
+    }
+  },
 };
 
 export default inventoryService;

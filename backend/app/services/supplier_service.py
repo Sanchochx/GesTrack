@@ -3,10 +3,14 @@ Servicio de Proveedores
 US-SUPP-001: Registrar Proveedor
 US-SUPP-002: Listar Proveedores
 US-SUPP-004: Editar Proveedor
+US-SUPP-014: Productos por Proveedor
 """
 from app import db
 from app.models.supplier import Supplier
 from app.models.category import Category
+from app.models.product import Product
+from app.models.supplier_product import SupplierProduct
+from app.models.purchase_order import PurchaseOrder, PurchaseOrderItem
 
 SORTABLE_FIELDS = {
     'company_name': Supplier.company_name,
@@ -18,15 +22,18 @@ class SupplierService:
     """Lógica de negocio para gestión de proveedores"""
 
     @staticmethod
-    def list_suppliers(page=1, per_page=20, sort_by='company_name', order='asc'):
+    def list_suppliers(page=1, per_page=20, sort_by='company_name', order='asc', search=None):
         """
         Lista proveedores paginados y ordenados
+
+        US-SUPP-013 CA-1: Búsqueda por nombre de empresa o email (parcial, case-insensitive)
 
         Args:
             page: número de página (1-indexado)
             per_page: cantidad de proveedores por página
             sort_by: campo de ordenamiento ('company_name' o 'created_at')
             order: dirección de ordenamiento ('asc' o 'desc')
+            search: texto de búsqueda sobre company_name o email (opcional)
 
         Returns:
             Pagination: objeto de paginación de SQLAlchemy con los proveedores
@@ -35,7 +42,17 @@ class SupplierService:
         if order == 'desc':
             sort_column = sort_column.desc()
 
-        query = Supplier.query.order_by(sort_column)
+        query = Supplier.query
+        if search:
+            term = f'%{search.strip()}%'
+            query = query.filter(
+                db.or_(
+                    Supplier.company_name.ilike(term),
+                    Supplier.email.ilike(term),
+                )
+            )
+
+        query = query.order_by(sort_column)
         return query.paginate(page=page, per_page=per_page, error_out=False)
 
     @staticmethod
@@ -137,3 +154,144 @@ class SupplierService:
 
         db.session.commit()
         return supplier
+
+    @staticmethod
+    def get_last_purchase_price(supplier_id, product_id):
+        """
+        US-SUPP-014 CA-4: Último precio de compra de un producto a un proveedor,
+        calculado a partir del historial de órdenes de compra (más reciente primero).
+        """
+        last_item = (
+            PurchaseOrderItem.query
+            .join(PurchaseOrder, PurchaseOrderItem.purchase_order_id == PurchaseOrder.id)
+            .filter(
+                PurchaseOrder.supplier_id == supplier_id,
+                PurchaseOrderItem.product_id == product_id,
+            )
+            .order_by(PurchaseOrder.created_at.desc())
+            .first()
+        )
+        return float(last_item.unit_cost) if last_item else None
+
+    @staticmethod
+    def list_supplier_products(supplier_id):
+        """
+        US-SUPP-014 CA-1: Lista los productos que provee un proveedor, con precio
+        preferencial, indicador de preferido y último precio de compra.
+
+        Args:
+            supplier_id: ID del proveedor
+
+        Returns:
+            list[dict]: vínculos producto-proveedor, o None si el proveedor no existe
+        """
+        supplier = Supplier.query.get(supplier_id)
+        if not supplier:
+            return None
+
+        links = SupplierProduct.query.filter_by(supplier_id=supplier_id).all()
+        return [
+            link.to_dict(last_purchase_price=SupplierService.get_last_purchase_price(supplier_id, link.product_id))
+            for link in links
+        ]
+
+    @staticmethod
+    def link_product(supplier_id, data):
+        """
+        US-SUPP-014 CA-2/CA-3/CA-5: Vincula un producto a un proveedor, con precio
+        preferencial opcional e indicador de proveedor preferido.
+
+        Args:
+            supplier_id: ID del proveedor
+            data: dict validado por SupplierProductLinkSchema
+
+        Returns:
+            SupplierProduct: vínculo creado
+
+        Raises:
+            ValueError: si el proveedor/producto no existen o el vínculo ya existe
+        """
+        supplier = Supplier.query.get(supplier_id)
+        if not supplier:
+            raise ValueError('El proveedor no existe')
+
+        product = Product.query.get(data['product_id'])
+        if not product:
+            raise ValueError('El producto no existe')
+
+        existing = SupplierProduct.query.filter_by(
+            supplier_id=supplier_id, product_id=data['product_id']
+        ).first()
+        if existing:
+            raise ValueError('Este producto ya está vinculado a este proveedor')
+
+        is_preferred = data.get('is_preferred', False)
+        if is_preferred:
+            SupplierService._clear_preferred_supplier(data['product_id'])
+
+        link = SupplierProduct(
+            supplier_id=supplier_id,
+            product_id=data['product_id'],
+            preferential_price=data.get('preferential_price'),
+            is_preferred=is_preferred,
+        )
+        db.session.add(link)
+        db.session.commit()
+        return link
+
+    @staticmethod
+    def update_supplier_product(supplier_id, product_id, data):
+        """
+        US-SUPP-014 CA-3/CA-5: Actualiza el precio preferencial y/o el indicador de
+        proveedor preferido de un vínculo producto-proveedor existente.
+
+        Args:
+            supplier_id: ID del proveedor
+            product_id: ID del producto
+            data: dict validado por SupplierProductUpdateSchema
+
+        Returns:
+            SupplierProduct: vínculo actualizado, o None si no existe
+
+        Raises:
+            ValueError: si el vínculo no existe
+        """
+        link = SupplierProduct.query.filter_by(supplier_id=supplier_id, product_id=product_id).first()
+        if not link:
+            return None
+
+        if 'preferential_price' in data:
+            link.preferential_price = data['preferential_price']
+
+        if data.get('is_preferred'):
+            SupplierService._clear_preferred_supplier(product_id, exclude_supplier_id=supplier_id)
+            link.is_preferred = True
+        elif 'is_preferred' in data:
+            link.is_preferred = False
+
+        db.session.commit()
+        return link
+
+    @staticmethod
+    def unlink_product(supplier_id, product_id):
+        """
+        US-SUPP-014: Elimina el vínculo entre un proveedor y un producto.
+
+        Returns:
+            bool: True si se eliminó, False si no existía
+        """
+        link = SupplierProduct.query.filter_by(supplier_id=supplier_id, product_id=product_id).first()
+        if not link:
+            return False
+
+        db.session.delete(link)
+        db.session.commit()
+        return True
+
+    @staticmethod
+    def _clear_preferred_supplier(product_id, exclude_supplier_id=None):
+        """US-SUPP-014 CA-5: Solo un proveedor puede ser el preferido por producto"""
+        query = SupplierProduct.query.filter_by(product_id=product_id, is_preferred=True)
+        if exclude_supplier_id:
+            query = query.filter(SupplierProduct.supplier_id != exclude_supplier_id)
+        query.update({'is_preferred': False})

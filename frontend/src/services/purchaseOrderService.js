@@ -98,6 +98,24 @@ const purchaseOrderService = {
   },
 
   /**
+   * Cancela una orden de compra
+   * @param {string} id - ID de la orden de compra
+   * @param {string} reason - Motivo de la cancelación
+   * @returns {Promise} - Respuesta del servidor
+   */
+  async cancelPurchaseOrder(id, reason) {
+    try {
+      const response = await api.post(`/purchase-orders/${id}/cancel`, { reason });
+      return response.data;
+    } catch (error) {
+      if (error.response && error.response.data) {
+        throw error.response.data;
+      }
+      throw { success: false, error: { message: 'Error de conexión con el servidor' } };
+    }
+  },
+
+  /**
    * Registra la recepción de mercancía de una orden de compra
    * @param {string} id - ID de la orden de compra
    * @param {Array} items - [{ item_id, quantity_received, discrepancy_reason, discrepancy_notes }]

@@ -565,6 +565,171 @@ class ExportHelper:
         return response
 
     @staticmethod
+    def export_supplier_purchase_history_to_csv(orders):
+        """
+        US-SUPP-012 CA-8: Exporta el historial de órdenes de compra de un proveedor a CSV
+
+        Args:
+            orders: Lista de diccionarios con los datos de las órdenes
+
+        Returns:
+            Flask Response con el archivo CSV
+        """
+        columns = [
+            ('order_number', 'Número de Orden'),
+            ('created_at', 'Fecha'),
+            ('status', 'Estado'),
+            ('items_count', 'Productos'),
+            ('expected_delivery_date', 'Entrega Estimada'),
+            ('received_at', 'Fecha de Recepción'),
+            ('total', 'Total'),
+        ]
+
+        return ExportHelper.export_to_csv(
+            data=orders,
+            columns=columns,
+            filename_prefix='historial_ordenes_proveedor'
+        )
+
+    @staticmethod
+    def export_supplier_purchase_history_to_excel(orders):
+        """
+        US-SUPP-012 CA-8: Exporta el historial de órdenes de compra de un proveedor a Excel
+
+        Args:
+            orders: Lista de diccionarios con los datos de las órdenes
+
+        Returns:
+            Flask Response con el archivo Excel
+        """
+        columns = [
+            ('order_number', 'Número de Orden'),
+            ('created_at', 'Fecha'),
+            ('status', 'Estado'),
+            ('items_count', 'Productos'),
+            ('expected_delivery_date', 'Entrega Estimada'),
+            ('received_at', 'Fecha de Recepción'),
+            ('total', 'Total'),
+        ]
+
+        return ExportHelper.export_to_excel(
+            data=orders,
+            columns=columns,
+            filename_prefix='historial_ordenes_proveedor',
+            sheet_name='Órdenes de Compra'
+        )
+
+    @staticmethod
+    def export_daily_sales_report_to_csv(orders, report_date):
+        """
+        US-REP-002 CA-6: Exporta el detalle de pedidos del reporte de ventas diarias a CSV
+
+        Args:
+            orders: Lista de diccionarios con los datos de los pedidos
+            report_date: Fecha del reporte (str YYYY-MM-DD), usada en el nombre del archivo
+
+        Returns:
+            Flask Response con el archivo CSV
+        """
+        columns = [
+            ('order_number', 'Número de Pedido'),
+            ('customer_name', 'Cliente'),
+            ('status', 'Estado'),
+            ('total', 'Total'),
+            ('created_at', 'Fecha y Hora'),
+        ]
+
+        return ExportHelper.export_to_csv(
+            data=orders,
+            columns=columns,
+            filename_prefix=f'ventas_diarias_{report_date}'
+        )
+
+    @staticmethod
+    def export_daily_sales_report_to_excel(orders, report_date):
+        """
+        US-REP-002 CA-6: Exporta el detalle de pedidos del reporte de ventas diarias a Excel
+
+        Args:
+            orders: Lista de diccionarios con los datos de los pedidos
+            report_date: Fecha del reporte (str YYYY-MM-DD), usada en el nombre del archivo
+
+        Returns:
+            Flask Response con el archivo Excel
+        """
+        columns = [
+            ('order_number', 'Número de Pedido'),
+            ('customer_name', 'Cliente'),
+            ('status', 'Estado'),
+            ('total', 'Total'),
+            ('created_at', 'Fecha y Hora'),
+        ]
+
+        return ExportHelper.export_to_excel(
+            data=orders,
+            columns=columns,
+            filename_prefix=f'ventas_diarias_{report_date}',
+            sheet_name='Ventas Diarias'
+        )
+
+    @staticmethod
+    def export_sales_by_period_report_to_csv(orders, start_date, end_date):
+        """
+        US-REP-003 CA-7: Exporta el detalle de pedidos del reporte de ventas
+        por período a CSV.
+
+        Args:
+            orders: Lista de diccionarios con los datos de los pedidos
+            start_date: Fecha de inicio del período (str YYYY-MM-DD)
+            end_date: Fecha de fin del período (str YYYY-MM-DD)
+
+        Returns:
+            Flask Response con el archivo CSV
+        """
+        columns = [
+            ('order_number', 'Número de Pedido'),
+            ('customer_name', 'Cliente'),
+            ('status', 'Estado'),
+            ('total', 'Total'),
+            ('created_at', 'Fecha y Hora'),
+        ]
+
+        return ExportHelper.export_to_csv(
+            data=orders,
+            columns=columns,
+            filename_prefix=f'ventas_periodo_{start_date}_a_{end_date}'
+        )
+
+    @staticmethod
+    def export_sales_by_period_report_to_excel(orders, start_date, end_date):
+        """
+        US-REP-003 CA-7: Exporta el detalle de pedidos del reporte de ventas
+        por período a Excel.
+
+        Args:
+            orders: Lista de diccionarios con los datos de los pedidos
+            start_date: Fecha de inicio del período (str YYYY-MM-DD)
+            end_date: Fecha de fin del período (str YYYY-MM-DD)
+
+        Returns:
+            Flask Response con el archivo Excel
+        """
+        columns = [
+            ('order_number', 'Número de Pedido'),
+            ('customer_name', 'Cliente'),
+            ('status', 'Estado'),
+            ('total', 'Total'),
+            ('created_at', 'Fecha y Hora'),
+        ]
+
+        return ExportHelper.export_to_excel(
+            data=orders,
+            columns=columns,
+            filename_prefix=f'ventas_periodo_{start_date}_a_{end_date}',
+            sheet_name='Ventas por Período'
+        )
+
+    @staticmethod
     def export_inventory_value_report_to_pdf(value_data, categories, top_products):
         """
         US-INV-005 CA-7: Exporta reporte de valor del inventario a PDF

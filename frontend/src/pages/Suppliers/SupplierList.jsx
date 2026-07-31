@@ -13,15 +13,21 @@ import {
   InputLabel,
   Select,
   MenuItem,
+  TextField,
+  InputAdornment,
+  IconButton,
 } from '@mui/material';
 import {
   Home as HomeIcon,
   LocalShipping as SuppliersIcon,
   PersonAdd as AddIcon,
   AddShoppingCart as AddOrderIcon,
+  Search as SearchIcon,
+  Clear as ClearIcon,
 } from '@mui/icons-material';
 import supplierService from '../../services/supplierService';
 import SupplierTable from '../../components/suppliers/SupplierTable';
+import useDebounce from '../../hooks/useDebounce';
 
 /**
  * SupplierList Page
@@ -33,6 +39,8 @@ import SupplierTable from '../../components/suppliers/SupplierTable';
  * - CA-4: Indicador de órdenes de compra pendientes (en SupplierTable)
  * - CA-5: Botón para agregar nuevo proveedor
  * - CA-6: Total de proveedores registrados
+ *
+ * US-SUPP-013 CA-1: Búsqueda por nombre o email
  */
 const SupplierList = () => {
   const navigate = useNavigate();
@@ -48,9 +56,18 @@ const SupplierList = () => {
   const [sortField, setSortField] = useState('company_name');
   const [sortOrder, setSortOrder] = useState('asc');
 
+  // US-SUPP-013 CA-1: Búsqueda por nombre o email
+  const [searchInput, setSearchInput] = useState('');
+  const search = useDebounce(searchInput, 300);
+
+  useEffect(() => {
+    setPage(1);
+  }, [search]);
+
   useEffect(() => {
     loadSuppliers();
-  }, [page, itemsPerPage, sortField, sortOrder]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page, itemsPerPage, sortField, sortOrder, search]);
 
   const loadSuppliers = async () => {
     setLoading(true);
@@ -62,6 +79,7 @@ const SupplierList = () => {
         per_page: itemsPerPage,
         sort_by: sortField,
         order: sortOrder,
+        search: search || undefined,
       });
 
       if (response.success) {
@@ -149,6 +167,31 @@ const SupplierList = () => {
           {error}
         </Alert>
       )}
+
+      {/* US-SUPP-013 CA-1: Búsqueda por nombre o email */}
+      <Box sx={{ mb: 2 }}>
+        <TextField
+          fullWidth
+          size="small"
+          placeholder="Buscar por nombre de empresa o email..."
+          value={searchInput}
+          onChange={(e) => setSearchInput(e.target.value)}
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <SearchIcon fontSize="small" color="action" />
+              </InputAdornment>
+            ),
+            endAdornment: searchInput && (
+              <InputAdornment position="end">
+                <IconButton size="small" onClick={() => setSearchInput('')}>
+                  <ClearIcon fontSize="small" />
+                </IconButton>
+              </InputAdornment>
+            ),
+          }}
+        />
+      </Box>
 
       {/* Results counter + sort-by field selector (fecha de registro no es columna visible) */}
       {!loading && (

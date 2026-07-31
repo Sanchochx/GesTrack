@@ -1,6 +1,8 @@
 /**
  * PurchaseOrderStatusModal – Modal para cambiar el estado de una orden de compra
- * US-SUPP-007: CA-1 (estados), CA-2 (avanzar/retroceder), CA-5 (notas), CA-7 (cancelar desde cualquier estado)
+ * US-SUPP-007: CA-1 (estados), CA-2 (avanzar/retroceder), CA-5 (notas)
+ * US-SUPP-011: La cancelación se maneja mediante un flujo dedicado (CancelPurchaseOrderDialog),
+ *              no a través de este modal genérico de cambio de estado.
  */
 import { useState } from 'react';
 import {
@@ -21,12 +23,11 @@ import { PURCHASE_ORDER_STATUS_COLORS } from '../../pages/PurchaseOrders/Purchas
 
 // CA-2: Se puede avanzar o retroceder libremente entre estados no terminales.
 // CA-6: "Recibida" solo se alcanza mediante el flujo de recepción de mercancía (US-SUPP-008).
-// CA-7: "Cancelada" se puede establecer desde cualquier estado no terminal.
 const NON_TERMINAL_STATUSES = ['Pendiente', 'Confirmada', 'En Tránsito'];
 
 const getAllowedTransitions = (currentStatus) => {
   if (!NON_TERMINAL_STATUSES.includes(currentStatus)) return [];
-  return [...NON_TERMINAL_STATUSES.filter((s) => s !== currentStatus), 'Cancelada'];
+  return NON_TERMINAL_STATUSES.filter((s) => s !== currentStatus);
 };
 
 const PurchaseOrderStatusModal = ({ currentStatus, onConfirm, onClose, loading = false }) => {

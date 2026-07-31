@@ -18,5 +18,7 @@ from app.models.payment import Payment
 from app.models.return_order import Return, ReturnItem
 from app.models.supplier import Supplier
 from app.models.purchase_order import PurchaseOrder, PurchaseOrderItem, PurchaseOrderStatusHistory, PurchaseOrderEditAudit
+from app.models.supplier_product import SupplierProduct
+from app.models.restock_suggestion_dismissal import RestockSuggestionDismissal
 
-__all__ = ['User', 'LoginAttempt', 'PasswordResetToken', 'Category', 'Product', 'InventoryMovement', 'ProductDeletionAudit', 'InventoryAlert', 'InventoryValueHistory', 'Customer', 'CustomerDeletionAudit', 'CustomerNote', 'CustomerSegmentationConfig', 'CustomerCategoryHistory', 'Order', 'OrderItem', 'OrderStatusHistory', 'OrderEditAudit', 'Payment', 'Return', 'ReturnItem', 'Supplier', 'PurchaseOrder', 'PurchaseOrderItem', 'PurchaseOrderStatusHistory', 'PurchaseOrderEditAudit']
+__all__ = ['User', 'LoginAttempt', 'PasswordResetToken', 'Category', 'Product', 'InventoryMovement', 'ProductDeletionAudit', 'InventoryAlert', 'InventoryValueHistory', 'Customer', 'CustomerDeletionAudit', 'CustomerNote', 'CustomerSegmentationConfig', 'CustomerCategoryHistory', 'Order', 'OrderItem', 'OrderStatusHistory', 'OrderEditAudit', 'Payment', 'Return', 'ReturnItem', 'Supplier', 'PurchaseOrder', 'PurchaseOrderItem', 'PurchaseOrderStatusHistory', 'PurchaseOrderEditAudit', 'SupplierProduct', 'RestockSuggestionDismissal']

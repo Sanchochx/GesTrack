@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { Box, Typography, Chip, ToggleButtonGroup, ToggleButton, Skeleton } from '@mui/material';
 import { TrendingUp as UpIcon, TrendingDown as DownIcon, Remove as FlatIcon } from '@mui/icons-material';
 import inventoryService from '../../services/inventoryService';
+import usePolling from '../../hooks/usePolling';
 
 const PERIODS = [
   { value: '7d', label: '7D' },
@@ -38,6 +39,7 @@ const InventoryValueCard = () => {
   }, [period]);
 
   useEffect(() => { fetchData(); }, [fetchData]);
+  usePolling(fetchData, 60000);
 
   const trendPositive = changeData?.direction === 'increase';
   const trendNeutral = !changeData || changeData.direction === 'stable';

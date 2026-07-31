@@ -32,6 +32,10 @@ import {
   Grid,
   Divider,
   Skeleton,
+  FormControlLabel,
+  Switch,
+  TextField,
+  InputAdornment,
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import HomeIcon from '@mui/icons-material/Home';
@@ -40,9 +44,18 @@ import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import SwapHorizIcon from '@mui/icons-material/SwapHoriz';
 import InventoryIcon from '@mui/icons-material/Inventory';
+import CancelIcon from '@mui/icons-material/Cancel';
+import SearchIcon from '@mui/icons-material/Search';
+import ClearIcon from '@mui/icons-material/Clear';
+import FilterListIcon from '@mui/icons-material/FilterList';
 import purchaseOrderService from '../../services/purchaseOrderService';
 import PurchaseOrderStatusModal from '../../components/purchaseOrders/PurchaseOrderStatusModal';
 import ReceivePurchaseOrderModal from '../../components/purchaseOrders/ReceivePurchaseOrderModal';
+import CancelPurchaseOrderDialog from '../../components/purchaseOrders/CancelPurchaseOrderDialog';
+import useDebounce from '../../hooks/useDebounce';
+
+// US-SUPP-011 CA-1/CA-3: Solo se pueden cancelar órdenes en estos estados
+const CANCELLABLE_STATUSES = ['Pendiente', 'Confirmada'];
 
 // US-SUPP-007: Estados disponibles para órdenes de compra
 export const PURCHASE_ORDER_STATUS_COLORS = {
@@ -52,6 +65,9 @@ export const PURCHASE_ORDER_STATUS_COLORS = {
   Recibida: '#66BB6A',
   Cancelada: '#EF5350',
 };
+
+// US-SUPP-013 CA-3: Estados disponibles para filtrar
+const PURCHASE_ORDER_STATUSES = ['Pendiente', 'Confirmada', 'En Tránsito', 'Recibida', 'Cancelada'];
 
 const TERMINAL_STATUSES = ['Recibida', 'Cancelada'];
 
@@ -98,6 +114,19 @@ const PurchaseOrderList = () => {
   const [receiveModalOrder, setReceiveModalOrder] = useState(null);
   const [receiveLoading, setReceiveLoading] = useState(false);
 
+  // US-SUPP-011: Cancelación de orden y filtro de canceladas
+  const [cancelDialogOrder, setCancelDialogOrder] = useState(null);
+  const [cancelLoading, setCancelLoading] = useState(false);
+  const [showCancelled, setShowCancelled] = useState(true);
+
+  // US-SUPP-013: Búsqueda y filtros combinables
+  const [searchInput, setSearchInput] = useState('');
+  const search = useDebounce(searchInput, 300);
+  const [statusFilter, setStatusFilter] = useState('');
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
+  const [overdueOnly, setOverdueOnly] = useState(false);
+
   // CA-2: Paginación
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(20);
@@ -116,7 +145,14 @@ const PurchaseOrderList = () => {
         per_page: rowsPerPage,
         sort_by: sortBy,
         sort_order: sortOrder,
+        include_cancelled: showCancelled,
       };
+      if (search) params.search = search;
+      if (statusFilter) params.status = statusFilter;
+      if (dateFrom) params.date_from = dateFrom;
+      if (dateTo) params.date_to = dateTo;
+      if (overdueOnly) params.overdue = true;
+
       const response = await purchaseOrderService.getPurchaseOrders(params);
       setOrders(response.data || []);
       setTotal(response.pagination?.total || 0);
@@ -126,11 +162,26 @@ const PurchaseOrderList = () => {
     } finally {
       setLoading(false);
     }
-  }, [page, rowsPerPage, sortBy, sortOrder]);
+  }, [page, rowsPerPage, sortBy, sortOrder, showCancelled, search, statusFilter, dateFrom, dateTo, overdueOnly]);
 
   useEffect(() => {
     fetchOrders();
   }, [fetchOrders]);
+
+  // US-SUPP-013: Reiniciar a la primera página cuando cambian los filtros
+  useEffect(() => {
+    setPage(0);
+  }, [search, statusFilter, dateFrom, dateTo, overdueOnly, showCancelled]);
+
+  const handleClearFilters = () => {
+    setSearchInput('');
+    setStatusFilter('');
+    setDateFrom('');
+    setDateTo('');
+    setOverdueOnly(false);
+  };
+
+  const hasActiveFilters = Boolean(searchInput || statusFilter || dateFrom || dateTo || overdueOnly);
 
   // CA-3: Cambio de columna de ordenamiento
   const handleSortChange = (column) => {
@@ -198,6 +249,32 @@ const PurchaseOrderList = () => {
     }
   };
 
+  // US-SUPP-011: Cancelar orden
+  const handleOpenCancelDialog = () => {
+    setCancelDialogOrder(actionMenuOrder);
+    closeActionMenu();
+  };
+
+  const handleCancelConfirm = async (reason) => {
+    setCancelLoading(true);
+    try {
+      const result = await purchaseOrderService.cancelPurchaseOrder(cancelDialogOrder.id, reason);
+      setCancelDialogOrder(null);
+      setSuccessMessage(result.message || `Orden ${cancelDialogOrder.order_number} cancelada exitosamente`);
+      fetchOrders();
+    } catch (err) {
+      setError(err?.error?.message || 'Error al cancelar la orden de compra');
+      setCancelDialogOrder(null);
+    } finally {
+      setCancelLoading(false);
+    }
+  };
+
+  const handleToggleShowCancelled = (e) => {
+    setShowCancelled(e.target.checked);
+    setPage(0);
+  };
+
   const renderSkeletonRows = () =>
     Array.from({ length: 8 }).map((_, i) => (
       <TableRow key={i}>
@@ -215,15 +292,23 @@ const PurchaseOrderList = () => {
         <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1.5 }}>
           <LocalShippingIcon sx={{ fontSize: 48, color: 'text.disabled' }} />
           <Typography color="text.secondary" variant="body1">
-            No hay órdenes de compra registradas
+            {hasActiveFilters
+              ? 'No se encontraron órdenes de compra con los filtros aplicados'
+              : 'No hay órdenes de compra registradas'}
           </Typography>
-          <Button
-            variant="contained"
-            startIcon={<AddIcon />}
-            onClick={() => navigate('/purchase-orders/new')}
-          >
-            Crear primera orden de compra
-          </Button>
+          {hasActiveFilters ? (
+            <Button size="small" onClick={handleClearFilters}>
+              Limpiar filtros
+            </Button>
+          ) : (
+            <Button
+              variant="contained"
+              startIcon={<AddIcon />}
+              onClick={() => navigate('/purchase-orders/new')}
+            >
+              Crear primera orden de compra
+            </Button>
+          )}
         </Box>
       </TableCell>
     </TableRow>
@@ -250,18 +335,25 @@ const PurchaseOrderList = () => {
       </Breadcrumbs>
 
       {/* Header */}
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2, flexWrap: 'wrap', gap: 1 }}>
         <Typography variant="h5" fontWeight="bold">
           Órdenes de Compra
         </Typography>
-        {/* CA-5: Botón crear */}
-        <Button
-          variant="contained"
-          startIcon={<AddIcon />}
-          onClick={() => navigate('/purchase-orders/new')}
-        >
-          Nueva Orden de Compra
-        </Button>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+          {/* US-SUPP-011 CA-7: Filtro para ocultar/mostrar órdenes canceladas */}
+          <FormControlLabel
+            control={<Switch checked={showCancelled} onChange={handleToggleShowCancelled} size="small" />}
+            label="Mostrar canceladas"
+          />
+          {/* CA-5: Botón crear */}
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
+            onClick={() => navigate('/purchase-orders/new')}
+          >
+            Nueva Orden de Compra
+          </Button>
+        </Box>
       </Box>
 
       {/* CA-6: Panel de métricas */}
@@ -287,6 +379,87 @@ const PurchaseOrderList = () => {
                 {formatCurrency(metrics.total_amount)}
               </Typography>
             </Box>
+          </Grid>
+        </Grid>
+      </Paper>
+
+      {/* US-SUPP-013: Búsqueda y filtros combinables */}
+      <Paper variant="outlined" sx={{ p: 2, mb: 2 }}>
+        <Typography variant="subtitle2" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+          <FilterListIcon fontSize="small" color="action" />
+          Filtros
+        </Typography>
+        <Grid container spacing={2} alignItems="center">
+          <Grid item xs={12} sm={6} md={3}>
+            <TextField
+              fullWidth
+              size="small"
+              placeholder="Buscar por número o proveedor..."
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SearchIcon fontSize="small" color="action" />
+                  </InputAdornment>
+                ),
+                endAdornment: searchInput && (
+                  <InputAdornment position="end">
+                    <IconButton size="small" onClick={() => setSearchInput('')}>
+                      <ClearIcon fontSize="small" />
+                    </IconButton>
+                  </InputAdornment>
+                ),
+              }}
+            />
+          </Grid>
+          <Grid item xs={6} sm={3} md={2}>
+            <TextField
+              select
+              fullWidth
+              size="small"
+              label="Estado"
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+            >
+              <MenuItem value="">Todos</MenuItem>
+              {PURCHASE_ORDER_STATUSES.map((s) => (
+                <MenuItem key={s} value={s}>{s}</MenuItem>
+              ))}
+            </TextField>
+          </Grid>
+          <Grid item xs={6} sm={3} md={2}>
+            <TextField
+              fullWidth
+              size="small"
+              label="Desde"
+              type="date"
+              value={dateFrom}
+              onChange={(e) => setDateFrom(e.target.value)}
+              InputLabelProps={{ shrink: true }}
+            />
+          </Grid>
+          <Grid item xs={6} sm={3} md={2}>
+            <TextField
+              fullWidth
+              size="small"
+              label="Hasta"
+              type="date"
+              value={dateTo}
+              onChange={(e) => setDateTo(e.target.value)}
+              InputLabelProps={{ shrink: true }}
+            />
+          </Grid>
+          <Grid item xs={6} sm={6} md={2}>
+            <FormControlLabel
+              control={<Switch checked={overdueOnly} onChange={(e) => setOverdueOnly(e.target.checked)} size="small" />}
+              label="Solo atrasadas"
+            />
+          </Grid>
+          <Grid item xs={12} sm={6} md={1}>
+            <Button size="small" onClick={handleClearFilters} disabled={!hasActiveFilters}>
+              Limpiar
+            </Button>
           </Grid>
         </Grid>
       </Paper>
@@ -464,6 +637,13 @@ const PurchaseOrderList = () => {
             Recibir mercancía
           </MenuItem>
         )}
+        {/* US-SUPP-011 CA-1/CA-3: Solo disponible en estado "Pendiente" o "Confirmada" */}
+        {CANCELLABLE_STATUSES.includes(actionMenuOrder?.status) && (
+          <MenuItem onClick={handleOpenCancelDialog} sx={{ color: 'error.main' }}>
+            <CancelIcon fontSize="small" sx={{ mr: 1 }} />
+            Cancelar orden
+          </MenuItem>
+        )}
       </Menu>
 
       {/* US-SUPP-007: Modal cambio de estado */}
@@ -484,6 +664,16 @@ const PurchaseOrderList = () => {
           onConfirm={handleReceiveConfirm}
           onClose={() => !receiveLoading && setReceiveModalOrder(null)}
           loading={receiveLoading}
+        />
+      )}
+
+      {/* US-SUPP-011: Modal de cancelación */}
+      {cancelDialogOrder && (
+        <CancelPurchaseOrderDialog
+          orderNumber={cancelDialogOrder.order_number}
+          onConfirm={handleCancelConfirm}
+          onClose={() => !cancelLoading && setCancelDialogOrder(null)}
+          loading={cancelLoading}
         />
       )}
     </Container>

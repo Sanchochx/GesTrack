@@ -7,6 +7,8 @@ import {
   People as CustomersIcon,
   Category as ProductsIcon,
   LocalShipping as SuppliersIcon,
+  Autorenew as RestockIcon,
+  Assessment as ReportIcon,
   Settings as AdminIcon,
   Download as DownloadIcon,
   HelpOutline as HelpIcon,
@@ -27,6 +29,9 @@ const NAV_ITEMS = [
   { label: 'Clientes', icon: CustomersIcon, path: '/customers', roles: ['Admin', 'Gerente de Almacén', 'Personal de Ventas'] },
   { label: 'Productos', icon: ProductsIcon, path: '/products', roles: ['Admin', 'Gerente de Almacén'] },
   { label: 'Proveedores', icon: SuppliersIcon, path: '/suppliers', roles: ['Admin', 'Gerente de Almacén'] },
+  { label: 'Reabastecimiento', icon: RestockIcon, path: '/inventory/restock-suggestions', roles: ['Admin', 'Gerente de Almacén'] },
+  { label: 'Ventas Diarias', icon: ReportIcon, path: '/reports/daily-sales', roles: ['Admin'] },
+  { label: 'Ventas por Período', icon: ReportIcon, path: '/reports/sales-period', roles: ['Admin'] },
   { label: 'Administración', icon: AdminIcon, path: '/users', roles: ['Admin'] },
 ];
 

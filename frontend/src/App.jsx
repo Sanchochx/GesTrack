@@ -20,6 +20,9 @@ import MovementHistory from './pages/Inventory/MovementHistory';
 import CategoryInventoryView from './pages/Inventory/CategoryInventoryView';
 import OutOfStockProducts from './pages/Inventory/OutOfStockProducts';
 import InventoryDashboard from './pages/Inventory/InventoryDashboard';
+import RestockSuggestions from './pages/Inventory/RestockSuggestions';
+import DailySalesReport from './pages/Reports/DailySalesReport';
+import SalesByPeriodReport from './pages/Reports/SalesByPeriodReport';
 import CustomerList from './pages/Customers/CustomerList';
 import CreateCustomer from './pages/Customers/CreateCustomer';
 import CustomerDetail from './pages/Customers/CustomerDetail';
@@ -35,6 +38,7 @@ import CreateSupplier from './pages/Suppliers/CreateSupplier';
 import SupplierList from './pages/Suppliers/SupplierList';
 import SupplierDetail from './pages/Suppliers/SupplierDetail';
 import EditSupplier from './pages/Suppliers/EditSupplier';
+import SupplierPurchaseHistory from './pages/Suppliers/SupplierPurchaseHistory';
 import CreatePurchaseOrder from './pages/PurchaseOrders/CreatePurchaseOrder';
 import PurchaseOrderList from './pages/PurchaseOrders/PurchaseOrderList';
 import PurchaseOrderDetail from './pages/PurchaseOrders/PurchaseOrderDetail';
@@ -148,6 +152,20 @@ function App() {
             path="/inventory/dashboard"
             element={<ProtectedRoute allowedRoles={['Admin', 'Gerente de Almacén']}><InventoryDashboard /></ProtectedRoute>}
           />
+          <Route
+            path="/inventory/restock-suggestions"
+            element={<ProtectedRoute allowedRoles={['Admin', 'Gerente de Almacén']}><RestockSuggestions /></ProtectedRoute>}
+          />
+
+          {/* Reports */}
+          <Route
+            path="/reports/daily-sales"
+            element={<ProtectedRoute allowedRoles={['Admin']}><DailySalesReport /></ProtectedRoute>}
+          />
+          <Route
+            path="/reports/sales-period"
+            element={<ProtectedRoute allowedRoles={['Admin']}><SalesByPeriodReport /></ProtectedRoute>}
+          />
 
           {/* Customers */}
           <Route
@@ -211,6 +229,10 @@ function App() {
           <Route
             path="/suppliers/:id/edit"
             element={<ProtectedRoute allowedRoles={['Admin', 'Gerente de Almacén']}><EditSupplier /></ProtectedRoute>}
+          />
+          <Route
+            path="/suppliers/:id/orders"
+            element={<ProtectedRoute allowedRoles={['Admin', 'Gerente de Almacén']}><SupplierPurchaseHistory /></ProtectedRoute>}
           />
           <Route
             path="/suppliers/:id"

@@ -21,6 +21,7 @@ from app.services.reorder_point_service import ReorderPointService
 from app.services.inventory_value_service import InventoryValueService
 from app.services.inventory_category_service import InventoryCategoryService
 from app.services.inventory_dashboard_service import InventoryDashboardService
+from app.services.restock_suggestion_service import RestockSuggestionService
 from app.utils.export_helper import ExportHelper
 from app.utils.constants import ADJUSTMENT_REASONS, ADJUSTMENT_TYPES
 from app.utils.decorators import warehouse_manager_or_admin
@@ -1942,4 +1943,81 @@ def get_dashboard_additional_stats():
                 'code': 'DASHBOARD_STATS_ERROR',
                 'message': f'Error al obtener estadísticas: {str(e)}'
             }
+        }), 500
+
+
+@inventory_bp.route('/restock-suggestions', methods=['GET'])
+@jwt_required()
+@warehouse_manager_or_admin
+def get_restock_suggestions():
+    """
+    GET /api/inventory/restock-suggestions
+    US-SUPP-015: Lista sugerencias de reabastecimiento para productos con
+    stock en o por debajo del punto de reorden.
+
+    Query params:
+        - include_dismissed: 'true' para incluir también las ya procesadas (default false)
+    """
+    try:
+        include_dismissed = request.args.get('include_dismissed', 'false').lower() == 'true'
+        suggestions = RestockSuggestionService.get_suggestions(include_dismissed=include_dismissed)
+        return jsonify({'success': True, 'data': suggestions}), 200
+
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': {'code': 'INTERNAL_ERROR', 'message': str(e)}
+        }), 500
+
+
+@inventory_bp.route('/restock-suggestions/<product_id>/dismiss', methods=['POST'])
+@jwt_required()
+@warehouse_manager_or_admin
+def dismiss_restock_suggestion(product_id):
+    """
+    POST /api/inventory/restock-suggestions/:product_id/dismiss
+    US-SUPP-015 CA-7: Marca la sugerencia de reabastecimiento de un producto como procesada.
+    """
+    try:
+        current_user_id = get_jwt_identity()
+        RestockSuggestionService.dismiss_suggestion(product_id, current_user_id)
+        return jsonify({'success': True, 'message': 'Sugerencia marcada como procesada'}), 200
+
+    except ValueError as e:
+        return jsonify({
+            'success': False,
+            'error': {'code': 'VALIDATION_ERROR', 'message': str(e)}
+        }), 400
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({
+            'success': False,
+            'error': {'code': 'INTERNAL_ERROR', 'message': str(e)}
+        }), 500
+
+
+@inventory_bp.route('/restock-suggestions/<product_id>/dismiss', methods=['DELETE'])
+@jwt_required()
+@warehouse_manager_or_admin
+def undismiss_restock_suggestion(product_id):
+    """
+    DELETE /api/inventory/restock-suggestions/:product_id/dismiss
+    US-SUPP-015 CA-7: Vuelve a mostrar una sugerencia previamente procesada.
+    """
+    try:
+        removed = RestockSuggestionService.undismiss_suggestion(product_id)
+        if not removed:
+            return jsonify({
+                'success': False,
+                'error': {'code': 'NOT_FOUND', 'message': 'No hay una sugerencia procesada para este producto'}
+            }), 404
+
+        return jsonify({'success': True, 'message': 'Sugerencia reactivada'}), 200
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({
+            'success': False,
+            'error': {'code': 'INTERNAL_ERROR', 'message': str(e)}
         }), 500

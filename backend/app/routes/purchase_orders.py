@@ -6,17 +6,31 @@ US-SUPP-007: Gestionar Estados de Orden de Compra
 US-SUPP-008: Recibir Mercancía (Actualizar Inventario)
 US-SUPP-010: Editar Orden de Compra
 """
+from datetime import datetime, timedelta
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from app.schemas.purchase_order_schema import (
-    purchase_order_create_schema, purchase_order_receive_schema, purchase_order_update_schema
+    purchase_order_create_schema, purchase_order_receive_schema, purchase_order_update_schema,
+    purchase_order_cancel_schema
 )
-from app.services.purchase_order_service import PurchaseOrderService
+from app.services.purchase_order_service import PurchaseOrderService, PURCHASE_ORDER_STATUSES
 from app.services.stock_service import StockUpdateError
 from app.utils.decorators import require_role
 from marshmallow import ValidationError
 
 purchase_orders_bp = Blueprint('purchase_orders', __name__, url_prefix='/api/purchase-orders')
+
+
+def _parse_date_range():
+    """US-SUPP-013 CA-4: Parsea date_from/date_to de los query params (formato YYYY-MM-DD)"""
+    date_from_str = request.args.get('date_from')
+    date_to_str = request.args.get('date_to')
+
+    date_from = datetime.strptime(date_from_str, '%Y-%m-%d') if date_from_str else None
+    # date_to es inclusivo: se compara con el día siguiente
+    date_to = (datetime.strptime(date_to_str, '%Y-%m-%d') + timedelta(days=1)) if date_to_str else None
+
+    return date_from, date_to
 
 
 @purchase_orders_bp.route('', methods=['GET'])
@@ -32,15 +46,32 @@ def list_purchase_orders():
         - per_page: Items por página (default 20, max 100)
         - sort_by: Columna de ordenamiento (created_at, supplier, total, status)
         - sort_order: Dirección (asc, desc) - default desc
+        - include_cancelled: Incluir órdenes canceladas (true/false) - default true
+        - search: US-SUPP-013 CA-2 — búsqueda por número de orden o nombre del proveedor
+        - status: US-SUPP-013 CA-3 — filtrar por estado exacto
+        - date_from, date_to: US-SUPP-013 CA-4 — rango de fechas (YYYY-MM-DD)
+        - overdue: US-SUPP-013 CA-5 — 'true' para solo órdenes atrasadas
     """
     try:
         page = int(request.args.get('page', 1))
         per_page = min(int(request.args.get('per_page', 20)), 100)
         sort_by = request.args.get('sort_by', 'created_at')
         sort_order = request.args.get('sort_order', 'desc')
+        include_cancelled = request.args.get('include_cancelled', 'true').lower() != 'false'
+        search = request.args.get('search') or None
+        status = request.args.get('status') or None
+        if status and status not in PURCHASE_ORDER_STATUSES:
+            return jsonify({
+                'success': False,
+                'error': {'code': 'VALIDATION_ERROR', 'message': 'Estado inválido'}
+            }), 400
+        overdue = request.args.get('overdue', 'false').lower() == 'true'
+        date_from, date_to = _parse_date_range()
 
         pagination, metrics = PurchaseOrderService.list_purchase_orders(
-            page=page, per_page=per_page, sort_by=sort_by, sort_order=sort_order
+            page=page, per_page=per_page, sort_by=sort_by, sort_order=sort_order,
+            include_cancelled=include_cancelled, search=search, status=status,
+            date_from=date_from, date_to=date_to, overdue=overdue
         )
 
         orders_data = []
@@ -283,6 +314,61 @@ def update_purchase_order_status(purchase_order_id):
             'error': {
                 'code': 'SERVER_ERROR',
                 'message': 'Error al actualizar el estado de la orden de compra',
+                'details': str(e)
+            }
+        }), 500
+
+
+@purchase_orders_bp.route('/<string:purchase_order_id>/cancel', methods=['POST'])
+@jwt_required()
+@require_role(['Admin', 'Gerente de Almacén'])
+def cancel_purchase_order(purchase_order_id):
+    """
+    POST /api/purchase-orders/:id/cancel
+    US-SUPP-011: Cancela una orden de compra en estado "Pendiente" o "Confirmada".
+
+    Body:
+        - reason: Motivo de la cancelación (requerido)
+    """
+    try:
+        data = purchase_order_cancel_schema.load(request.json or {})
+        current_user_id = get_jwt_identity()
+
+        purchase_order = PurchaseOrderService.cancel_purchase_order(
+            purchase_order_id, data['reason'], current_user_id
+        )
+
+        return jsonify({
+            'success': True,
+            'data': purchase_order.to_dict(),
+            'message': f'Orden de compra {purchase_order.order_number} cancelada exitosamente'
+        }), 200
+
+    except ValidationError as e:
+        return jsonify({
+            'success': False,
+            'error': {
+                'code': 'VALIDATION_ERROR',
+                'message': 'Error de validación',
+                'details': e.messages
+            }
+        }), 400
+
+    except ValueError as e:
+        return jsonify({
+            'success': False,
+            'error': {
+                'code': 'VALIDATION_ERROR',
+                'message': str(e)
+            }
+        }), 400
+
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': {
+                'code': 'SERVER_ERROR',
+                'message': 'Error al cancelar la orden de compra',
                 'details': str(e)
             }
         }), 500

@@ -141,7 +141,23 @@ class PurchaseOrderUpdateSchema(Schema):
             )
 
 
+class PurchaseOrderCancelSchema(Schema):
+    """US-SUPP-011: Schema para cancelar una orden de compra"""
+
+    reason = fields.Str(required=True, error_messages={
+        'required': 'El motivo de cancelación es requerido'
+    })
+
+    @validates('reason')
+    def validate_reason(self, value):
+        if not value or not value.strip():
+            raise ValidationError('El motivo de cancelación es requerido')
+        if len(value.strip()) > 500:
+            raise ValidationError('El motivo de cancelación no puede exceder 500 caracteres')
+
+
 # Instancias de esquemas para uso en rutas
 purchase_order_create_schema = PurchaseOrderCreateSchema()
 purchase_order_receive_schema = PurchaseOrderReceiveSchema()
 purchase_order_update_schema = PurchaseOrderUpdateSchema()
+purchase_order_cancel_schema = PurchaseOrderCancelSchema()

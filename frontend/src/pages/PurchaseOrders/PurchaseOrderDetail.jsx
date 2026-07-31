@@ -43,6 +43,10 @@ import CancelIcon from '@mui/icons-material/Cancel';
 import purchaseOrderService from '../../services/purchaseOrderService';
 import { PURCHASE_ORDER_STATUS_COLORS } from './PurchaseOrderList';
 import PurchaseOrderStatusModal from '../../components/purchaseOrders/PurchaseOrderStatusModal';
+import CancelPurchaseOrderDialog from '../../components/purchaseOrders/CancelPurchaseOrderDialog';
+
+// US-SUPP-011 CA-1/CA-3: Solo se pueden cancelar órdenes en estos estados
+const CANCELLABLE_STATUSES = ['Pendiente', 'Confirmada'];
 
 const STATUS_ICONS = {
   Pendiente: AccessTimeIcon,
@@ -179,6 +183,10 @@ const PurchaseOrderDetail = () => {
   const [statusModalOpen, setStatusModalOpen] = useState(false);
   const [statusLoading, setStatusLoading] = useState(false);
 
+  // US-SUPP-011: Cancelación de orden
+  const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
+  const [cancelLoading, setCancelLoading] = useState(false);
+
   const fetchOrder = useCallback(async () => {
     setLoading(true);
     setError(null);
@@ -211,6 +219,22 @@ const PurchaseOrderDetail = () => {
     }
   };
 
+  // US-SUPP-011: Cancelar orden
+  const handleCancelConfirm = async (reason) => {
+    setCancelLoading(true);
+    try {
+      const result = await purchaseOrderService.cancelPurchaseOrder(id, reason);
+      setCancelDialogOpen(false);
+      setSuccessMessage(result.message || 'Orden de compra cancelada exitosamente');
+      fetchOrder();
+    } catch (err) {
+      setError(err?.error?.message || 'Error al cancelar la orden de compra');
+      setCancelDialogOpen(false);
+    } finally {
+      setCancelLoading(false);
+    }
+  };
+
   // CA-7: Imprimir
   const handlePrint = () => window.print();
 
@@ -238,6 +262,7 @@ const PurchaseOrderDetail = () => {
   if (!order) return null;
 
   const isPending = order.status === 'Pendiente';
+  const isCancellable = CANCELLABLE_STATUSES.includes(order.status);
 
   return (
     <Container maxWidth="lg" sx={{ py: 3 }} className="print-container">
@@ -310,6 +335,16 @@ const PurchaseOrderDetail = () => {
           <Button variant="outlined" startIcon={<PrintIcon />} onClick={handlePrint}>
             Imprimir
           </Button>
+          {isCancellable && (
+            <Button
+              variant="outlined"
+              color="error"
+              startIcon={<CancelIcon />}
+              onClick={() => setCancelDialogOpen(true)}
+            >
+              Cancelar Orden
+            </Button>
+          )}
         </Box>
       </Box>
 
@@ -368,7 +403,23 @@ const PurchaseOrderDetail = () => {
             <InfoRow label="Fecha de creación" value={formatDate(order.created_at)} />
             <InfoRow label="Fecha estimada de entrega" value={order.expected_delivery_date ? formatDateShort(order.expected_delivery_date) : 'No definida'} />
             {order.received_at && <InfoRow label="Fecha de recepción" value={formatDate(order.received_at)} />}
+            {order.cancelled_at && <InfoRow label="Fecha de cancelación" value={formatDate(order.cancelled_at)} />}
           </Paper>
+
+          {/* US-SUPP-011 CA-5: Información de cancelación */}
+          {order.status === 'Cancelada' && (
+            <Paper variant="outlined" sx={{ p: 2, mb: 3, borderColor: 'error.main' }}>
+              <Typography variant="subtitle1" fontWeight="bold" color="error.main" gutterBottom>
+                Orden Cancelada
+              </Typography>
+              <Divider sx={{ mb: 1.5 }} />
+              <InfoRow label="Cancelada por" value={order.cancelled_by_name || '-'} />
+              <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                Motivo
+              </Typography>
+              <Typography variant="body2">{order.cancellation_reason || '-'}</Typography>
+            </Paper>
+          )}
 
           {/* CA-2: Productos */}
           <Paper variant="outlined" sx={{ p: 2, mb: 3 }}>
@@ -467,6 +518,16 @@ const PurchaseOrderDetail = () => {
           onConfirm={handleStatusConfirm}
           onClose={() => !statusLoading && setStatusModalOpen(false)}
           loading={statusLoading}
+        />
+      )}
+
+      {/* US-SUPP-011: Modal de cancelación */}
+      {cancelDialogOpen && (
+        <CancelPurchaseOrderDialog
+          orderNumber={order.order_number}
+          onConfirm={handleCancelConfirm}
+          onClose={() => !cancelLoading && setCancelDialogOpen(false)}
+          loading={cancelLoading}
         />
       )}
     </Container>

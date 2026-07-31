@@ -20,6 +20,8 @@ import {
   Tooltip,
   Skeleton,
   Divider,
+  ToggleButtonGroup,
+  ToggleButton,
 } from '@mui/material';
 import {
   ShoppingCart as OrdersIcon,
@@ -31,10 +33,12 @@ import {
   ArrowForward as ArrowForwardIcon,
   CheckCircle as DeliveredIcon,
 } from '@mui/icons-material';
+import { BarChart, Bar, XAxis, CartesianGrid, Tooltip as ChartTooltip, ResponsiveContainer } from 'recharts';
 import authService from '../../services/authService';
 import DashboardHeader from '../../components/common/DashboardHeader';
 import StatCard from '../../components/common/StatCard';
 import useSalesDashboard from '../../hooks/useSalesDashboard';
+import { PERIOD_OPTIONS } from '../../utils/dashboardPeriods';
 
 const STATUS_CHIP_CONFIG = {
   Pendiente:   { color: 'warning' },
@@ -69,8 +73,10 @@ const formatDate = (isoString) => {
 const SalesDashboard = () => {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
-  const { loading, error, recentOrders, metrics, totalOrders, activeCustomers, refetch } =
-    useSalesDashboard();
+  const {
+    loading, error, recentOrders, metrics, totalOrders, activeCustomers,
+    period, setPeriod, periodSales, periodSalesChange, weeklyChartData, refetch,
+  } = useSalesDashboard();
 
   useEffect(() => {
     const currentUser = authService.getCurrentUser();
@@ -106,24 +112,37 @@ const SalesDashboard = () => {
         )}
 
         {/* ── KPIs ── */}
-        <Typography
-          variant="overline"
-          color="text.secondary"
-          sx={{ fontWeight: 600, letterSpacing: 1.5, display: 'block', mb: 2 }}
-        >
-          Resumen de Ventas
-        </Typography>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2, flexWrap: 'wrap', gap: 1 }}>
+          <Typography
+            variant="overline"
+            color="text.secondary"
+            sx={{ fontWeight: 600, letterSpacing: 1.5, display: 'block' }}
+          >
+            Resumen de Ventas
+          </Typography>
+          {/* US-REP-001 CA-5: Selector de período hoy/semana/mes */}
+          <ToggleButtonGroup
+            value={period}
+            exclusive
+            size="small"
+            onChange={(_, v) => v && setPeriod(v)}
+          >
+            {PERIOD_OPTIONS.map((p) => (
+              <ToggleButton key={p.value} value={p.value}>{p.label}</ToggleButton>
+            ))}
+          </ToggleButtonGroup>
+        </Box>
 
         <Grid container spacing={3} sx={{ mb: 4 }}>
           <Grid item xs={12} sm={6} lg={3}>
             <StatCard
-              title="Total Pedidos"
-              value={loading ? '—' : totalOrders}
-              icon={<OrdersIcon />}
-              color="primary"
-              subtitle="Todos los tiempos"
+              title="Ventas del Período"
+              value={loading ? '—' : formatCurrency(periodSales)}
+              icon={<RevenueIcon />}
+              color="success"
+              subtitle="Vs. período anterior"
+              trend={!loading && periodSalesChange !== null ? { value: periodSalesChange } : undefined}
               loading={loading}
-              onClick={() => navigate('/orders')}
             />
           </Grid>
           <Grid item xs={12} sm={6} lg={3}>
@@ -139,12 +158,13 @@ const SalesDashboard = () => {
           </Grid>
           <Grid item xs={12} sm={6} lg={3}>
             <StatCard
-              title="Ingresos Totales"
-              value={loading ? '—' : formatCurrency(metrics?.total_amount)}
-              icon={<RevenueIcon />}
-              color="success"
-              subtitle="Valor acumulado"
+              title="Total Pedidos"
+              value={loading ? '—' : totalOrders}
+              icon={<OrdersIcon />}
+              color="primary"
+              subtitle="Todos los tiempos"
               loading={loading}
+              onClick={() => navigate('/orders')}
             />
           </Grid>
           <Grid item xs={12} sm={6} lg={3}>
@@ -159,6 +179,27 @@ const SalesDashboard = () => {
             />
           </Grid>
         </Grid>
+
+        {/* US-REP-001 CA-3: Gráfico de ventas de los últimos 7 días */}
+        <Card elevation={2} sx={{ mb: 4 }}>
+          <CardContent>
+            <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>
+              Ventas — Últimos 7 Días
+            </Typography>
+            {loading ? (
+              <Skeleton variant="rectangular" height={220} sx={{ borderRadius: 1 }} />
+            ) : (
+              <ResponsiveContainer width="100%" height={220}>
+                <BarChart data={weeklyChartData} margin={{ top: 4, right: 8, left: 8, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                  <XAxis dataKey="label" tick={{ fontSize: 12 }} />
+                  <ChartTooltip formatter={(value) => [formatCurrency(value), 'Ventas']} />
+                  <Bar dataKey="total" fill="#2e7d32" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            )}
+          </CardContent>
+        </Card>
 
         <Grid container spacing={3}>
           {/* ── Pedidos Recientes ── */}

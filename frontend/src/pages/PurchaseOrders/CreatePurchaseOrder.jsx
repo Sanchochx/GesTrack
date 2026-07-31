@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import {
   Container,
   Box,
@@ -26,6 +26,10 @@ import PurchaseOrderForm from '../../components/forms/PurchaseOrderForm';
  */
 const CreatePurchaseOrder = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // US-SUPP-015 CA-5: Prefill de proveedor/productos desde sugerencias de reabastecimiento
+  const prefill = location.state?.prefill || null;
 
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
   const [createdOrder, setCreatedOrder] = useState(null);
@@ -89,8 +93,14 @@ const CreatePurchaseOrder = () => {
         </Typography>
       </Box>
 
+      {prefill && (
+        <Alert severity="info" sx={{ mb: 3 }}>
+          Orden prellenada desde las sugerencias de reabastecimiento. Verifique cantidades y precios antes de guardar.
+        </Alert>
+      )}
+
       {/* Purchase Order Form */}
-      <PurchaseOrderForm onSuccess={handleSuccess} onCancel={handleCancel} />
+      <PurchaseOrderForm onSuccess={handleSuccess} onCancel={handleCancel} prefill={prefill} />
 
       {/* Success Dialog */}
       <Dialog open={showSuccessDialog} onClose={handleCreateAnother} maxWidth="sm" fullWidth>

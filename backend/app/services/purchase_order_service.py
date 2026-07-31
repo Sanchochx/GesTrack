@@ -13,13 +13,15 @@ from app.models.supplier import Supplier
 from app.models.product import Product
 from app.services.stock_service import StockService
 from decimal import Decimal
-from datetime import datetime
+from datetime import datetime, date
 from sqlalchemy import func, asc, desc
 
 # US-SUPP-007 CA-1: Estados disponibles para órdenes de compra
 PURCHASE_ORDER_STATUSES = ['Pendiente', 'Confirmada', 'En Tránsito', 'Recibida', 'Cancelada']
 # CA-6: "Recibida" solo se alcanza a través del flujo dedicado de recepción de mercancía (US-SUPP-008)
 TERMINAL_STATUSES = ['Recibida', 'Cancelada']
+# US-SUPP-011 CA-1/CA-3: Solo se pueden cancelar órdenes en estos estados
+CANCELLABLE_STATUSES = ['Pendiente', 'Confirmada']
 # US-SUPP-008 CA-4: Razones de discrepancia al recibir mercancía
 DISCREPANCY_REASONS = ['Faltante', 'Sobrante', 'Daño']
 # US-SUPP-010 CA-7: Umbral (%) de cambio en el total a partir del cual se considera "significativo"
@@ -30,16 +32,61 @@ class PurchaseOrderService:
     """Lógica de negocio para gestión de órdenes de compra"""
 
     @staticmethod
-    def list_purchase_orders(page=1, per_page=20, sort_by='created_at', sort_order='desc'):
+    def _apply_list_filters(query, needs_supplier, include_cancelled=True, search=None,
+                             status=None, date_from=None, date_to=None, overdue=False):
+        """US-SUPP-013: Aplica los filtros combinables de búsqueda al listado general de órdenes"""
+        if not include_cancelled:
+            query = query.filter(PurchaseOrder.status != 'Cancelada')
+
+        if status:
+            query = query.filter(PurchaseOrder.status == status)
+
+        if date_from:
+            query = query.filter(PurchaseOrder.created_at >= date_from)
+        if date_to:
+            query = query.filter(PurchaseOrder.created_at < date_to)
+
+        if search:
+            term = f'%{search.strip()}%'
+            if not needs_supplier:
+                query = query.join(PurchaseOrder.supplier)
+            query = query.filter(
+                db.or_(
+                    PurchaseOrder.order_number.ilike(term),
+                    Supplier.company_name.ilike(term),
+                )
+            )
+            needs_supplier = True
+
+        if overdue:
+            query = query.filter(
+                PurchaseOrder.expected_delivery_date.isnot(None),
+                PurchaseOrder.expected_delivery_date < date.today(),
+                PurchaseOrder.status.notin_(TERMINAL_STATUSES),
+            )
+
+        return query, needs_supplier
+
+    @staticmethod
+    def list_purchase_orders(page=1, per_page=20, sort_by='created_at', sort_order='desc', include_cancelled=True,
+                              search=None, status=None, date_from=None, date_to=None, overdue=False):
         """
         US-SUPP-006 CA-2/CA-3: Lista órdenes de compra paginadas y ordenadas,
         con métricas de total de órdenes y monto total.
+        US-SUPP-011 CA-7: Permite ocultar las órdenes canceladas.
+        US-SUPP-013: Búsqueda por número de orden/proveedor y filtros combinables
+        de estado, rango de fechas y órdenes atrasadas.
 
         Args:
             page: número de página (1-indexado)
             per_page: cantidad de órdenes por página
             sort_by: campo de ordenamiento ('created_at', 'supplier', 'total', 'status')
             sort_order: dirección ('asc' o 'desc')
+            include_cancelled: si es False, excluye las órdenes en estado "Cancelada"
+            search: texto de búsqueda sobre order_number o nombre del proveedor (opcional)
+            status: filtrar por estado exacto (opcional)
+            date_from/date_to: rango de fechas sobre created_at (opcional)
+            overdue: si es True, solo incluye órdenes atrasadas (fecha estimada pasada, no terminales)
 
         Returns:
             (pagination, metrics): objeto de paginación de SQLAlchemy y dict de métricas
@@ -48,6 +95,10 @@ class PurchaseOrderService:
         query = PurchaseOrder.query
         if needs_supplier:
             query = query.join(PurchaseOrder.supplier)
+
+        query, needs_supplier = PurchaseOrderService._apply_list_filters(
+            query, needs_supplier, include_cancelled, search, status, date_from, date_to, overdue
+        )
 
         sort_columns = {
             'created_at': PurchaseOrder.created_at,
@@ -61,16 +112,123 @@ class PurchaseOrderService:
 
         pagination = query.paginate(page=page, per_page=per_page, error_out=False)
 
-        # CA-6: Total de órdenes y monto total (sobre el total de registros, no solo la página)
-        total_amount = db.session.query(
+        # CA-6/CA-7 (US-SUPP-013): Total de órdenes y monto total sobre el mismo conjunto filtrado
+        metrics_query, _ = PurchaseOrderService._apply_list_filters(
+            PurchaseOrder.query, False, include_cancelled, search, status, date_from, date_to, overdue
+        )
+
+        total_amount = metrics_query.with_entities(
             func.coalesce(func.sum(PurchaseOrder.total), 0)
         ).scalar()
         metrics = {
-            'total_orders': PurchaseOrder.query.count(),
+            'total_orders': metrics_query.count(),
             'total_amount': float(total_amount),
         }
 
         return pagination, metrics
+
+    @staticmethod
+    def _apply_supplier_history_filters(query, status=None, date_from=None, date_to=None):
+        """US-SUPP-012: Aplica filtros de estado y rango de fechas a una query de órdenes"""
+        if status:
+            query = query.filter(PurchaseOrder.status == status)
+        if date_from:
+            query = query.filter(PurchaseOrder.created_at >= date_from)
+        if date_to:
+            query = query.filter(PurchaseOrder.created_at < date_to)
+        return query
+
+    @staticmethod
+    def get_supplier_purchase_history(supplier_id, page=1, per_page=20, sort_order='desc',
+                                       status=None, date_from=None, date_to=None):
+        """
+        US-SUPP-012: Lista el historial de órdenes de compra de un proveedor,
+        con filtros de rango de fechas y estado.
+
+        CA-2: Ordenadas por fecha, más reciente primero (por defecto)
+        CA-6: Filtro por rango de fechas
+        CA-7: Filtro por estado
+
+        Args:
+            supplier_id: ID del proveedor
+            page/per_page: paginación
+            sort_order: 'asc' o 'desc' sobre created_at
+            status: Filtrar por estado (opcional)
+            date_from/date_to: Rango de fechas sobre created_at (opcional)
+
+        Returns:
+            pagination: objeto de paginación de SQLAlchemy con las órdenes filtradas
+        """
+        query = PurchaseOrder.query.filter(PurchaseOrder.supplier_id == supplier_id)
+        query = PurchaseOrderService._apply_supplier_history_filters(query, status, date_from, date_to)
+
+        direction = desc if sort_order == 'desc' else asc
+        query = query.order_by(direction(PurchaseOrder.created_at))
+
+        return query.paginate(page=page, per_page=per_page, error_out=False)
+
+    @staticmethod
+    def get_supplier_purchase_metrics(supplier_id, status=None, date_from=None, date_to=None):
+        """
+        US-SUPP-012 CA-4/CA-5: Calcula métricas de compras a un proveedor.
+
+        CA-4: Total de compras al proveedor (suma de totales, excluyendo canceladas)
+        CA-5: Tasa de cumplimiento — % de órdenes recibidas a tiempo (received_at <= fecha
+              estimada de entrega) sobre el total de órdenes recibidas
+
+        Args:
+            supplier_id: ID del proveedor
+            status/date_from/date_to: mismos filtros que get_supplier_purchase_history
+
+        Returns:
+            dict: {total_orders, total_purchases, fulfillment_rate, last_order_date}
+        """
+        base_query = PurchaseOrder.query.filter(PurchaseOrder.supplier_id == supplier_id)
+        base_query = PurchaseOrderService._apply_supplier_history_filters(base_query, status, date_from, date_to)
+
+        total_orders = base_query.count()
+
+        purchases_query = base_query.filter(PurchaseOrder.status != 'Cancelada')
+        total_purchases = purchases_query.with_entities(
+            func.coalesce(func.sum(PurchaseOrder.total), 0)
+        ).scalar()
+
+        received_orders = base_query.filter(PurchaseOrder.status == 'Recibida').all()
+        on_time_count = sum(
+            1 for order in received_orders
+            if not order.expected_delivery_date or (
+                order.received_at and order.received_at.date() <= order.expected_delivery_date
+            )
+        )
+        fulfillment_rate = (
+            round(on_time_count / len(received_orders) * 100, 1) if received_orders else None
+        )
+
+        last_order = base_query.order_by(PurchaseOrder.created_at.desc()).first()
+
+        return {
+            'total_orders': total_orders,
+            'total_purchases': float(total_purchases),
+            'fulfillment_rate': fulfillment_rate,
+            'last_order_date': last_order.created_at.isoformat() if last_order else None,
+        }
+
+    @staticmethod
+    def get_supplier_purchase_history_all(supplier_id, status=None, date_from=None, date_to=None):
+        """
+        US-SUPP-012 CA-8: Obtiene todas las órdenes de compra de un proveedor (sin paginar),
+        para exportación a CSV/Excel.
+
+        Args:
+            supplier_id: ID del proveedor
+            status/date_from/date_to: mismos filtros que get_supplier_purchase_history
+
+        Returns:
+            list[PurchaseOrder]: órdenes ordenadas por fecha, más reciente primero
+        """
+        query = PurchaseOrder.query.filter(PurchaseOrder.supplier_id == supplier_id)
+        query = PurchaseOrderService._apply_supplier_history_filters(query, status, date_from, date_to)
+        return query.order_by(PurchaseOrder.created_at.desc()).all()
 
     @staticmethod
     def get_purchase_order_by_id(purchase_order_id):
@@ -166,7 +324,8 @@ class PurchaseOrderService:
         CA-5: Se pueden agregar notas al cambiar estado
         CA-6: Solo el estado "Recibida" actualiza el inventario — se alcanza únicamente a
               través del flujo dedicado de recepción de mercancía (US-SUPP-008), no desde aquí
-        CA-7: "Cancelada" se puede establecer desde cualquier estado previo no terminal
+        US-SUPP-011: "Cancelada" solo se puede establecer mediante el flujo dedicado de
+              cancelación (cancel_purchase_order), que exige un motivo obligatorio
 
         Args:
             purchase_order_id: ID de la orden de compra
@@ -195,6 +354,11 @@ class PurchaseOrderService:
                 'El estado "Recibida" solo se puede establecer mediante el registro de recepción de mercancía'
             )
 
+        if new_status == 'Cancelada':
+            raise ValueError(
+                'El estado "Cancelada" solo se puede establecer mediante la acción de cancelar orden'
+            )
+
         if new_status == purchase_order.status:
             raise ValueError('La orden ya se encuentra en ese estado')
 
@@ -207,6 +371,59 @@ class PurchaseOrderService:
             previous_status=previous_status,
             status=new_status,
             notes=notes,
+        )
+        db.session.add(history)
+        db.session.commit()
+        return purchase_order
+
+    @staticmethod
+    def cancel_purchase_order(purchase_order_id, reason, current_user_id):
+        """
+        US-SUPP-011: Cancela una orden de compra.
+
+        CA-1: Solo se pueden cancelar órdenes en estado "Pendiente" o "Confirmada"
+        CA-3: No se pueden cancelar órdenes "En Tránsito" o "Recibida"
+        CA-2: Se exige un motivo de cancelación
+        CA-4: La orden cambia a estado "Cancelada"
+        CA-5: Se registra fecha/hora, usuario y motivo de cancelación
+        CA-6: La orden no se elimina, solo se marca como cancelada
+
+        Args:
+            purchase_order_id: ID de la orden de compra
+            reason: Motivo de la cancelación (requerido)
+            current_user_id: ID del usuario que cancela la orden
+
+        Returns:
+            PurchaseOrder: orden de compra cancelada
+
+        Raises:
+            ValueError: si la orden no existe, no se puede cancelar, o falta el motivo
+        """
+        purchase_order = PurchaseOrder.query.get(purchase_order_id)
+        if not purchase_order:
+            raise ValueError('La orden de compra no existe')
+
+        if purchase_order.status not in CANCELLABLE_STATUSES:
+            raise ValueError(
+                f'No se puede cancelar una orden en estado "{purchase_order.status}". '
+                f'Solo se pueden cancelar órdenes en estado {" o ".join(CANCELLABLE_STATUSES)}'
+            )
+
+        if not reason or not reason.strip():
+            raise ValueError('Debe indicar el motivo de la cancelación')
+
+        previous_status = purchase_order.status
+        purchase_order.status = 'Cancelada'
+        purchase_order.cancelled_at = datetime.utcnow()
+        purchase_order.cancelled_by_id = current_user_id
+        purchase_order.cancellation_reason = reason.strip()
+
+        history = PurchaseOrderStatusHistory(
+            purchase_order_id=purchase_order.id,
+            changed_by_id=current_user_id,
+            previous_status=previous_status,
+            status='Cancelada',
+            notes=reason.strip(),
         )
         db.session.add(history)
         db.session.commit()

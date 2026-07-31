@@ -32,6 +32,7 @@ import {
 import supplierService from '../../services/supplierService';
 import productService from '../../services/productService';
 import purchaseOrderService from '../../services/purchaseOrderService';
+import StarIcon from '@mui/icons-material/Star';
 
 const formatCOP = (amount) => {
   return new Intl.NumberFormat('es-CO', {
@@ -59,13 +60,16 @@ const SIGNIFICANT_CHANGE_THRESHOLD = 20;
  * CA-2/CA-3: Agregar/eliminar productos y modificar cantidades/precios
  * CA-4: Recalcula totales automáticamente
  * CA-7: Advertencia si hay cambios significativos (total varía >20% o se agregan/eliminan productos)
+ *
+ * US-SUPP-015 CA-5: `prefill` permite iniciar la orden con proveedor/productos
+ * ya seleccionados (creación directa desde sugerencias de reabastecimiento)
  */
-const PurchaseOrderForm = ({ onSuccess, onCancel, mode = 'create', initialOrder = null }) => {
+const PurchaseOrderForm = ({ onSuccess, onCancel, mode = 'create', initialOrder = null, prefill = null }) => {
   const isEdit = mode === 'edit';
 
   // Supplier state (CA-1)
   const [supplierOptions, setSupplierOptions] = useState([]);
-  const [selectedSupplier, setSelectedSupplier] = useState(initialOrder?.supplier || null);
+  const [selectedSupplier, setSelectedSupplier] = useState(initialOrder?.supplier || prefill?.supplier || null);
   const [loadingSuppliers, setLoadingSuppliers] = useState(false);
 
   // Product search state (CA-2)
@@ -73,15 +77,19 @@ const PurchaseOrderForm = ({ onSuccess, onCancel, mode = 'create', initialOrder 
   const [productOptions, setProductOptions] = useState([]);
   const [loadingProducts, setLoadingProducts] = useState(false);
 
+  // US-SUPP-014 CA-6: Productos sugeridos del proveedor seleccionado
+  const [suggestedProducts, setSuggestedProducts] = useState([]);
+  const [loadingSuggestions, setLoadingSuggestions] = useState(false);
+
   // Order items state (CA-2/CA-3)
   const [orderItems, setOrderItems] = useState(() =>
-    (initialOrder?.items || []).map((item) => ({
+    (initialOrder?.items || prefill?.items || []).map((item) => ({
       product_id: item.product_id,
       product_name: item.product_name,
       product_sku: item.product_sku,
       quantity_ordered: item.quantity_ordered,
       unit_cost: item.unit_cost,
-      subtotal: item.subtotal,
+      subtotal: item.subtotal ?? item.quantity_ordered * item.unit_cost,
     }))
   );
 
@@ -112,6 +120,59 @@ const PurchaseOrderForm = ({ onSuccess, onCancel, mode = 'create', initialOrder 
     loadSuppliers();
     return () => { cancelled = true; };
   }, []);
+
+  // US-SUPP-014 CA-6: Sugerir productos vinculados al proveedor seleccionado
+  useEffect(() => {
+    if (!selectedSupplier) {
+      setSuggestedProducts([]);
+      return;
+    }
+    let cancelled = false;
+    async function loadSuggestions() {
+      setLoadingSuggestions(true);
+      try {
+        const result = await supplierService.getSupplierProducts(selectedSupplier.id);
+        if (!cancelled && result.success) setSuggestedProducts(result.data || []);
+      } catch {
+        if (!cancelled) setSuggestedProducts([]);
+      } finally {
+        if (!cancelled) setLoadingSuggestions(false);
+      }
+    }
+    loadSuggestions();
+    return () => { cancelled = true; };
+  }, [selectedSupplier]);
+
+  const handleAddSuggestedProduct = (link) => {
+    const existing = orderItems.find((item) => item.product_id === link.product_id);
+    if (existing) {
+      const newQty = existing.quantity_ordered + 1;
+      setOrderItems((prev) =>
+        prev.map((item) =>
+          item.product_id === link.product_id
+            ? { ...item, quantity_ordered: newQty, subtotal: newQty * item.unit_cost }
+            : item
+        )
+      );
+      return;
+    }
+    const unitCost = link.preferential_price ?? link.product_cost_price ?? 0;
+    setOrderItems((prev) => [
+      ...prev,
+      {
+        product_id: link.product_id,
+        product_name: link.product_name,
+        product_sku: link.product_sku,
+        quantity_ordered: 1,
+        unit_cost: unitCost,
+        subtotal: unitCost,
+      },
+    ]);
+    setErrors((prev) => {
+      const { items: _items, ...rest } = prev;
+      return rest;
+    });
+  };
 
   // --- CA-2: Product Search ---
   const searchProducts = useCallback(async (query) => {
@@ -171,7 +232,7 @@ const PurchaseOrderForm = ({ onSuccess, onCancel, mode = 'create', initialOrder 
     }
 
     setErrors((prev) => {
-      const { items, ...rest } = prev;
+      const { items: _items, ...rest } = prev;
       return rest;
     });
     setProductSearch('');
@@ -370,6 +431,33 @@ const PurchaseOrderForm = ({ onSuccess, onCancel, mode = 'create', initialOrder 
           <CartIcon sx={{ mr: 1, color: 'primary.main' }} />
           <Typography variant="h6">Productos de la Orden</Typography>
         </Box>
+
+        {/* US-SUPP-014 CA-6: Productos sugeridos del proveedor */}
+        {selectedSupplier && (loadingSuggestions || suggestedProducts.length > 0) && (
+          <Box sx={{ mb: 2 }}>
+            <Typography variant="caption" color="text.secondary" gutterBottom sx={{ display: 'block' }}>
+              Productos de este proveedor
+            </Typography>
+            {loadingSuggestions ? (
+              <CircularProgress size={16} />
+            ) : (
+              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                {suggestedProducts.map((link) => (
+                  <Chip
+                    key={link.id}
+                    icon={link.is_preferred ? <StarIcon fontSize="small" /> : undefined}
+                    label={`${link.product_name} (${link.product_sku})${link.preferential_price != null ? ` — ${formatCOP(link.preferential_price)}` : ''}`}
+                    onClick={() => handleAddSuggestedProduct(link)}
+                    color={link.is_preferred ? 'warning' : 'default'}
+                    variant="outlined"
+                    size="small"
+                    clickable
+                  />
+                ))}
+              </Box>
+            )}
+          </Box>
+        )}
 
         <Autocomplete
           options={productOptions}

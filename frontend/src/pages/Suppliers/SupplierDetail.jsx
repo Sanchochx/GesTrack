@@ -41,6 +41,7 @@ import {
   OpenInNew as OpenInNewIcon,
 } from '@mui/icons-material';
 import supplierService from '../../services/supplierService';
+import SupplierProductsPanel from '../../components/suppliers/SupplierProductsPanel';
 
 const formatDate = (dateString) => {
   if (!dateString) return 'N/A';
@@ -204,7 +205,6 @@ export default function SupplierDetail() {
                 variant="outlined"
                 startIcon={<OpenInNewIcon />}
                 onClick={() => navigate(`/suppliers/${id}/orders`)}
-                disabled
               >
                 Ver Todas las Órdenes
               </Button>
@@ -212,7 +212,6 @@ export default function SupplierDetail() {
                 variant="outlined"
                 startIcon={<AddIcon />}
                 onClick={() => navigate(`/purchase-orders/new?supplier=${id}`)}
-                disabled
               >
                 Nueva Orden
               </Button>
@@ -374,7 +373,7 @@ export default function SupplierDetail() {
                   </CardContent>
                 </Card>
               </Grid>
-              <Grid item xs={12}>
+              <Grid item xs={6}>
                 <Card variant="outlined">
                   <CardContent sx={{ textAlign: 'center', py: 2 }}>
                     <AccessTimeIcon color="warning" sx={{ fontSize: 32, mb: 1 }} />
@@ -382,6 +381,19 @@ export default function SupplierDetail() {
                       {supplier.last_order_date ? formatDate(supplier.last_order_date) : 'Sin órdenes'}
                     </Typography>
                     <Typography variant="body2" color="text.secondary">Última Orden</Typography>
+                  </CardContent>
+                </Card>
+              </Grid>
+              <Grid item xs={6}>
+                <Card variant="outlined">
+                  <CardContent sx={{ textAlign: 'center', py: 2 }}>
+                    <ReceiptIcon color="info" sx={{ fontSize: 32, mb: 1 }} />
+                    <Typography variant="h6" fontWeight="bold">
+                      {supplier.fulfillment_rate !== null && supplier.fulfillment_rate !== undefined
+                        ? `${supplier.fulfillment_rate}%`
+                        : 'Sin datos'}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">Tasa de Cumplimiento</Typography>
                   </CardContent>
                 </Card>
               </Grid>
@@ -404,7 +416,6 @@ export default function SupplierDetail() {
                 size="small"
                 endIcon={<OpenInNewIcon />}
                 onClick={() => navigate(`/suppliers/${id}/orders`)}
-                disabled
               >
                 Ver historial completo
               </Button>
@@ -429,6 +440,9 @@ export default function SupplierDetail() {
           </Paper>
         </Grid>
       </Grid>
+
+      {/* US-SUPP-014: Productos que provee el proveedor */}
+      <SupplierProductsPanel supplierId={id} />
     </Container>
   );
 }
