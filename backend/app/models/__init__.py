@@ -20,5 +20,7 @@ from app.models.supplier import Supplier
 from app.models.purchase_order import PurchaseOrder, PurchaseOrderItem, PurchaseOrderStatusHistory, PurchaseOrderEditAudit
 from app.models.supplier_product import SupplierProduct
 from app.models.restock_suggestion_dismissal import RestockSuggestionDismissal
+from app.models.scheduled_report import ScheduledReport, ScheduledReportRun
+from app.models.dashboard_preference import DashboardPreference
 
-__all__ = ['User', 'LoginAttempt', 'PasswordResetToken', 'Category', 'Product', 'InventoryMovement', 'ProductDeletionAudit', 'InventoryAlert', 'InventoryValueHistory', 'Customer', 'CustomerDeletionAudit', 'CustomerNote', 'CustomerSegmentationConfig', 'CustomerCategoryHistory', 'Order', 'OrderItem', 'OrderStatusHistory', 'OrderEditAudit', 'Payment', 'Return', 'ReturnItem', 'Supplier', 'PurchaseOrder', 'PurchaseOrderItem', 'PurchaseOrderStatusHistory', 'PurchaseOrderEditAudit', 'SupplierProduct', 'RestockSuggestionDismissal']
+__all__ = ['User', 'LoginAttempt', 'PasswordResetToken', 'Category', 'Product', 'InventoryMovement', 'ProductDeletionAudit', 'InventoryAlert', 'InventoryValueHistory', 'Customer', 'CustomerDeletionAudit', 'CustomerNote', 'CustomerSegmentationConfig', 'CustomerCategoryHistory', 'Order', 'OrderItem', 'OrderStatusHistory', 'OrderEditAudit', 'Payment', 'Return', 'ReturnItem', 'Supplier', 'PurchaseOrder', 'PurchaseOrderItem', 'PurchaseOrderStatusHistory', 'PurchaseOrderEditAudit', 'SupplierProduct', 'RestockSuggestionDismissal', 'ScheduledReport', 'ScheduledReportRun', 'DashboardPreference']

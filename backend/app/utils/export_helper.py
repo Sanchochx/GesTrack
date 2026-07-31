@@ -730,6 +730,616 @@ class ExportHelper:
         )
 
     @staticmethod
+    def export_top_selling_products_to_csv(products):
+        """
+        US-REP-004 CA-8: Exporta el ranking de productos más vendidos a CSV
+
+        Args:
+            products: Lista de diccionarios con los datos de los productos
+
+        Returns:
+            Flask Response con el archivo CSV
+        """
+        columns = [
+            ('product_name', 'Producto'),
+            ('product_sku', 'SKU'),
+            ('category_name', 'Categoría'),
+            ('quantity_sold', 'Cantidad Vendida'),
+            ('total_revenue', 'Ingresos'),
+            ('profit_margin', 'Margen de Ganancia (%)'),
+            ('sales_percentage', '% Participación en Ventas'),
+        ]
+
+        return ExportHelper.export_to_csv(
+            data=products,
+            columns=columns,
+            filename_prefix='productos_mas_vendidos'
+        )
+
+    @staticmethod
+    def export_top_selling_products_to_excel(products):
+        """
+        US-REP-004 CA-8: Exporta el ranking de productos más vendidos a Excel
+
+        Args:
+            products: Lista de diccionarios con los datos de los productos
+
+        Returns:
+            Flask Response con el archivo Excel
+        """
+        columns = [
+            ('product_name', 'Producto'),
+            ('product_sku', 'SKU'),
+            ('category_name', 'Categoría'),
+            ('quantity_sold', 'Cantidad Vendida'),
+            ('total_revenue', 'Ingresos'),
+            ('profit_margin', 'Margen de Ganancia (%)'),
+            ('sales_percentage', '% Participación en Ventas'),
+        ]
+
+        return ExportHelper.export_to_excel(
+            data=products,
+            columns=columns,
+            filename_prefix='productos_mas_vendidos',
+            sheet_name='Productos Más Vendidos'
+        )
+
+    @staticmethod
+    def export_profit_margin_analysis_to_excel(products):
+        """
+        US-REP-005 CA-9: Exporta el análisis de márgenes de ganancia por producto a Excel
+
+        Args:
+            products: Lista de diccionarios con los datos de los productos
+
+        Returns:
+            Flask Response con el archivo Excel
+        """
+        columns = [
+            ('product_name', 'Producto'),
+            ('product_sku', 'SKU'),
+            ('category_name', 'Categoría'),
+            ('cost_price', 'Precio Costo'),
+            ('sale_price', 'Precio Venta'),
+            ('margin_pct', 'Margen (%)'),
+            ('margin_dollar', 'Margen ($)'),
+            ('units_sold', 'Unidades Vendidas'),
+            ('total_profit', 'Ganancia Total'),
+        ]
+
+        return ExportHelper.export_to_excel(
+            data=products,
+            columns=columns,
+            filename_prefix='analisis_margenes_ganancia',
+            sheet_name='Márgenes de Ganancia'
+        )
+
+    @staticmethod
+    def export_current_inventory_report_to_csv(products, generated_at=None):
+        """
+        US-REP-006 CA-7: Exporta el reporte de inventario actual a CSV
+
+        Args:
+            products: Lista de diccionarios con los datos de los productos
+            generated_at: Timestamp de generación del reporte (str), usado en el nombre del archivo
+
+        Returns:
+            Flask Response con el archivo CSV
+        """
+        columns = [
+            ('sku', 'SKU'),
+            ('name', 'Nombre'),
+            ('category_name', 'Categoría'),
+            ('stock_quantity', 'Stock Actual'),
+            ('item_value', 'Valor en Inventario'),
+            ('stock_status', 'Estado'),
+        ]
+
+        prefix = 'reporte_inventario'
+        if generated_at:
+            prefix = f'{prefix}_{generated_at[:10]}'
+
+        return ExportHelper.export_to_csv(
+            data=products,
+            columns=columns,
+            filename_prefix=prefix
+        )
+
+    @staticmethod
+    def export_current_inventory_report_to_excel(products, generated_at=None):
+        """
+        US-REP-006 CA-7: Exporta el reporte de inventario actual a Excel
+
+        Args:
+            products: Lista de diccionarios con los datos de los productos
+            generated_at: Timestamp de generación del reporte (str), usado en el nombre del archivo
+
+        Returns:
+            Flask Response con el archivo Excel
+        """
+        columns = [
+            ('sku', 'SKU'),
+            ('name', 'Nombre'),
+            ('category_name', 'Categoría'),
+            ('stock_quantity', 'Stock Actual'),
+            ('item_value', 'Valor en Inventario'),
+            ('stock_status', 'Estado'),
+        ]
+
+        prefix = 'reporte_inventario'
+        if generated_at:
+            prefix = f'{prefix}_{generated_at[:10]}'
+
+        return ExportHelper.export_to_excel(
+            data=products,
+            columns=columns,
+            filename_prefix=prefix,
+            sheet_name='Inventario Actual'
+        )
+
+    @staticmethod
+    def export_inventory_movements_report_to_csv(movements, start_date, end_date):
+        """
+        US-REP-007 CA-7: Exporta el reporte de movimientos de inventario a CSV
+
+        Args:
+            movements: Lista de diccionarios con los datos de los movimientos
+            start_date: Fecha de inicio del período (str YYYY-MM-DD)
+            end_date: Fecha de fin del período (str YYYY-MM-DD)
+
+        Returns:
+            Flask Response con el archivo CSV
+        """
+        columns = [
+            ('created_at', 'Fecha y Hora'),
+            ('product_name', 'Producto'),
+            ('product_sku', 'SKU'),
+            ('movement_type', 'Tipo de Movimiento'),
+            ('quantity', 'Cantidad'),
+            ('previous_stock', 'Stock Anterior'),
+            ('new_stock', 'Stock Resultante'),
+            ('user_name', 'Usuario'),
+            ('reason', 'Motivo'),
+        ]
+
+        return ExportHelper.export_to_csv(
+            data=movements,
+            columns=columns,
+            filename_prefix=f'movimientos_inventario_{start_date}_a_{end_date}'
+        )
+
+    @staticmethod
+    def export_inventory_movements_report_to_excel(movements, start_date, end_date):
+        """
+        US-REP-007 CA-7: Exporta el reporte de movimientos de inventario a Excel
+
+        Args:
+            movements: Lista de diccionarios con los datos de los movimientos
+            start_date: Fecha de inicio del período (str YYYY-MM-DD)
+            end_date: Fecha de fin del período (str YYYY-MM-DD)
+
+        Returns:
+            Flask Response con el archivo Excel
+        """
+        columns = [
+            ('created_at', 'Fecha y Hora'),
+            ('product_name', 'Producto'),
+            ('product_sku', 'SKU'),
+            ('movement_type', 'Tipo de Movimiento'),
+            ('quantity', 'Cantidad'),
+            ('previous_stock', 'Stock Anterior'),
+            ('new_stock', 'Stock Resultante'),
+            ('user_name', 'Usuario'),
+            ('reason', 'Motivo'),
+        ]
+
+        return ExportHelper.export_to_excel(
+            data=movements,
+            columns=columns,
+            filename_prefix=f'movimientos_inventario_{start_date}_a_{end_date}',
+            sheet_name='Movimientos de Inventario'
+        )
+
+    @staticmethod
+    def export_low_stock_report_to_csv(products):
+        """
+        US-REP-008 CA-7: Exporta el reporte de productos con stock bajo a CSV
+
+        Args:
+            products: Lista de diccionarios con los datos de los productos
+
+        Returns:
+            Flask Response con el archivo CSV
+        """
+        columns = [
+            ('product_name', 'Producto'),
+            ('product_sku', 'SKU'),
+            ('stock_quantity', 'Stock Actual'),
+            ('reorder_point', 'Punto de Reorden'),
+            ('days_until_stockout', 'Días Estimados Sin Stock'),
+            ('suggested_quantity', 'Cantidad Sugerida'),
+            ('supplier_name', 'Proveedor Preferido'),
+        ]
+
+        return ExportHelper.export_to_csv(
+            data=products,
+            columns=columns,
+            filename_prefix='productos_stock_bajo'
+        )
+
+    @staticmethod
+    def export_low_stock_report_to_excel(products):
+        """
+        US-REP-008 CA-7: Exporta el reporte de productos con stock bajo a Excel
+
+        Args:
+            products: Lista de diccionarios con los datos de los productos
+
+        Returns:
+            Flask Response con el archivo Excel
+        """
+        columns = [
+            ('product_name', 'Producto'),
+            ('product_sku', 'SKU'),
+            ('stock_quantity', 'Stock Actual'),
+            ('reorder_point', 'Punto de Reorden'),
+            ('days_until_stockout', 'Días Estimados Sin Stock'),
+            ('suggested_quantity', 'Cantidad Sugerida'),
+            ('supplier_name', 'Proveedor Preferido'),
+        ]
+
+        return ExportHelper.export_to_excel(
+            data=products,
+            columns=columns,
+            filename_prefix='productos_stock_bajo',
+            sheet_name='Stock Bajo'
+        )
+
+    @staticmethod
+    def export_sales_by_seller_report_to_excel(sellers):
+        """
+        US-REP-009 CA-8: Exporta el reporte de desempeño de ventas por vendedor a Excel
+
+        Args:
+            sellers: Lista de diccionarios con los datos de cada vendedor
+
+        Returns:
+            Flask Response con el archivo Excel
+        """
+        columns = [
+            ('seller_name', 'Vendedor'),
+            ('order_count', 'Cantidad de Pedidos'),
+            ('total_sales', 'Monto Total Vendido'),
+            ('average_ticket', 'Ticket Promedio'),
+            ('sales_percentage', '% Participación en Ventas'),
+            ('conversion_rate', 'Tasa de Conversión (%)'),
+        ]
+
+        return ExportHelper.export_to_excel(
+            data=sellers,
+            columns=columns,
+            filename_prefix='desempeno_ventas_vendedores',
+            sheet_name='Desempeño por Vendedor'
+        )
+
+    @staticmethod
+    def export_customer_report_to_csv(customers):
+        """
+        US-REP-010 CA-8: Exporta el top de clientes del reporte de clientes a CSV
+
+        Args:
+            customers: Lista de diccionarios con los datos de los clientes
+
+        Returns:
+            Flask Response con el archivo CSV
+        """
+        columns = [
+            ('customer_name', 'Cliente'),
+            ('customer_category', 'Nivel'),
+            ('order_count', 'Cantidad de Pedidos'),
+            ('total_spent', 'Monto Total de Compra'),
+        ]
+
+        return ExportHelper.export_to_csv(
+            data=customers,
+            columns=columns,
+            filename_prefix='reporte_clientes'
+        )
+
+    @staticmethod
+    def export_customer_report_to_excel(customers):
+        """
+        US-REP-010 CA-8: Exporta el top de clientes del reporte de clientes a Excel
+
+        Args:
+            customers: Lista de diccionarios con los datos de los clientes
+
+        Returns:
+            Flask Response con el archivo Excel
+        """
+        columns = [
+            ('customer_name', 'Cliente'),
+            ('customer_category', 'Nivel'),
+            ('order_count', 'Cantidad de Pedidos'),
+            ('total_spent', 'Monto Total de Compra'),
+        ]
+
+        return ExportHelper.export_to_excel(
+            data=customers,
+            columns=columns,
+            filename_prefix='reporte_clientes',
+            sheet_name='Top Clientes'
+        )
+
+    @staticmethod
+    def export_sales_trends_report_to_pdf(data):
+        """
+        US-REP-011 CA-8: Exporta el análisis de tendencias de ventas a PDF,
+        incluyendo un gráfico de línea de la evolución mensual y tablas de
+        datos (comparación anual, estacionalidad, tendencias por categoría,
+        proyección).
+
+        Args:
+            data: dict retornado por ReportService.get_sales_trends_report()
+
+        Returns:
+            Flask Response con el archivo PDF
+        """
+        from reportlab.lib import colors
+        from reportlab.lib.pagesizes import letter
+        from reportlab.lib.units import cm
+        from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+        from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+        from reportlab.graphics.shapes import Drawing
+        from reportlab.graphics.charts.linecharts import HorizontalLineChart
+
+        month_names = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic']
+
+        def fmt(amount):
+            return '${:,.0f}'.format(amount or 0)
+
+        buffer = io.BytesIO()
+        doc = SimpleDocTemplate(
+            buffer, pagesize=letter,
+            topMargin=2 * cm, bottomMargin=2 * cm, leftMargin=2 * cm, rightMargin=2 * cm,
+        )
+        styles = getSampleStyleSheet()
+        subtitle_style = ParagraphStyle('Subtitle', parent=styles['Heading3'])
+
+        elements = [
+            Paragraph('Análisis de Tendencias de Ventas', styles['Title']),
+            Paragraph(f'Generado: {datetime.now().strftime("%Y-%m-%d %H:%M")}', styles['Normal']),
+            Spacer(1, 0.5 * cm),
+        ]
+
+        # CA-1/CA-2/CA-3: Gráfico de línea + resumen de ventas mensuales
+        elements.append(Paragraph('Ventas Mensuales (Últimos 12 Meses)', subtitle_style))
+        monthly_values = [m['total'] for m in data['monthly_sales']]
+        monthly_labels = [m['month'][2:] for m in data['monthly_sales']]
+
+        drawing = Drawing(460, 200)
+        chart = HorizontalLineChart()
+        chart.x = 40
+        chart.y = 30
+        chart.width = 400
+        chart.height = 150
+        chart.data = [monthly_values]
+        chart.categoryAxis.categoryNames = monthly_labels
+        chart.categoryAxis.labels.fontSize = 7
+        chart.valueAxis.valueMin = 0
+        chart.lines[0].strokeColor = colors.HexColor('#1976d2')
+        chart.lines[0].strokeWidth = 2
+        drawing.add(chart)
+        elements.append(drawing)
+
+        growth_text = (
+            f"{data['average_monthly_growth_rate']}%"
+            if data['average_monthly_growth_rate'] is not None else 'sin datos suficientes'
+        )
+        summary_text = (
+            f"Mes pico: {data['peak_month']['month']} ({fmt(data['peak_month']['total'])}) &nbsp;|&nbsp; "
+            f"Mes bajo: {data['low_month']['month']} ({fmt(data['low_month']['total'])}) &nbsp;|&nbsp; "
+            f"Crecimiento promedio mensual: {growth_text}"
+        )
+        elements.append(Spacer(1, 0.3 * cm))
+        elements.append(Paragraph(summary_text, styles['Normal']))
+        elements.append(Spacer(1, 0.6 * cm))
+
+        # CA-4: Comparación año actual vs año anterior
+        elements.append(Paragraph(f"Comparación {data['current_year']} vs {data['previous_year']}", subtitle_style))
+        yoy_data = [['Mes', str(data['previous_year']), str(data['current_year'])]]
+        for row in data['yoy_comparison']:
+            yoy_data.append([month_names[row['month'] - 1], fmt(row['previous_year_total']), fmt(row['current_year_total'])])
+        yoy_table = Table(yoy_data, colWidths=[4 * cm, 5 * cm, 5 * cm])
+        yoy_table.setStyle(TableStyle([
+            ('GRID', (0, 0), (-1, -1), 0.5, colors.black),
+            ('BACKGROUND', (0, 0), (-1, 0), colors.whitesmoke),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('ALIGN', (1, 0), (2, -1), 'RIGHT'),
+            ('FONTSIZE', (0, 0), (-1, -1), 8),
+        ]))
+        elements.append(yoy_table)
+        elements.append(Spacer(1, 0.6 * cm))
+
+        # CA-5: Estacionalidad
+        elements.append(Paragraph('Estacionalidad (Promedio Histórico por Mes)', subtitle_style))
+        season_data = [['Mes', 'Promedio', 'Años con Datos']]
+        for row in data['seasonality']:
+            season_data.append([month_names[row['month'] - 1], fmt(row['average_total']), str(row['years_with_data'])])
+        season_table = Table(season_data, colWidths=[4 * cm, 5 * cm, 5 * cm])
+        season_table.setStyle(TableStyle([
+            ('GRID', (0, 0), (-1, -1), 0.5, colors.black),
+            ('BACKGROUND', (0, 0), (-1, 0), colors.whitesmoke),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('ALIGN', (1, 0), (2, -1), 'RIGHT'),
+            ('FONTSIZE', (0, 0), (-1, -1), 8),
+        ]))
+        elements.append(season_table)
+        elements.append(Spacer(1, 0.6 * cm))
+
+        # CA-6: Tendencias por categoría (total de los últimos 12 meses)
+        elements.append(Paragraph('Tendencias por Categoría de Producto', subtitle_style))
+        cat_data = [['Categoría', 'Total (12 meses)']]
+        for cat in data['category_trends']:
+            cat_data.append([cat['category_name'], fmt(cat['total'])])
+        if len(cat_data) > 1:
+            cat_table = Table(cat_data, colWidths=[7 * cm, 7 * cm])
+            cat_table.setStyle(TableStyle([
+                ('GRID', (0, 0), (-1, -1), 0.5, colors.black),
+                ('BACKGROUND', (0, 0), (-1, 0), colors.whitesmoke),
+                ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+                ('ALIGN', (1, 0), (1, -1), 'RIGHT'),
+                ('FONTSIZE', (0, 0), (-1, -1), 8),
+            ]))
+            elements.append(cat_table)
+        else:
+            elements.append(Paragraph('Sin datos de ventas por categoría en el período.', styles['Normal']))
+        elements.append(Spacer(1, 0.6 * cm))
+
+        # CA-7: Proyección próximos 3 meses
+        elements.append(Paragraph('Proyección Próximos 3 Meses', subtitle_style))
+        proj_data = [['Mes', 'Ventas Proyectadas']]
+        for row in data['projection']:
+            proj_data.append([row['month'], fmt(row['projected_total'])])
+        proj_table = Table(proj_data, colWidths=[4 * cm, 5 * cm])
+        proj_table.setStyle(TableStyle([
+            ('GRID', (0, 0), (-1, -1), 0.5, colors.black),
+            ('BACKGROUND', (0, 0), (-1, 0), colors.whitesmoke),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('ALIGN', (1, 0), (1, -1), 'RIGHT'),
+            ('FONTSIZE', (0, 0), (-1, -1), 8),
+        ]))
+        elements.append(proj_table)
+
+        doc.build(elements)
+        buffer.seek(0)
+
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        filename = f'tendencias_ventas_{timestamp}.pdf'
+        return Response(
+            buffer.getvalue(),
+            mimetype='application/pdf',
+            headers={
+                'Content-Disposition': f'attachment; filename={filename}',
+                'Content-Type': 'application/pdf',
+            }
+        )
+
+    @staticmethod
+    def export_purchase_orders_report_to_csv(orders, start_date, end_date):
+        """
+        US-REP-012 CA-8: Exporta el reporte de órdenes de compra a proveedores a CSV
+
+        Args:
+            orders: Lista de diccionarios con los datos de las órdenes
+            start_date: Fecha de inicio del período (str YYYY-MM-DD)
+            end_date: Fecha de fin del período (str YYYY-MM-DD)
+
+        Returns:
+            Flask Response con el archivo CSV
+        """
+        columns = [
+            ('order_number', 'Número de Orden'),
+            ('supplier_name', 'Proveedor'),
+            ('created_at', 'Fecha'),
+            ('total', 'Monto'),
+            ('status', 'Estado'),
+        ]
+
+        return ExportHelper.export_to_csv(
+            data=orders,
+            columns=columns,
+            filename_prefix=f'ordenes_compra_{start_date}_a_{end_date}'
+        )
+
+    @staticmethod
+    def export_purchase_orders_report_to_excel(orders, start_date, end_date):
+        """
+        US-REP-012 CA-8: Exporta el reporte de órdenes de compra a proveedores a Excel
+
+        Args:
+            orders: Lista de diccionarios con los datos de las órdenes
+            start_date: Fecha de inicio del período (str YYYY-MM-DD)
+            end_date: Fecha de fin del período (str YYYY-MM-DD)
+
+        Returns:
+            Flask Response con el archivo Excel
+        """
+        columns = [
+            ('order_number', 'Número de Orden'),
+            ('supplier_name', 'Proveedor'),
+            ('created_at', 'Fecha'),
+            ('total', 'Monto'),
+            ('status', 'Estado'),
+        ]
+
+        return ExportHelper.export_to_excel(
+            data=orders,
+            columns=columns,
+            filename_prefix=f'ordenes_compra_{start_date}_a_{end_date}',
+            sheet_name='Órdenes de Compra'
+        )
+
+    @staticmethod
+    def export_returns_report_to_csv(returns, start_date, end_date):
+        """
+        US-REP-015 CA-8: Exporta el reporte de devoluciones a CSV
+
+        Args:
+            returns: Lista de diccionarios con los datos de las devoluciones
+            start_date: Fecha de inicio del período (str YYYY-MM-DD)
+            end_date: Fecha de fin del período (str YYYY-MM-DD)
+
+        Returns:
+            Flask Response con el archivo CSV
+        """
+        columns = [
+            ('return_number', 'Número de Devolución'),
+            ('order_number', 'Número de Pedido'),
+            ('customer_name', 'Cliente'),
+            ('return_date', 'Fecha'),
+            ('reason', 'Motivo'),
+            ('total_amount', 'Monto'),
+            ('status', 'Estado'),
+        ]
+
+        return ExportHelper.export_to_csv(
+            data=returns,
+            columns=columns,
+            filename_prefix=f'devoluciones_{start_date}_a_{end_date}'
+        )
+
+    @staticmethod
+    def export_returns_report_to_excel(returns, start_date, end_date):
+        """
+        US-REP-015 CA-8: Exporta el reporte de devoluciones a Excel
+
+        Args:
+            returns: Lista de diccionarios con los datos de las devoluciones
+            start_date: Fecha de inicio del período (str YYYY-MM-DD)
+            end_date: Fecha de fin del período (str YYYY-MM-DD)
+
+        Returns:
+            Flask Response con el archivo Excel
+        """
+        columns = [
+            ('return_number', 'Número de Devolución'),
+            ('order_number', 'Número de Pedido'),
+            ('customer_name', 'Cliente'),
+            ('return_date', 'Fecha'),
+            ('reason', 'Motivo'),
+            ('total_amount', 'Monto'),
+            ('status', 'Estado'),
+        ]
+
+        return ExportHelper.export_to_excel(
+            data=returns,
+            columns=columns,
+            filename_prefix=f'devoluciones_{start_date}_a_{end_date}',
+            sheet_name='Devoluciones'
+        )
+
+    @staticmethod
     def export_inventory_value_report_to_pdf(value_data, categories, top_products):
         """
         US-INV-005 CA-7: Exporta reporte de valor del inventario a PDF

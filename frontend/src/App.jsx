@@ -7,6 +7,7 @@ import ForgotPassword from './pages/Auth/ForgotPassword';
 import ResetPassword from './pages/Auth/ResetPassword';
 import Profile from './pages/Profile/Profile';
 import MainDashboard from './pages/Dashboard/MainDashboard';
+import CustomizableDashboard from './pages/Dashboard/CustomizableDashboard';
 import SalesDashboard from './pages/Dashboard/SalesDashboard';
 import Forbidden from './pages/Errors/Forbidden';
 import ProductList from './pages/Products/ProductList';
@@ -23,6 +24,17 @@ import InventoryDashboard from './pages/Inventory/InventoryDashboard';
 import RestockSuggestions from './pages/Inventory/RestockSuggestions';
 import DailySalesReport from './pages/Reports/DailySalesReport';
 import SalesByPeriodReport from './pages/Reports/SalesByPeriodReport';
+import TopSellingProductsReport from './pages/Reports/TopSellingProductsReport';
+import ProfitMarginReport from './pages/Reports/ProfitMarginReport';
+import CurrentInventoryReport from './pages/Reports/CurrentInventoryReport';
+import InventoryMovementsReport from './pages/Reports/InventoryMovementsReport';
+import LowStockReport from './pages/Reports/LowStockReport';
+import SalesBySellerReport from './pages/Reports/SalesBySellerReport';
+import CustomerReport from './pages/Reports/CustomerReport';
+import SalesTrendsReport from './pages/Reports/SalesTrendsReport';
+import PurchaseOrdersReport from './pages/Reports/PurchaseOrdersReport';
+import ScheduledReports from './pages/Reports/ScheduledReports';
+import ReturnsReport from './pages/Reports/ReturnsReport';
 import CustomerList from './pages/Customers/CustomerList';
 import CreateCustomer from './pages/Customers/CreateCustomer';
 import CustomerDetail from './pages/Customers/CustomerDetail';
@@ -108,6 +120,10 @@ function App() {
             path="/dashboard/sales"
             element={<ProtectedRoute allowedRoles={['Personal de Ventas']}><SalesDashboard /></ProtectedRoute>}
           />
+          <Route
+            path="/dashboard/custom"
+            element={<ProtectedRoute><CustomizableDashboard /></ProtectedRoute>}
+          />
 
           {/* Products */}
           <Route
@@ -165,6 +181,50 @@ function App() {
           <Route
             path="/reports/sales-period"
             element={<ProtectedRoute allowedRoles={['Admin']}><SalesByPeriodReport /></ProtectedRoute>}
+          />
+          <Route
+            path="/reports/top-products"
+            element={<ProtectedRoute allowedRoles={['Admin']}><TopSellingProductsReport /></ProtectedRoute>}
+          />
+          <Route
+            path="/reports/profit-margin"
+            element={<ProtectedRoute allowedRoles={['Admin']}><ProfitMarginReport /></ProtectedRoute>}
+          />
+          <Route
+            path="/reports/inventory"
+            element={<ProtectedRoute allowedRoles={['Admin', 'Gerente de Almacén']}><CurrentInventoryReport /></ProtectedRoute>}
+          />
+          <Route
+            path="/reports/inventory-movements"
+            element={<ProtectedRoute allowedRoles={['Admin', 'Gerente de Almacén']}><InventoryMovementsReport /></ProtectedRoute>}
+          />
+          <Route
+            path="/reports/low-stock"
+            element={<ProtectedRoute allowedRoles={['Admin', 'Gerente de Almacén']}><LowStockReport /></ProtectedRoute>}
+          />
+          <Route
+            path="/reports/sales-by-seller"
+            element={<ProtectedRoute allowedRoles={['Admin']}><SalesBySellerReport /></ProtectedRoute>}
+          />
+          <Route
+            path="/reports/customers"
+            element={<ProtectedRoute allowedRoles={['Admin']}><CustomerReport /></ProtectedRoute>}
+          />
+          <Route
+            path="/reports/sales-trends"
+            element={<ProtectedRoute allowedRoles={['Admin']}><SalesTrendsReport /></ProtectedRoute>}
+          />
+          <Route
+            path="/reports/purchase-orders"
+            element={<ProtectedRoute allowedRoles={['Admin', 'Gerente de Almacén']}><PurchaseOrdersReport /></ProtectedRoute>}
+          />
+          <Route
+            path="/reports/scheduled"
+            element={<ProtectedRoute allowedRoles={['Admin']}><ScheduledReports /></ProtectedRoute>}
+          />
+          <Route
+            path="/reports/returns"
+            element={<ProtectedRoute allowedRoles={['Admin']}><ReturnsReport /></ProtectedRoute>}
           />
 
           {/* Customers */}

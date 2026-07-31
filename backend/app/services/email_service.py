@@ -1,6 +1,7 @@
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+from email.mime.application import MIMEApplication
 from email.utils import formataddr
 import os
 from datetime import datetime
@@ -83,6 +84,64 @@ class EmailService:
         except Exception as e:
             # En desarrollo, no fallar silenciosamente
             raise Exception(f"Error al enviar email: {str(e)}")
+
+    @classmethod
+    def send_email_with_attachment(cls, to_email, subject, html_content, attachment_bytes,
+                                    attachment_filename, attachment_mimetype='application/octet-stream',
+                                    text_content=None):
+        """
+        US-REP-013: Envía un email con un archivo adjunto (reporte generado)
+
+        Args:
+            to_email: Dirección de correo del destinatario
+            subject: Asunto del email
+            html_content: Contenido HTML del email
+            attachment_bytes: Contenido binario del archivo adjunto
+            attachment_filename: Nombre del archivo adjunto
+            attachment_mimetype: Tipo MIME del adjunto
+            text_content: Contenido en texto plano (opcional, fallback)
+
+        Returns:
+            bool: True si se envió exitosamente
+
+        Raises:
+            Exception: Si hay un error al enviar el email
+        """
+        try:
+            msg = MIMEMultipart('mixed')
+            msg['Subject'] = subject
+            msg['From'] = formataddr((cls.FROM_NAME, cls.FROM_EMAIL))
+            msg['To'] = to_email
+
+            body = MIMEMultipart('alternative')
+            if text_content:
+                body.attach(MIMEText(text_content, 'plain', 'utf-8'))
+            body.attach(MIMEText(html_content, 'html', 'utf-8'))
+            msg.attach(body)
+
+            attachment = MIMEApplication(attachment_bytes)
+            attachment.add_header(
+                'Content-Disposition', 'attachment', filename=attachment_filename
+            )
+            attachment.add_header('Content-Type', attachment_mimetype)
+            msg.attach(attachment)
+
+            if cls.SMTP_USE_TLS:
+                server = smtplib.SMTP(cls.SMTP_HOST, cls.SMTP_PORT)
+                server.starttls()
+            else:
+                server = smtplib.SMTP(cls.SMTP_HOST, cls.SMTP_PORT)
+
+            if cls.SMTP_USERNAME and cls.SMTP_PASSWORD:
+                server.login(cls.SMTP_USERNAME, cls.SMTP_PASSWORD)
+
+            server.send_message(msg)
+            server.quit()
+
+            return True
+
+        except Exception as e:
+            raise Exception(f"Error al enviar email con adjunto: {str(e)}")
 
     @classmethod
     def send_password_reset_email(cls, user_email, user_name, reset_token):

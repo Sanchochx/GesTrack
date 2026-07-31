@@ -22,6 +22,7 @@ import gesTrackLogo from '../../assets/GesTrack Logo 2.png';
 
 const NAV_ITEMS = [
   { label: 'Inicio', icon: HomeIcon, path: '/dashboard', roles: ['Admin', 'Gerente de Almacén', 'Personal de Ventas'] },
+  { label: 'Mi Dashboard Personalizado', icon: HomeIcon, path: '/dashboard/custom', roles: ['Admin', 'Gerente de Almacén', 'Personal de Ventas'] },
   { label: 'Inventario', icon: InventoryIcon, path: '/inventory/dashboard', roles: ['Admin', 'Gerente de Almacén'] },
   { label: 'Movimientos', icon: MovementsIcon, path: '/inventory/history', roles: ['Admin', 'Gerente de Almacén'] },
   { label: 'Pedidos', icon: OrdersIcon, path: '/orders', roles: ['Admin', 'Gerente de Almacén', 'Personal de Ventas'] },
@@ -32,6 +33,17 @@ const NAV_ITEMS = [
   { label: 'Reabastecimiento', icon: RestockIcon, path: '/inventory/restock-suggestions', roles: ['Admin', 'Gerente de Almacén'] },
   { label: 'Ventas Diarias', icon: ReportIcon, path: '/reports/daily-sales', roles: ['Admin'] },
   { label: 'Ventas por Período', icon: ReportIcon, path: '/reports/sales-period', roles: ['Admin'] },
+  { label: 'Productos Más Vendidos', icon: ReportIcon, path: '/reports/top-products', roles: ['Admin'] },
+  { label: 'Márgenes de Ganancia', icon: ReportIcon, path: '/reports/profit-margin', roles: ['Admin'] },
+  { label: 'Reporte de Inventario', icon: ReportIcon, path: '/reports/inventory', roles: ['Admin', 'Gerente de Almacén'] },
+  { label: 'Movimientos de Inventario', icon: ReportIcon, path: '/reports/inventory-movements', roles: ['Admin', 'Gerente de Almacén'] },
+  { label: 'Productos con Stock Bajo', icon: ReportIcon, path: '/reports/low-stock', roles: ['Admin', 'Gerente de Almacén'] },
+  { label: 'Desempeño por Vendedor', icon: ReportIcon, path: '/reports/sales-by-seller', roles: ['Admin'] },
+  { label: 'Reporte de Clientes', icon: ReportIcon, path: '/reports/customers', roles: ['Admin'] },
+  { label: 'Tendencias de Ventas', icon: ReportIcon, path: '/reports/sales-trends', roles: ['Admin'] },
+  { label: 'Reporte de Órdenes de Compra', icon: ReportIcon, path: '/reports/purchase-orders', roles: ['Admin', 'Gerente de Almacén'] },
+  { label: 'Reportes Programados', icon: ReportIcon, path: '/reports/scheduled', roles: ['Admin'] },
+  { label: 'Reporte de Devoluciones', icon: ReportIcon, path: '/reports/returns', roles: ['Admin'] },
   { label: 'Administración', icon: AdminIcon, path: '/users', roles: ['Admin'] },
 ];
 

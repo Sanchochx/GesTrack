@@ -57,6 +57,8 @@ def create_app(config_name=None):
     from app.routes.suppliers import suppliers_bp  # US-SUPP-001
     from app.routes.purchase_orders import purchase_orders_bp  # US-SUPP-005
     from app.routes.reports import reports_bp  # US-REP-002
+    from app.routes.scheduled_reports import scheduled_reports_bp  # US-REP-013
+    from app.routes.dashboard_preferences import dashboard_preferences_bp  # US-REP-014
 
     app.register_blueprint(auth_bp, url_prefix='/api/auth')
     app.register_blueprint(categories_bp)
@@ -69,6 +71,8 @@ def create_app(config_name=None):
     app.register_blueprint(suppliers_bp)  # US-SUPP-001
     app.register_blueprint(purchase_orders_bp)  # US-SUPP-005
     app.register_blueprint(reports_bp)  # US-REP-002
+    app.register_blueprint(scheduled_reports_bp)  # US-REP-013
+    app.register_blueprint(dashboard_preferences_bp)  # US-REP-014
 
     # Manejador de errores global
     @app.errorhandler(404)
@@ -106,5 +110,12 @@ def create_app(config_name=None):
         """
         upload_folder = app.config['UPLOAD_FOLDER']
         return send_from_directory(upload_folder, filename)
+
+    # US-REP-013: Iniciar el scheduler de reportes programados en background.
+    # Se omite en testing y, con el reloader de debug activo, solo en el proceso
+    # hijo real (WERKZEUG_RUN_MAIN) para evitar iniciarlo dos veces.
+    if config_name != 'testing' and (not app.debug or os.environ.get('WERKZEUG_RUN_MAIN') == 'true'):
+        from app.scheduler import start_scheduler
+        start_scheduler(app)
 
     return app
