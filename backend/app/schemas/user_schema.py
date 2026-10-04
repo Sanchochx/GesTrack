@@ -25,7 +25,7 @@ class UserRegistrationSchema(Schema):
     })
 
     @validates('full_name')
-    def validate_full_name(self, value):
+    def validate_full_name(self, value, **kwargs):
         """Valida que el nombre completo no esté vacío y tenga longitud válida"""
         if not value or value.strip() == '':
             raise ValidationError('El nombre completo no puede estar vacío')
@@ -33,7 +33,7 @@ class UserRegistrationSchema(Schema):
             raise ValidationError('El nombre completo no puede exceder 100 caracteres')
 
     @validates('email')
-    def validate_email_uniqueness(self, value):
+    def validate_email_uniqueness(self, value, **kwargs):
         """Valida que el email sea único en el sistema (CA-3)"""
         # Validar formato (sin verificar deliverability en testing)
         check_deliverability = not current_app.config.get('TESTING', False)
@@ -47,14 +47,14 @@ class UserRegistrationSchema(Schema):
             raise ValidationError('Este email ya está registrado')
 
     @validates('password')
-    def validate_password(self, value):
+    def validate_password(self, value, **kwargs):
         """Valida la fortaleza de la contraseña (CA-2)"""
         is_valid, errors = validate_password_strength(value)
         if not is_valid:
             raise ValidationError(errors)
 
     @validates('role')
-    def validate_user_role(self, value):
+    def validate_user_role(self, value, **kwargs):
         """Valida que el rol sea uno de los permitidos"""
         if not validate_role(value):
             raise ValidationError(
@@ -86,7 +86,7 @@ class UserProfileUpdateSchema(Schema):
     })
 
     @validates('full_name')
-    def validate_full_name(self, value):
+    def validate_full_name(self, value, **kwargs):
         """Valida que el nombre completo tenga longitud válida (CA-3)"""
         if value is not None:
             if not value or value.strip() == '':

@@ -87,6 +87,7 @@ def register():
         }), 400
 
     except Exception as e:
+        print(f"ERROR REAL EN REGISTRO: {str(e)}")
         return jsonify({
             'success': False,
             'error': {
