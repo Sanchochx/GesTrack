@@ -32,7 +32,7 @@ class ProductCreateSchema(Schema):
 
     # CA-1: Campos opcionales
     description = fields.Str(required=False, allow_none=True)
-    reorder_point = fields.Int(required=False, missing=10)  # Default 10
+    reorder_point = fields.Int(required=False, load_default=10)  # Default 10
     image = fields.Str(required=False, allow_none=True)  # Image filename after upload
 
     @validates('name')

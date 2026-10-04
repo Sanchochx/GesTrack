@@ -35,15 +35,6 @@ def upgrade():
     )
     op.create_index(op.f('ix_payments_order_id'), 'payments', ['order_id'], unique=False)
 
-    # CA-4: Agregar columna payment_status a orders
-    op.add_column('orders', sa.Column(
-        'payment_status',
-        sa.String(length=50),
-        nullable=False,
-        server_default='Pendiente'
-    ))
-
-
 def downgrade():
     op.drop_column('orders', 'payment_status')
     op.drop_index(op.f('ix_payments_order_id'), table_name='payments')
