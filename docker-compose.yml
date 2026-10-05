@@ -1,0 +1,19 @@
+services:
+  backend:
+    build: ./backend
+    container_name: gestrack-backend
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./backend:/app
+
+  frontend:
+    build: ./frontend
+    container_name: gestrack-frontend
+    ports:
+      - "5173:5173" # Ajusta si tu framework usa otro puerto (ej. "5173:5173")
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules # Truco DevOps: Protege la carpeta node_modules interna del contenedor
+    depends_on:
+      - backend # Asegura que el backend arranque antes que el frontend

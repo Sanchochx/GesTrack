@@ -6,4 +6,4 @@ app = create_app()
 if __name__ == '__main__':
     port = int(os.getenv('PORT', 5000))
     # US-INV-001 CA-3: Usar socketio.run para soporte de WebSockets
-    socketio.run(app, host='0.0.0.0', port=port, debug=True)
+    socketio.run(app, host='0.0.0.0', port=port, debug=True, allow_unsafe_werkzeug=True)
